@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
-const serviceAccount = require("C:/Users/amirb/Downloads/firebase_flashcards/three-sided-flashcard-app-firebase-adminsdk-fbsvc-2aa116656d.json");
+const { getServiceAccountPath } = require('./config');
+const serviceAccount = require(getServiceAccountPath());
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
