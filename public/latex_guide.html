@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LaTeX Guide - Three-Sided</title>
+  <meta name="description" content="Learn how to use LaTeX in your flashcards with examples and syntax guide.">
+  <link rel="canonical" href="https://three-sided.com/latex_guide.html" />
+  
+  <!-- MathJax for rendering LaTeX examples -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #2d3748;
+      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #0066cc, #004a99);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      color: #718096;
+      margin-bottom: 2rem;
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #0066cc, #004a99);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 102, 204, 0.3);
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
+    }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      color: #2d3748;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section h3 {
+      font-size: 1.2rem;
+      color: #4a5568;
+      margin: 1.5rem 0 0.5rem 0;
+      border-left: 4px solid #0066cc;
+      padding-left: 1rem;
+    }
+
+    .example {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .example .label {
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      font-family: inherit;
+    }
+
+    .example .code {
+      color: #2d3748;
+      background: #edf2f7;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .example .result {
+      color: #718096;
+      font-style: italic;
+      font-family: inherit;
+    }
+
+    .math-example {
+      text-align: center;
+      padding: 1rem;
+      background: #f0fff4;
+      border: 1px solid #c6f6d5;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    .tip {
+      background: #fffaf0;
+      border: 1px solid #fbd38d;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .tip .tip-icon {
+      color: #d69e2e;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    .warning {
+      background: #fed7d7;
+      border: 1px solid #feb2b2;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+
+    .warning .warning-icon {
+      color: #e53e3e;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    .quick-reference {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .quick-ref-item {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .quick-ref-item .symbol {
+      font-weight: 600;
+      color: #0066cc;
+      font-family: 'Courier New', monospace;
+    }
+
+    .quick-ref-item .description {
+      color: #4a5568;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .section {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📝 LaTeX Guide</h1>
+      <p>Learn how to write beautiful mathematical expressions in your flashcards</p>
+      <a href="index.html" class="back-btn">← Back to Home</a>
+    </div>
+
+    <div class="section">
+      <h2>🎯 What is LaTeX?</h2>
+      <p>LaTeX is a typesetting system that makes it easy to write mathematical expressions, equations, and scientific notation. In Three-Sided, you can use LaTeX in your flashcard statements, hints, and proofs to create professional-looking mathematical content.</p>
+      
+      <div class="tip">
+        <span class="tip-icon">💡</span>
+        <strong>Tip:</strong> LaTeX expressions are enclosed in dollar signs: $expression$ or \(expression\)
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔢 Basic Math Symbols</h2>
+      
+      <h3>Basic Operations</h3>
+      <div class="quick-reference">
+        <div class="quick-ref-item">
+          <div class="symbol">$+$</div>
+          <div class="description">Plus sign</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$-$</div>
+          <div class="description">Minus sign</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\times$</div>
+          <div class="description">Multiplication</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\div$</div>
+          <div class="description">Division</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$=$</div>
+          <div class="description">Equals</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\neq$</div>
+          <div class="description">Not equals</div>
+        </div>
+      </div>
+
+      <h3>Fractions and Powers</h3>
+      <div class="example">
+        <div class="label">Fraction:</div>
+        <div class="code">$\frac{a}{b}$</div>
+        <div class="result">Result: \(\frac{a}{b}\)</div>
+      </div>
+      
+      <div class="example">
+        <div class="label">Power/Exponent:</div>
+        <div class="code">$x^2$ or $x^{n+1}$</div>
+        <div class="result">Result: \(x^2\) or \(x^{n+1}\)</div>
+      </div>
+
+      <h3>Greek Letters</h3>
+      <div class="quick-reference">
+        <div class="quick-ref-item">
+          <div class="symbol">$\alpha$</div>
+          <div class="description">Alpha</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\beta$</div>
+          <div class="description">Beta</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\gamma$</div>
+          <div class="description">Gamma</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\delta$</div>
+          <div class="description">Delta</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\pi$</div>
+          <div class="description">Pi</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\theta$</div>
+          <div class="description">Theta</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\sigma$</div>
+          <div class="description">Sigma</div>
+        </div>
+        <div class="quick-ref-item">
+          <div class="symbol">$\omega$</div>
+          <div class="description">Omega</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📐 Common Mathematical Expressions</h2>
+      
+      <h3>Square Root</h3>
+      <div class="example">
+        <div class="label">Square root:</div>
+        <div class="code">$\sqrt{x}$ or $\sqrt[n]{x}$</div>
+        <div class="result">Result: \(\sqrt{x}\) or \(\sqrt[n]{x}\)</div>
+      </div>
+
+      <h3>Integrals</h3>
+      <div class="example">
+        <div class="label">Definite integral:</div>
+        <div class="code">$\int_{a}^{b} f(x) dx$</div>
+        <div class="result">Result: \(\int_{a}^{b} f(x) dx\)</div>
+      </div>
+      
+      <div class="example">
+        <div class="label">Indefinite integral:</div>
+        <div class="code">$\int f(x) dx$</div>
+        <div class="result">Result: \(\int f(x) dx\)</div>
+      </div>
+
+      <h3>Summation</h3>
+      <div class="example">
+        <div class="label">Sum:</div>
+        <div class="code">$\sum_{i=1}^{n} x_i$</div>
+        <div class="result">Result: \(\sum_{i=1}^{n} x_i\)</div>
+      </div>
+
+      <h3>Limits</h3>
+      <div class="example">
+        <div class="label">Limit:</div>
+        <div class="code">$\lim_{x \to \infty} f(x)$</div>
+        <div class="result">Result: \(\lim_{x \to \infty} f(x)\)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔬 Advanced Examples</h2>
+      
+      <h3>Quadratic Formula</h3>
+      <div class="example">
+        <div class="label">Code:</div>
+        <div class="code">$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$</div>
+        <div class="math-example">
+          \(x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\)
+        </div>
+      </div>
+
+      <h3>Euler's Identity</h3>
+      <div class="example">
+        <div class="label">Code:</div>
+        <div class="code">$e^{i\pi} + 1 = 0$</div>
+        <div class="math-example">
+          \(e^{i\pi} + 1 = 0\)
+        </div>
+      </div>
+
+      <h3>Matrix</h3>
+      <div class="example">
+        <div class="label">Code:</div>
+        <div class="code">$\begin{pmatrix} a & b \\ c & d \end{pmatrix}$</div>
+        <div class="math-example">
+          \(\begin{pmatrix} a & b \\ c & d \end{pmatrix}\)
+        </div>
+      </div>
+
+      <h3>Partial Derivative</h3>
+      <div class="example">
+        <div class="label">Code:</div>
+        <div class="code">$\frac{\partial f}{\partial x}$</div>
+        <div class="math-example">
+          \(\frac{\partial f}{\partial x}\)
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>⚠️ Common Mistakes to Avoid</h2>
+      
+      <div class="warning">
+        <span class="warning-icon">⚠️</span>
+        <strong>Don't forget the dollar signs!</strong> LaTeX expressions must be enclosed in $ or \( \)
+      </div>
+      
+      <div class="warning">
+        <span class="warning-icon">⚠️</span>
+        <strong>Use curly braces for grouping:</strong> $x^{2+3}$ gives \(x^{2+3}\), not \(x^2+3\)
+      </div>
+      
+      <div class="warning">
+        <span class="warning-icon">⚠️</span>
+        <strong>Spaces matter:</strong> $\frac{a}{b}$ works, but $\frac {a} {b}$ might not
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🎓 Practice Examples</h2>
+      
+      <p>Try these examples in your flashcards:</p>
+      
+      <div class="example">
+        <div class="label">Statement:</div>
+        <div class="code">What is the derivative of $f(x) = x^2 + 3x + 1$?</div>
+      </div>
+      
+      <div class="example">
+        <div class="label">Hint:</div>
+        <div class="code">Use the power rule: $\frac{d}{dx}x^n = nx^{n-1}$</div>
+      </div>
+      
+      <div class="example">
+        <div class="label">Proof:</div>
+        <div class="code">$f'(x) = 2x + 3$</div>
+      </div>
+      
+      <div class="tip">
+        <span class="tip-icon">💡</span>
+        <strong>Pro tip:</strong> You can mix regular text with LaTeX expressions. For example: "The area of a circle is $A = \pi r^2$ where $r$ is the radius."
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔗 More Resources</h2>
+      <p>For more advanced LaTeX syntax, check out:</p>
+      <ul style="margin-left: 2rem; margin-top: 1rem;">
+        <li><a href="https://www.latex-project.org/help/documentation/" target="_blank" style="color: #0066cc;">Official LaTeX Documentation</a></li>
+        <li><a href="https://oeis.org/wiki/List_of_LaTeX_mathematical_symbols" target="_blank" style="color: #0066cc;">LaTeX Mathematical Symbols</a></li>
+        <li><a href="https://detexify.kirelabs.org/classify.html" target="_blank" style="color: #0066cc;">Detexify</a> - Draw symbols to find LaTeX code</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html> 

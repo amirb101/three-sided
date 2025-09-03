@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Friends & Social Features</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .tabs {
+      display: flex;
+      background: white;
+      border-radius: 16px;
+      padding: 8px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+      position: relative;
+    }
+
+    .tab:hover {
+      background: #f1f5f9;
+    }
+
+    .tab.active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .badge {
+      background: #ef4444;
+      color: white;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .tab-content {
+      display: none;
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #3b82f6;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .search-section {
+      margin-bottom: 30px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+
+    .user-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .user-card:hover {
+      background: #f1f5f9;
+      transform: translateY(-2px);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .user-details h3 {
+      margin-bottom: 5px;
+      color: #1e293b;
+    }
+
+    .user-stats {
+      font-size: 14px;
+      color: #64748b;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .friendship-status {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-friends {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-sent {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-pending {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .user-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+    }
+
+    .empty-state-icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .leaderboard {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .leaderboard-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .leaderboard-header h3 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .leaderboard-item:hover {
+      background: #f1f5f9;
+    }
+
+    .leaderboard-item.current-user {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      border: 2px solid #3b82f6;
+    }
+
+    .leaderboard-rank {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: 16px;
+    }
+
+    .leaderboard-user {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .leaderboard-score {
+      font-weight: 600;
+      color: #3b82f6;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f4f6;
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #10b981;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 500;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .notification.show {
+      transform: translateX(0);
+    }
+
+    .mini-tree {
+      background: #dcfce7;
+      color: #166534;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .auth-prompt {
+      text-align: center;
+      padding: 60px 20px;
+      color: white;
+    }
+
+    .auth-prompt h2 {
+      margin-bottom: 16px;
+    }
+
+    .auth-prompt .btn {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="title">👥 Friends & Social</h1>
+      <p class="subtitle">Connect with fellow learners and share your progress</p>
+    </div>
+
+    <div id="authPrompt" class="auth-prompt" style="display: none;">
+      <h2>Please sign in to access social features</h2>
+      <p>Connect with friends and share your learning journey!</p>
+      <button class="btn btn-primary" onclick="window.location.href='/login.html'">Sign In</button>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('friends')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM4 18v-4h2v4h2v-4h2v4h2v-4h2v4h2V9H4v9z"/></svg>
+          My Friends
+        </button>
+        <button class="tab" onclick="switchTab('discover')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          Discover
+        </button>
+        <button class="tab" onclick="switchTab('requests')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM15.5 11H13v4h2.5v-4zM7 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zM6.5 11H4v4h2.5v-4z"/></svg>
+          Requests
+          <span id="requestBadge" class="badge" style="display: none;">0</span>
+        </button>
+        <button class="tab" onclick="switchTab('leaderboard')">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/></svg>
+          Leaderboard
+        </button>
+      </div>
+
+      <!-- Friends Tab -->
+      <div id="friends" class="tab-content active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="friendCount">0</div>
+            <div class="stat-label">Friends</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="totalSharedCards">0</div>
+            <div class="stat-label">Cards Shared</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="mutualConnections">0</div>
+            <div class="stat-label">Mutual Connections</div>
+          </div>
+        </div>
+
+        <div id="friendsList" class="user-list">
+          <div class="loading-spinner" style="margin: 20px auto;"></div>
+        </div>
+
+        <div id="emptyFriends" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">👥</div>
+          <h3>No friends yet</h3>
+          <p>Search for users to add your first friend!</p>
+        </div>
+      </div>
+
+      <!-- Discover Tab -->
+      <div id="discover" class="tab-content">
+        <div class="search-section">
+          <div class="search-bar">
+            <input type="text" id="userSearch" class="search-input" placeholder="Search for users by email or display name..." onkeypress="handleSearchKeypress(event)">
+            <button class="btn btn-primary" onclick="searchUsers()">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              Search
+            </button>
+          </div>
+          <p style="color: #64748b; font-size: 14px;">
+            💡 Tip: Search by email address or display name for best results
+          </p>
+        </div>
+
+        <div id="searchResults" class="search-results">
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3>Discover new friends</h3>
+            <p>Search for users to connect with and share your learning journey!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Requests Tab -->
+      <div id="requests" class="tab-content">
+        <h3 style="margin-bottom: 20px; color: #1e293b;">Pending Friend Requests</h3>
+        
+        <div id="requestsList" class="user-list">
+          <div class="loading-spinner" style="margin: 20px auto;"></div>
+        </div>
+
+        <div id="emptyRequests" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">📬</div>
+          <h3>No pending requests</h3>
+          <p>You're all caught up! New friend requests will appear here.</p>
+        </div>
+      </div>
+
+      <!-- Leaderboard Tab -->
+      <div id="leaderboard" class="tab-content">
+        <div class="leaderboard">
+          <div class="leaderboard-header">
+            <h3>🏆 Knowledge Champions</h3>
+            <p>Top learners among your friends</p>
+          </div>
+          <div id="leaderboardList">
+            <div class="loading-spinner" style="margin: 20px auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let friendService = null;
+
+    // Initialize friend service
+    function createFriendService(firebase, db) {
+      return {
+        async getFriendRequests(userId) {
+          const requestSnap = await db.collection("friendRequests")
+            .where("to", "==", userId)
+            .orderBy("timestamp", "desc")
+            .get();
+
+          const requests = [];
+          for (const doc of requestSnap.docs) {
+            const data = doc.data();
+            const fromId = data.from;
+
+            const slugSnap = await db.collection("userToSlug").doc(fromId).get();
+            const slug = slugSnap.exists ? slugSnap.data().slug : null;
+
+            const profileSnap = slug ? await db.collection("profiles").doc(slug).get() : null;
+            const name = profileSnap?.exists ? profileSnap.data().displayName : "Unknown";
+
+            requests.push({
+              id: doc.id,
+              fromId,
+              slug,
+              name,
+              ...data
+            });
+          }
+
+          return requests;
+        },
+
+        async checkFriendStatus(myId, theirId) {
+          const isFriend = await db
+            .collection("userFriends").doc(myId)
+            .collection("friends").doc(theirId).get();
+
+          const sentRequest = await db
+            .collection("friendRequests")
+            .where("from", "==", myId)
+            .where("to", "==", theirId)
+            .get();
+
+          const receivedRequest = await db
+            .collection("friendRequests")
+            .where("from", "==", theirId)
+            .where("to", "==", myId)
+            .get();
+
+          return {
+            isFriend: isFriend.exists,
+            sentRequest: !sentRequest.empty,
+            receivedRequest: !receivedRequest.empty,
+            receivedRequestData: receivedRequest.empty ? null : receivedRequest.docs[0]
+          };
+        },
+
+        async getMutualFriends(myId, theirId) {
+          const myFriendsSnap = await db.collection("userFriends").doc(myId).collection("friends").get();
+          const theirFriendsSnap = await db.collection("userFriends").doc(theirId).collection("friends").get();
+
+          const myFriendIds = new Set(myFriendsSnap.docs.map(d => d.id));
+          const theirFriendIds = new Set(theirFriendsSnap.docs.map(d => d.id));
+
+          const mutuals = [...myFriendIds].filter(id => theirFriendIds.has(id) && id !== myId);
+          
+          if (mutuals.length === 0) return [];
+
+          const firstThree = mutuals.slice(0, 3);
+          const names = await Promise.all(
+            firstThree.map(async id => {
+              const snap = await db.collection("userToSlug").doc(id).get();
+              if (!snap.exists) return "Unknown";
+              const slug = snap.data().slug;
+              const prof = await db.collection("profiles").doc(slug).get();
+              return prof.exists ? prof.data().displayName : "Unknown";
+            })
+          );
+
+          return {
+            names,
+            total: mutuals.length,
+            moreCount: mutuals.length - 3
+          };
+        },
+
+        async getFriendCount(userId) {
+          const friendsSnap = await db.collection("userFriends").doc(userId).collection("friends").get();
+          return friendsSnap.size;
+        },
+
+        async sendFriendRequest(fromId, toId) {
+          await db.collection("friendRequests").add({
+            from: fromId,
+            to: toId,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        },
+
+        async acceptFriendRequest(fromId, toId, requestId = null) {
+          // Add to both users' friend lists
+          await db.collection("userFriends").doc(toId).collection("friends").doc(fromId).set({});
+          await db.collection("userFriends").doc(fromId).collection("friends").doc(toId).set({});
+
+          // Delete the request
+          if (requestId) {
+            await db.collection("friendRequests").doc(requestId).delete();
+          } else {
+            const requestSnap = await db.collection("friendRequests")
+              .where("from", "==", fromId)
+              .where("to", "==", toId)
+              .get();
+
+            const batch = db.batch();
+            requestSnap.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+          }
+        },
+
+        async rejectFriendRequest(requestId) {
+          await db.collection("friendRequests").doc(requestId).delete();
+        },
+
+        async removeFriend(myId, friendId) {
+          await db.collection("userFriends").doc(myId).collection("friends").doc(friendId).delete();
+        }
+      };
+    }
+
+    // Authentication check
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        friendService = createFriendService(firebase, db);
+        document.getElementById('authPrompt').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        
+        // Load initial data
+        await loadFriends();
+        await updateRequestBadge();
+      } else {
+        document.getElementById('authPrompt').style.display = 'block';
+        document.getElementById('mainContent').style.display = 'none';
+      }
+    });
+
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+      
+      // Load content based on tab
+      switch(tabName) {
+        case 'friends':
+          loadFriends();
+          break;
+        case 'requests':
+          loadRequests();
+          break;
+        case 'leaderboard':
+          loadLeaderboard();
+          break;
+      }
+    }
+
+    // Search functionality
+    function handleSearchKeypress(event) {
+      if (event.key === 'Enter') {
+        searchUsers();
+      }
+    }
+
+    async function searchUsers() {
+      const query = document.getElementById('userSearch').value.trim().toLowerCase();
+      if (!query) return;
+
+      const container = document.getElementById('searchResults');
+      container.innerHTML = '<div class="loading-spinner" style="margin: 20px auto;"></div>';
+
+      try {
+        // Search in profiles collection by email and displayName
+        const profilesSnap = await db.collection("profiles").get();
+        const results = [];
+
+        for (const doc of profilesSnap.docs) {
+          const data = doc.data();
+          const email = data.email?.toLowerCase() || '';
+          const displayName = data.displayName?.toLowerCase() || '';
+          
+          if ((email.includes(query) || displayName.includes(query)) && data.userId !== currentUser.uid) {
+            results.push({
+              userId: data.userId,
+              slug: doc.id,
+              email: data.email,
+              displayName: data.displayName,
+              institution: data.institution || ''
+            });
+          }
+        }
+
+        displaySearchResults(results);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">😔</div>
+            <h3>Search failed</h3>
+            <p>Please try again</p>
+          </div>
+        `;
+      }
+    }
+
+    async function displaySearchResults(results) {
+      const container = document.getElementById('searchResults');
+      
+      if (results.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">😔</div>
+            <h3>No users found</h3>
+            <p>Try searching with a different email or username</p>
+          </div>
+        `;
+        return;
+      }
+
+      const userCards = await Promise.all(results.map(async user => {
+        const friendshipStatus = await getFriendshipStatus(user.userId);
+        const mutualFriends = await friendService.getMutualFriends(currentUser.uid, user.userId);
+        return createUserCard(user, friendshipStatus, mutualFriends);
+      }));
+
+      container.innerHTML = userCards.join('');
+    }
+
+    async function getFriendshipStatus(userId) {
+      try {
+        const status = await friendService.checkFriendStatus(currentUser.uid, userId);
+        if (status.isFriend) return 'friends';
+        if (status.sentRequest) return 'sent';
+        if (status.receivedRequest) return 'pending';
+        return 'none';
+      } catch (error) {
+        console.error('Error checking friendship status:', error);
+        return 'none';
+      }
+    }
+
+    function createUserCard(user, friendshipStatus, mutualFriends = null) {
+      const statusInfo = {
+        friends: { class: 'status-friends', text: 'Friends', action: `<button class="btn btn-danger btn-small" onclick="removeFriend('${user.userId}')">Remove</button>` },
+        sent: { class: 'status-sent', text: 'Request Sent', action: '' },
+        pending: { class: 'status-pending', text: 'Pending', action: `<button class="btn btn-success btn-small" onclick="acceptFriend('${user.userId}')">Accept</button>` },
+        none: { class: '', text: '', action: `<button class="btn btn-primary btn-small" onclick="sendFriendRequest('${user.userId}')">Add Friend</button>` }
+      };
+      console.log(user);
+      const status = statusInfo[friendshipStatus];
+      const initials = user.displayName ? user.displayName.split(' ').map(n => n[0]).join('').toUpperCase() : '?';
+
+      let mutualText = '';
+      if (mutualFriends && mutualFriends.total > 0) {
+        mutualText = `<div class="mini-tree">${mutualFriends.total} mutual friend${mutualFriends.total > 1 ? 's' : ''}</div>`;
+      }
+
+      return `
+        <div class="user-card">
+          <div class="user-info">
+            <div class="user-avatar">${initials}</div>
+            <div class="user-details">
+              <h3>${user.displayName || "Unknown"}</h3>
+              <div class="user-stats">
+                <span>${user.email || ""}</span>
+                ${user.institution ? `<span>🏫 ${user.institution}</span>` : ""}
+                ${mutualText}
+              </div>
+            </div>
+          </div>
+          <div>
+            ${status.text ? `<span class="friendship-status ${status.class}">${status.text}</span>` : ""}
+            <div class="user-actions">${status.action}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- Global wrapper functions for UI actions ---
+    async function sendFriendRequest(userId) {
+      try {
+        await friendService.sendFriendRequest(currentUser.uid, userId);
+        showNotification('Friend request sent!');
+        await searchUsers(); // Refresh search results
+        await updateRequestBadge();
+      } catch (e) {
+        showNotification('Failed to send friend request.', true);
+      }
+    }
+
+    async function acceptFriend(userId) {
+      try {
+        // Find the requestId for this user
+        const requests = await friendService.getFriendRequests(currentUser.uid);
+        const request = requests.find(r => r.fromId === userId);
+        if (request) {
+          await friendService.acceptFriendRequest(userId, currentUser.uid, request.id);
+          showNotification('Friend request accepted!');
+          await loadRequests();
+          await loadFriends();
+          await updateRequestBadge();
+        }
+      } catch (e) {
+        showNotification('Failed to accept friend request.', true);
+      }
+    }
+
+    async function removeFriend(userId) {
+      try {
+        await firebase.functions().httpsCallable('removeFriendship')({
+          userId: currentUser.uid,
+          friendId: userId
+        });
+        showNotification('Friend removed.');
+        await loadFriends();
+        await searchUsers();
+        await updateRequestBadge();
+      } catch (e) {
+        showNotification('Failed to remove friend.', true);
+      }
+    }
+
+    async function loadFriends() {
+      const friendsList = document.getElementById('friendsList');
+      friendsList.innerHTML = '<div class="loading-spinner" style="margin: 20px auto;"></div>';
+      try {
+        const friendsSnap = await db.collection('userFriends').doc(currentUser.uid).collection('friends').get();
+        const friendIds = friendsSnap.docs.map(doc => doc.id);
+        if (friendIds.length === 0) {
+          friendsList.innerHTML = '';
+          document.getElementById('emptyFriends').style.display = 'block';
+          document.getElementById('friendCount').textContent = '0';
+          return;
+        }
+        document.getElementById('emptyFriends').style.display = 'none';
+        document.getElementById('friendCount').textContent = friendIds.length;
+        // Fetch friend profiles
+        const profiles = await Promise.all(friendIds.map(async id => {
+          const slugSnap = await db.collection('userToSlug').doc(id).get();
+          const slug = slugSnap.exists ? slugSnap.data().slug : null;
+          if (!slug) return null;
+          const profileSnap = await db.collection('profiles').doc(slug).get();
+          return profileSnap.exists ? { ...profileSnap.data(), userId: id } : null;
+        }));
+        const validProfiles = profiles.filter(Boolean);
+        const userCards = await Promise.all(validProfiles.map(async user => {
+          const mutualFriends = await friendService.getMutualFriends(currentUser.uid, user.userId);
+          return createUserCard(user, 'friends', mutualFriends);
+        }));
+        friendsList.innerHTML = userCards.join('');
+      } catch (e) {
+        friendsList.innerHTML = '<div class="empty-state">Failed to load friends.</div>';
+      }
+    }
+
+    async function updateRequestBadge() {
+      try {
+        const requests = await friendService.getFriendRequests(currentUser.uid);
+        const badge = document.getElementById('requestBadge');
+        if (requests.length > 0) {
+          badge.textContent = requests.length;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    async function loadRequests() {
+      const requestsList = document.getElementById('requestsList');
+      requestsList.innerHTML = '<div class="loading-spinner" style="margin: 20px auto;"></div>';
+      try {
+        const requests = await friendService.getFriendRequests(currentUser.uid);
+        if (requests.length === 0) {
+          requestsList.innerHTML = '';
+          document.getElementById('emptyRequests').style.display = 'block';
+          return;
+        }
+        document.getElementById('emptyRequests').style.display = 'none';
+        const userCards = await Promise.all(requests.map(async req => {
+          const user = {
+            userId: req.fromId,
+            displayName: req.name,
+            email: '',
+            institution: '',
+          };
+          const mutualFriends = await friendService.getMutualFriends(currentUser.uid, req.fromId);
+          return createUserCard(user, 'pending', mutualFriends);
+        }));
+        requestsList.innerHTML = userCards.join('');
+      } catch (e) {
+        requestsList.innerHTML = '<div class="empty-state">Failed to load requests.</div>';
+      }
+    }
+
+    async function loadLeaderboard() {
+      const leaderboardList = document.getElementById('leaderboardList');
+      leaderboardList.innerHTML = '<div class="loading-spinner" style="margin: 20px auto;"></div>';
+      try {
+        // Example: leaderboard by number of friends
+        const friendsSnap = await db.collection('userFriends').doc(currentUser.uid).collection('friends').get();
+        const friendIds = friendsSnap.docs.map(doc => doc.id);
+        const allIds = [currentUser.uid, ...friendIds];
+        const profiles = await Promise.all(allIds.map(async id => {
+          const slugSnap = await db.collection('userToSlug').doc(id).get();
+          const slug = slugSnap.exists ? slugSnap.data().slug : null;
+          if (!slug) return null;
+          const profileSnap = await db.collection('profiles').doc(slug).get();
+          return profileSnap.exists ? { ...profileSnap.data(), userId: id } : null;
+        }));
+        const validProfiles = profiles.filter(Boolean);
+        // Sort by number of friends (descending)
+        const scores = await Promise.all(validProfiles.map(async user => {
+          const count = await friendService.getFriendCount(user.userId);
+          return { ...user, score: count };
+        }));
+        scores.sort((a, b) => b.score - a.score);
+        leaderboardList.innerHTML = scores.map((user, idx) => `
+          <div class="leaderboard-item${user.userId === currentUser.uid ? ' current-user' : ''}">
+            <div class="leaderboard-rank">${idx + 1}</div>
+            <div class="leaderboard-user">
+              <div class="user-avatar">${user.displayName ? user.displayName.split(' ').map(n => n[0]).join('').toUpperCase() : '?'}</div>
+              <div>
+                <div style="font-weight:600;">${user.displayName || 'Unknown'}</div>
+                <div style="font-size:13px;color:#64748b;">${user.institution || ''}</div>
+              </div>
+            </div>
+            <div class="leaderboard-score">${user.score} friends</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        leaderboardList.innerHTML = '<div class="empty-state">Failed to load leaderboard.</div>';
+      }
+    }
+
+    // Simple notification function
+    function showNotification(message, isError = false) {
+      let notification = document.querySelector('.notification');
+      if (!notification) {
+        notification = document.createElement('div');
+        notification.className = 'notification';
+        document.body.appendChild(notification);
+      }
+      notification.textContent = message;
+      notification.style.background = isError ? '#ef4444' : '#10b981';
+      notification.classList.add('show');
+      setTimeout(() => notification.classList.remove('show'), 2500);
+    }
+  </script>
+</body>
+</html>

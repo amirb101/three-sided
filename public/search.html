@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Flashcards - Three-Sided</title>
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+  
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+  <link rel="stylesheet" href="styles/main.css">
+  <link rel="icon" type="image/png" href="/files/three-sided_logo.png">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8fafc;
+      color: #2d3748;
+    }
+    
+    .search-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .search-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .search-header h1 {
+      font-size: 2.5rem;
+      margin: 0 0 0.5rem 0;
+      color: #2d3748;
+    }
+    
+    .search-header p {
+      font-size: 1.1rem;
+      color: #718096;
+      margin: 0;
+    }
+    
+    .search-controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 3rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #a0aec0;
+      font-size: 1.1rem;
+    }
+    
+    .clear-search {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #a0aec0;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0;
+      display: none;
+    }
+    
+    .clear-search:hover {
+      color: #718096;
+    }
+    
+    .filters-container {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .sort-select, .filter-select {
+      padding: 0.75rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    
+    .sort-select:focus, .filter-select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .view-toggle {
+      display: flex;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .view-btn {
+      padding: 0.5rem 1rem;
+      background: white;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
+    }
+    
+    .view-btn.active {
+      background: #667eea;
+      color: white;
+    }
+    
+    .view-btn:hover:not(.active) {
+      background: #f7fafc;
+    }
+    
+    .results-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .results-count {
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+    
+    .pagination-info {
+      color: #718096;
+      font-size: 0.9rem;
+    }
+    
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card-item {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .card-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      border-color: #cbd5e0;
+    }
+    
+    .card-item.list-view {
+      padding: 1.25rem;
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    
+    .card-content {
+      flex: 1;
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    
+    .card-author {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .card-author .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #667eea;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .card-author a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .card-author a:hover {
+      text-decoration: underline;
+    }
+    
+    .card-date {
+      font-size: 0.8rem;
+      color: #a0aec0;
+    }
+    
+    .card-statement {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      line-height: 1.4;
+      color: #2d3748;
+    }
+    
+    .card-hints {
+      font-size: 0.95rem;
+      color: #4a5568;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    
+    .card-preview {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #667eea;
+    }
+    
+    .card-preview-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .card-preview-content {
+      font-size: 0.9rem;
+      color: #2d3748;
+      line-height: 1.4;
+    }
+    
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .card-tag {
+      background: #f7fafc;
+      color: #4a5568;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s;
+    }
+    
+    .card-tag:hover {
+      background: #edf2f7;
+      border-color: #cbd5e0;
+      cursor: pointer;
+    }
+    
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      color: #718096;
+    }
+    
+    .card-stats {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn-upvote {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      color: #4a5568;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    
+    .btn-upvote:hover {
+      background: #edf2f7;
+      transform: translateY(-1px);
+    }
+    
+    .btn-upvote.upvoted {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .btn-import {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-import:hover {
+      background: #5a67d8;
+      transform: translateY(-1px);
+    }
+    
+    .btn-import.imported {
+      background: #38a169;
+    }
+    
+    .btn-secondary {
+      background: white;
+      color: #667eea;
+      border: 1px solid #667eea;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    
+    .pagination-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #e2e8f0;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+    }
+    
+    .pagination-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .pagination-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #718096;
+    }
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 1rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: #718096;
+    }
+    
+    .no-results-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .auth-notice {
+      text-align: center;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+    
+    .auth-notice a {
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .auth-notice a:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #a0aec0;
+    }
+    
+    .modal-close:hover {
+      color: #718096;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #2d3748;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      z-index: 1001;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast.success {
+      border-left: 4px solid #38a169;
+    }
+    
+    .toast.error {
+      border-left: 4px solid #e53e3e;
+    }
+    
+    @media (max-width: 768px) {
+      .search-container {
+        padding: 1rem;
+      }
+      
+      .search-header h1 {
+        font-size: 2rem;
+      }
+      
+      .search-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-input-wrapper {
+        min-width: auto;
+        max-width: none;
+      }
+      
+      .filters-container {
+        justify-content: center;
+      }
+      
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .card-item.list-view {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .results-info {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container">
+    <div class="search-header">
+      <h1>🔍 Search Flashcards</h1>
+      <p>Discover and import flashcards from the community</p>
+    </div>
+    
+    <div id="authNotice" class="auth-notice" style="display: none;">
+      <p>Unlock the full experience!</p>
+      <a href="/index.html">Sign in</a> to upvote and import flashcards to your account.
+    </div>
+    
+    <div class="search-controls">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search flashcards, tags, or authors...">
+        <button class="clear-search" id="clearSearch">×</button>
+      </div>
+      
+      <div class="filters-container">
+        <select id="sortSelect" class="sort-select">
+          <option value="recent">Most Recent</option>
+          <option value="upvotes">Most Upvoted</option>
+          <option value="oldest">Oldest First</option>
+          <option value="alphabetical">Alphabetical</option>
+        </select>
+        
+        <select id="tagFilter" class="filter-select">
+          <option value="">All Tags</option>
+        </select>
+        
+        <div class="view-toggle">
+          <button class="view-btn active" data-view="grid">Grid</button>
+          <button class="view-btn" data-view="list">List</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="resultsInfo" class="results-info" style="display: none;">
+      <div class="results-count">
+        <span id="resultsCount">0</span> flashcards found
+      </div>
+      <div class="pagination-info">
+        Showing <span id="showingStart">0</span>-<span id="showingEnd">0</span> of <span id="totalCount">0</span>
+      </div>
+    </div>
+    
+    <div id="cardsContainer">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <div>Loading flashcards...</div>
+      </div>
+    </div>
+    
+    <div id="pagination" class="pagination" style="display: none;"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="cardModal" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const functions = firebase.functions();
+    
+    let currentUser = null;
+    let allCards = [];
+    let filteredCards = [];
+    let currentView = 'grid';
+    let currentPage = 1;
+    let cardsPerPage = 12;
+    let userUpvotes = new Set();
+    let userImports = new Set();
+    let allTags = new Set();
+    
+    // Auth state listener
+    auth.onAuthStateChanged(async user => {
+      currentUser = user;
+      document.getElementById('authNotice').style.display = user ? 'none' : 'block';
+      
+      if (user) {
+        await loadUserData();
+      }
+      
+      loadCards();
+    });
+    
+    // Load user's upvotes and imports
+    async function loadUserData() {
+      if (!currentUser) return;
+      
+      try {
+        // Load user's upvotes
+        const upvotesSnapshot = await db.collection('userUpvotes')
+          .where('userId', '==', currentUser.uid)
+          .get();
+        
+        userUpvotes = new Set(upvotesSnapshot.docs.map(doc => doc.data().cardId));
+        
+        // Load user's imports (existing flashcards)
+        const importsSnapshot = await db.collection('flashcards')
+          .where('userId', '==', currentUser.uid)
+          .get();
+        
+        const importedStatements = new Set();
+        importsSnapshot.docs.forEach(doc => {
+          importedStatements.add(doc.data().statement);
+        });
+        
+        userImports = importedStatements;
+      } catch (error) {
+        console.error('Error loading user data:', error);
+      }
+    }
+    
+    // Load all public cards
+    async function loadCards() {
+      try {
+        const snapshot = await db.collection('publicCards')
+          .orderBy('createdAt', 'desc')
+          .get();
+        
+        allCards = snapshot.docs.map(doc => {
+          const data = doc.data();
+          if (data.tags) {
+            data.tags.forEach(tag => allTags.add(tag));
+          }
+          return {
+            id: doc.id,
+            ...data
+          };
+        });
+        
+        filteredCards = [...allCards];
+        updateTagFilter();
+        updateResultsInfo();
+        renderCards();
+      } catch (error) {
+        console.error('Error loading cards:', error);
+        document.getElementById('cardsContainer').innerHTML = 
+          '<div class="no-results"><div class="no-results-icon">⚠️</div><div>Error loading flashcards. Please try again.</div></div>';
+      }
+    }
+    
+    // Update tag filter dropdown
+    function updateTagFilter() {
+      const tagFilter = document.getElementById('tagFilter');
+      const currentValue = tagFilter.value;
+      
+      tagFilter.innerHTML = '<option value="">All Tags</option>';
+      
+      Array.from(allTags).sort().forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        tagFilter.appendChild(option);
+      });
+      
+      tagFilter.value = currentValue;
+    }
+    
+    // Update results info
+    function updateResultsInfo() {
+      const resultsInfo = document.getElementById('resultsInfo');
+      const totalCount = filteredCards.length;
+      
+      if (totalCount === 0) {
+        resultsInfo.style.display = 'none';
+        return;
+      }
+      
+      resultsInfo.style.display = 'flex';
+      
+      const startIndex = (currentPage - 1) * cardsPerPage + 1;
+      const endIndex = Math.min(currentPage * cardsPerPage, totalCount);
+      
+      document.getElementById('resultsCount').textContent = totalCount;
+      document.getElementById('showingStart').textContent = startIndex;
+      document.getElementById('showingEnd').textContent = endIndex;
+      document.getElementById('totalCount').textContent = totalCount;
+    }
+    
+    // Render cards
+    function renderCards() {
+      const container = document.getElementById('cardsContainer');
+      const pagination = document.getElementById('pagination');
+      
+      if (filteredCards.length === 0) {
+        container.innerHTML = `
+          <div class="no-results">
+            <div class="no-results-icon">🔍</div>
+            <div>No flashcards found matching your search.</div>
+          </div>
+        `;
+        pagination.style.display = 'none';
+        return;
+      }
+      
+      // Pagination
+      const totalPages = Math.ceil(filteredCards.length / cardsPerPage);
+      const startIndex = (currentPage - 1) * cardsPerPage;
+      const endIndex = startIndex + cardsPerPage;
+      const currentCards = filteredCards.slice(startIndex, endIndex);
+      
+      // Render cards
+      const containerClass = currentView === 'grid' ? 'cards-grid' : 'cards-list';
+      container.innerHTML = `
+        <div class="${containerClass}">
+          ${currentCards.map(card => renderCard(card)).join('')}
+        </div>
+      `;
+      
+      // Render pagination
+      if (totalPages > 1) {
+        pagination.innerHTML = renderPagination(totalPages);
+        pagination.style.display = 'flex';
+      } else {
+        pagination.style.display = 'none';
+      }
+      
+      // Re-render MathJax
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+    }
+    
+    // Render individual card
+    function renderCard(card) {
+      const isUpvoted = currentUser && userUpvotes.has(card.id);
+      const isImported = currentUser && userImports.has(card.statement);
+      const dateStr = card.createdAt ? formatDate(card.createdAt.toDate()) : 'Unknown date';
+      const authorInitial = card.authorSlug ? card.authorSlug.charAt(0).toUpperCase() : 'U';
+      
+      const listViewClass = currentView === 'list' ? 'list-view' : '';
+      
+      return `
+        <div class="card-item ${listViewClass}">
+          <div class="card-content">
+            <div class="card-header">
+              <div>
+                <div class="card-author">
+                  <div class="avatar">${authorInitial}</div>
+                  by <a href="/profile/${card.authorSlug}" target="_blank">${card.authorSlug}</a>
+                  <span class="card-date">${dateStr}</span>
+                </div>
+                <div class="card-statement">${escapeHtml(card.statement)}</div>
+              </div>
+            </div>
+            
+            <div class="card-hints">${escapeHtml(card.hints)}</div>
+            
+            ${card.proof ? `
+              <div class="card-preview">
+                <div class="card-preview-title">Proof Preview</div>
+                <div class="card-preview-content">${escapeHtml(card.proof.substring(0, 150))}${card.proof.length > 150 ? '...' : ''}</div>
+              </div>
+            ` : ''}
+            
+            <div class="card-meta">
+              <div class="card-stats">
+                <span>👁️ ${card.viewCount || 0} views</span>
+                <span>📥 ${card.importCount || 0} imports</span>
+              </div>
+            </div>
+            
+            ${card.tags && card.tags.length > 0 ? `
+              <div class="card-tags">
+                ${card.tags.map(tag => `<span class="card-tag" onclick="filterByTag('${escapeHtml(tag)}')">${escapeHtml(tag)}</span>`).join('')}
+              </div>
+            ` : ''}
+            
+            <div class="card-actions">
+              <button class="btn-upvote ${isUpvoted ? 'upvoted' : ''}" onclick="upvoteCard('${card.id}')">
+                👍 ${card.likeCount || 0}
+              </button>
+              <button class="btn-import ${isImported ? 'imported' : ''}" onclick="importCard('${card.id}')">
+                ${isImported ? '✓ Imported' : '📥 Import'}
+              </button>
+              <button class="btn-secondary" onclick="viewCardDetails('${card.id}')">
+                👁️ View
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Render pagination
+    function renderPagination(totalPages) {
+      let pagination = '';
+      
+      // Previous button
+      pagination += `
+        <button class="pagination-btn" onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+          ← Previous
+        </button>
+      `;
+      
+      // Page numbers
+      const maxVisiblePages = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+      
+      if (startPage > 1) {
+        pagination += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
+        if (startPage > 2) {
+          pagination += `<span>...</span>`;
+        }
+      }
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pagination += `
+          <button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+            ${i}
+          </button>
+        `;
+      }
+      
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pagination += `<span>...</span>`;
+        }
+        pagination += `<button class="pagination-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+      }
+      
+      // Next button
+      pagination += `
+        <button class="pagination-btn" onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+          Next →
+        </button>
+      `;
+      
+      return pagination;
+    }
+    
+    // Change page
+    function changePage(page) {
+      const totalPages = Math.ceil(filteredCards.length / cardsPerPage);
+      if (page < 1 || page > totalPages) return;
+      
+      currentPage = page;
+      updateResultsInfo();
+      renderCards();
+      
+      // Scroll to top
+      document.querySelector('.search-container').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Search functionality
+    function filterCards() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const tagFilter = document.getElementById('tagFilter').value;
+      const sortBy = document.getElementById('sortSelect').value;
+      
+      // Filter by search term and tag
+      filteredCards = allCards.filter(card => {
+        // Handle hints field (could be string or array)
+        let hintsText = '';
+        if (card.hints) {
+          if (Array.isArray(card.hints)) {
+            hintsText = card.hints.join(' ');
+          } else if (typeof card.hints === 'string') {
+            hintsText = card.hints;
+          }
+        }
+        
+        const matchesSearch = !searchTerm || 
+          (card.statement && card.statement.toLowerCase().includes(searchTerm)) ||
+          (hintsText && hintsText.toLowerCase().includes(searchTerm)) ||
+          (card.proof && card.proof.toLowerCase().includes(searchTerm)) ||
+          (card.authorSlug && card.authorSlug.toLowerCase().includes(searchTerm)) ||
+          (card.tags && card.tags.some(tag => tag.toLowerCase().includes(searchTerm)));
+        
+        const matchesTag = !tagFilter || (card.tags && card.tags.includes(tagFilter));
+        
+        return matchesSearch && matchesTag;
+      });
+      
+      // Sort
+      switch (sortBy) {
+        case 'upvotes':
+          filteredCards.sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0));
+          break;
+        case 'oldest':
+          filteredCards.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+          break;
+        case 'alphabetical':
+          filteredCards.sort((a, b) => a.statement.localeCompare(b.statement));
+          break;
+        case 'recent':
+        default:
+          filteredCards.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+          break;
+      }
+      
+      currentPage = 1;
+      updateResultsInfo();
+      renderCards();
+    }
+    
+    // Filter by tag
+    function filterByTag(tag) {
+      document.getElementById('tagFilter').value = tag;
+      filterCards();
+    }
+    
+    // View toggle
+    function toggleView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.view === view) {
+          btn.classList.add('active');
+        }
+      });
+      renderCards();
+    }
+    
+    // Upvote card
+    async function upvoteCard(cardId) {
+      if (!currentUser) {
+        showToast('Please sign in to upvote cards', 'error');
+        return;
+      }
+      
+      try {
+        const upvoteDoc = db.collection('userUpvotes').doc(`${currentUser.uid}_${cardId}`);
+        const cardDoc = db.collection('publicCards').doc(cardId);
+        
+        if (userUpvotes.has(cardId)) {
+          // Remove upvote
+          await upvoteDoc.delete();
+          await cardDoc.update({
+            likeCount: firebase.firestore.FieldValue.increment(-1)
+          });
+          userUpvotes.delete(cardId);
+          
+          // Update card in memory
+          const card = allCards.find(c => c.id === cardId);
+          if (card) card.likeCount = (card.likeCount || 1) - 1;
+        } else {
+          // Add upvote
+          await upvoteDoc.set({
+            userId: currentUser.uid,
+            cardId: cardId,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await cardDoc.update({
+            likeCount: firebase.firestore.FieldValue.increment(1)
+          });
+          userUpvotes.add(cardId);
+          
+          // Update card in memory
+          const card = allCards.find(c => c.id === cardId);
+          if (card) card.likeCount = (card.likeCount || 0) + 1;
+        }
+        
+        renderCards();
+      } catch (error) {
+        console.error('Error upvoting card:', error);
+        showToast('Error upvoting card. Please try again.', 'error');
+      }
+    }
+    
+    // Import card
+    async function importCard(cardId) {
+      if (!currentUser) {
+        showToast('Please sign in to import cards', 'error');
+        return;
+      }
+      
+      const card = allCards.find(c => c.id === cardId);
+      if (!card) return;
+      
+      if (userImports.has(card.statement)) {
+        showToast('Card already imported', 'error');
+        return;
+      }
+      
+      try {
+        // Add to user's flashcards
+        await db.collection('flashcards').add({
+          userId: currentUser.uid,
+          statement: card.statement,
+          hints: card.hints,
+          proof: card.proof || '',
+          tags: card.tags || [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          importedFrom: cardId
+        });
+        
+        // Increment import count
+        await db.collection('publicCards').doc(cardId).update({
+          importCount: firebase.firestore.FieldValue.increment(1)
+        });
+        
+        userImports.add(card.statement);
+        
+        // Update card in memory
+        card.importCount = (card.importCount || 0) + 1;
+        
+        // Invalidate cache so homepage shows the new card
+        localStorage.setItem("invalidate_cache", "true");
+        
+        renderCards();
+        showToast('Card imported successfully!', 'success');
+      } catch (error) {
+        console.error('Error importing card:', error);
+        showToast('Error importing card. Please try again.', 'error');
+      }
+    }
+    
+    // View card details in modal
+    function viewCardDetails(cardId) {
+      const card = allCards.find(c => c.id === cardId);
+      if (!card) return;
+      
+      const modal = document.getElementById('cardModal');
+      const modalContent = document.getElementById('modalContent');
+      
+      modalContent.innerHTML = `
+        <div class="modal-title">${escapeHtml(card.statement)}</div>
+        <div style="margin-bottom: 1rem;">
+          <strong>Hints:</strong><br>
+          ${escapeHtml(card.hints)}
+        </div>
+        ${card.proof ? `
+          <div style="margin-bottom: 1rem;">
+            <strong>Proof:</strong><br>
+            ${escapeHtml(card.proof)}
+          </div>
+        ` : ''}
+        ${card.tags && card.tags.length > 0 ? `
+          <div style="margin-bottom: 1rem;">
+            <strong>Tags:</strong><br>
+            ${card.tags.map(tag => `<span class="card-tag">${escapeHtml(tag)}</span>`).join(' ')}
+          </div>
+        ` : ''}
+        <div style="margin-bottom: 1rem; color: #718096; font-size: 0.9rem;">
+          By ${card.authorSlug} • ${card.createdAt ? formatDate(card.createdAt.toDate()) : 'Unknown date'}
+        </div>
+      `;
+      
+      modal.style.display = 'flex';
+      
+      // Track view using backend function
+      trackCardView(cardId);
+      
+      // Re-render MathJax
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise();
+      }
+    }
+    
+    // Track card view using backend function
+    async function trackCardView(cardId) {
+      try {
+        const trackView = functions.httpsCallable('trackCardView');
+        await trackView({ cardId });
+        
+        // Update local card data
+        const card = allCards.find(c => c.id === cardId);
+        if (card) {
+          card.viewCount = (card.viewCount || 0) + 1;
+        }
+      } catch (error) {
+        console.error('Error tracking view:', error);
+        // Don't show error to user as this is background tracking
+      }
+    }
+    
+    // Close modal
+    function closeModal() {
+      document.getElementById('cardModal').style.display = 'none';
+    }
+    
+    // Show toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('show'), 100);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
+    }
+    
+    // Utility functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function formatDate(date) {
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('searchInput');
+      const clearSearch = document.getElementById('clearSearch');
+      const sortSelect = document.getElementById('sortSelect');
+      const tagFilter = document.getElementById('tagFilter');
+      
+      // Search input
+      searchInput.addEventListener('input', (e) => {
+        clearSearch.style.display = e.target.value ? 'block' : 'none';
+        filterCards();
+      });
+      
+      // Clear search
+      clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        clearSearch.style.display = 'none';
+        filterCards();
+      });
+      
+      // Sort and filter changes
+      sortSelect.addEventListener('change', filterCards);
+      tagFilter.addEventListener('change', filterCards);
+      
+      // View toggle
+      document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleView(btn.dataset.view));
+      });
+      
+      // Modal close on outside click
+      document.getElementById('cardModal').addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+          closeModal();
+        }
+      });
+    });
+  </script>
+</body>
+</html>

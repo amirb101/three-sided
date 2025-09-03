@@ -1,0 +1,424 @@
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f4f6f8;
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, #0066cc, #004a99);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      color: #666;
+      font-size: 1.1rem;
+      font-style: italic;
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      z-index: 100;
+    }
+
+    .top-bar .btn {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      color: #0066cc;
+      border: 2px solid rgba(0, 102, 204, 0.3);
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .top-bar .btn:hover {
+      background: rgba(0, 102, 204, 0.1);
+      border-color: #0066cc;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .config-box, .card, .controls {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-bottom: 2rem;
+      transition: all 0.3s ease;
+    }
+
+    .config-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      text-align: center;
+    }
+
+    .config-box h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #0066cc;
+      margin-bottom: 0.5rem;
+    }
+
+    .config-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .config-controls label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .config-controls input {
+      padding: 0.5rem 1rem;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      font-size: 1rem;
+      width: 80px;
+      text-align: center;
+      transition: border-color 0.3s ease;
+    }
+
+    .config-controls input:focus {
+      outline: none;
+      border-color: #0066cc;
+    }
+
+    .card {
+      min-height: 300px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(0, 102, 204, 0.1);
+    }
+
+    .card-type {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0066cc;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-type::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(45deg, #0066cc, #004a99);
+      border-radius: 2px;
+    }
+
+    .card-progress {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      background: rgba(102, 126, 234, 0.1);
+      color: #0066cc;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1px solid rgba(0, 102, 204, 0.2);
+    }
+
+    .card-content {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #555;
+      white-space: pre-wrap;
+      flex-grow: 1;
+    }
+
+    .card-hint {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 102, 204, 0.9);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1rem;
+      font-family: inherit;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-width: 120px;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(45deg, #0066cc, #004a99);
+      color: white;
+      box-shadow: 0 5px 15px rgba(0, 102, 204, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 102, 204, 0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.9);
+      color: #0066cc;
+      border: 2px solid rgba(0, 102, 204, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 102, 204, 0.1);
+      border-color: #0066cc;
+    }
+
+    .btn-success {
+      background: linear-gradient(45deg, #4CAF50, #45a049);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(45deg, #ff9800, #f57c00);
+      color: white;
+    }
+
+    .btn-danger {
+      background: linear-gradient(45deg, #f44336, #da190b);
+      color: white;
+    }
+
+    .btn-easy {
+      background: linear-gradient(45deg, #2196F3, #1976D2);
+      color: white;
+    }
+
+    .rating-controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .completion-card {
+      text-align: center;
+      padding: 3rem 2rem;
+    }
+
+    .completion-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .completion-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #4CAF50;
+      margin-bottom: 1rem;
+    }
+
+    .completion-stats {
+      background: rgba(76, 175, 80, 0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 2rem 0;
+      color: #4CAF50;
+      font-weight: 600;
+    }
+
+    .completion-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .loading-indicator {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 102, 204, 0.2);
+      border-radius: 50%;
+      border-top-color: #0066cc;
+      animation: spin 1s ease-in-out infinite;
+      margin-bottom: 1rem;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .due-cards-info {
+      background: rgba(102, 126, 234, 0.1);
+      color: #0066cc;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-weight: 600;
+      border: 1px solid rgba(0, 102, 204, 0.2);
+    }
+
+    /* MathJax styling */
+    .MathJax {
+      font-size: 1.1em !important;
+    }
+
+    /* Code blocks */
+    code {
+      background: rgba(0, 102, 204, 0.1);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem;
+      }
+
+      .top-bar {
+        position: static;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .config-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .rating-controls {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .completion-actions {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .btn {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .card {
+        min-height: 250px;
+        padding: 1.5rem;
+      }
+
+      .card-progress {
+        position: static;
+        margin-bottom: 1rem;
+        align-self: flex-start;
+      }
+    }
+
+    /* Animations */
+    .card, .config-box, .controls {
+      animation: slideUp 0.6s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }

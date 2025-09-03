@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Friends List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="styles/friends.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="friends-header">
+      <div class="friends-icon">👥</div>
+      <h1 class="friends-title">Friends</h1>
+      <p class="friends-subtitle">Connect with fellow learners</p>
+    </div>
+
+    <!-- Friends Container -->
+    <div class="friends-container">
+      <h2 class="section-title">
+        <div class="section-icon">👫</div>
+        Friends List
+      </h2>
+      
+      <div class="friends-stats" id="friendsStats" style="display: none;">
+        <div class="stat-item">
+          <div class="stat-number" id="friendCount">0</div>
+          <div class="stat-label">Friends</div>
+        </div>
+      </div>
+
+      <div class="loading-container" id="loadingContainer">
+        <div class="loading-spinner"></div>
+      </div>
+
+      <div id="friendList"></div>
+      
+      <div class="empty-state" id="noFriendsMsg" style="display:none;">
+        <div class="empty-icon">🤝</div>
+        <div class="empty-title">No friends yet</div>
+        <div class="empty-subtitle">Start connecting with other learners to build your study network!</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUserId = null;
+    let viewingUserId = null;
+
+    async function loadFriends() {
+      const listEl = document.getElementById("friendList");
+      const emptyMsg = document.getElementById("noFriendsMsg");
+      const loadingContainer = document.getElementById("loadingContainer");
+      const friendsStats = document.getElementById("friendsStats");
+      const friendCount = document.getElementById("friendCount");
+      
+      listEl.innerHTML = "";
+      emptyMsg.style.display = "none";
+      loadingContainer.style.display = "flex";
+      friendsStats.style.display = "none";
+
+      try {
+        const snap = await db.collection("userFriends").doc(viewingUserId).collection("friends").get();
+        const friendUids = snap.docs.map(doc => doc.id);
+
+        loadingContainer.style.display = "none";
+
+        if (friendUids.length === 0) {
+          emptyMsg.style.display = "block";
+          return;
+        }
+
+        // Show stats
+        friendCount.textContent = friendUids.length;
+        friendsStats.style.display = "flex";
+
+        const slugDocs = await Promise.all(friendUids.map(uid =>
+          db.collection("userToSlug").doc(uid).get()
+        ));
+
+        const profileDocs = await Promise.all(slugDocs.map((slugDoc, i) => {
+          const slug = slugDoc.exists ? slugDoc.data().slug : friendUids[i];
+          return db.collection("profiles").doc(slug).get();
+        }));
+
+        for (let i = 0; i < friendUids.length; i++) {
+          const uid = friendUids[i];
+          const slugDoc = slugDocs[i];
+          const slug = slugDoc.exists ? slugDoc.data().slug : uid;
+
+          const profileDoc = profileDocs[i];
+          const displayName = profileDoc.exists ? profileDoc.data().displayName : "Anonymous";
+          const avatarLetter = displayName.charAt(0).toUpperCase();
+
+          const card = document.createElement("div");
+          card.className = "friend-card";
+
+          const left = document.createElement("div");
+          left.className = "left";
+
+          const avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.innerText = avatarLetter;
+
+          const friendInfo = document.createElement("div");
+          friendInfo.className = "friend-info";
+
+          const link = document.createElement("a");
+          link.href = `/profile/${slug}`;
+          link.innerText = displayName;
+
+          const status = document.createElement("div");
+          status.className = "friend-status";
+          status.innerText = "Fellow learner";
+
+          friendInfo.appendChild(link);
+          friendInfo.appendChild(status);
+
+          left.appendChild(avatar);
+          left.appendChild(friendInfo);
+
+          const actions = document.createElement("div");
+          actions.className = "friend-actions";
+
+          if (currentUserId === viewingUserId) {
+            const removeBtn = document.createElement("button");
+            removeBtn.className = "btn btn-danger";
+            removeBtn.innerHTML = "🗑️ Remove";
+            removeBtn.onclick = async () => {
+              if (!confirm(`Remove ${displayName} from your friends?`)) return;
+              
+              removeBtn.innerHTML = '<div class="loading-spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>';
+              removeBtn.disabled = true;
+              
+              try {
+                await db.collection("userFriends").doc(currentUserId).collection("friends").doc(uid).delete();
+                await db.collection("userFriends").doc(uid).collection("friends").doc(currentUserId).delete();
+                card.style.animation = "fadeOutUp 0.3s ease-in";
+                setTimeout(() => {
+                  card.remove();
+                  // Update count
+                  const newCount = parseInt(friendCount.textContent) - 1;
+                  friendCount.textContent = newCount;
+                  if (newCount === 0) {
+                    friendsStats.style.display = "none";
+                    emptyMsg.style.display = "block";
+                  }
+                }, 300);
+              } catch (error) {
+                console.error("Error removing friend:", error);
+                removeBtn.innerHTML = "🗑️ Remove";
+                removeBtn.disabled = false;
+              }
+            };
+            actions.appendChild(removeBtn);
+          }
+
+          card.appendChild(left);
+          card.appendChild(actions);
+          listEl.appendChild(card);
+        }
+      } catch (error) {
+        console.error("Error loading friends:", error);
+        loadingContainer.style.display = "none";
+        emptyMsg.style.display = "block";
+      }
+    }
+
+    auth.onAuthStateChanged(async user => {
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get("slug");
+      if (!slug) {
+        alert("Missing slug in URL.");
+        return;
+      }
+
+      try {
+        const profileDoc = await db.collection("profiles").doc(slug).get();
+        if (!profileDoc.exists) {
+          alert("Profile not found.");
+          return;
+        }
+        viewingUserId = profileDoc.data().userId;
+        currentUserId = user?.uid || null;
+        await loadFriends();
+      } catch (error) {
+        console.error("Error loading profile:", error);
+        alert("Error loading profile.");
+      }
+    });
+
+    // Add fadeOut animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeOutUp {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Your Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="styles/create-profile.css">
+
+</head>
+<body>
+  <div class="container">
+    <div class="form-card">
+      <div class="form-header">
+        <h1 class="form-title">Create Your Profile</h1>
+        <p class="form-subtitle">Set up your public profile to connect with others</p>
+      </div>
+
+      <form id="profileForm">
+        <div class="form-group">
+          <label class="form-label" for="displayName">Display Name *</label>
+          <input 
+            type="text" 
+            id="displayName" 
+            class="form-input"
+            placeholder="Enter your display name"
+            maxlength="50" 
+            required
+            autocomplete="name"
+          />
+          <div class="character-count" id="nameCount">0/50</div>
+          <div class="slug-preview">
+            Your profile URL: <strong>three-sided.app/profile/<span id="slugPreview">...</span></strong>
+          </div>
+          <div class="slug-status" id="slugStatus"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="bio">Short Bio</label>
+          <textarea 
+            id="bio" 
+            class="form-textarea"
+            placeholder="Tell others a bit about yourself..."
+            maxlength="1000"
+          ></textarea>
+          <div class="character-count" id="bioCount">0/1000</div>
+          <div class="form-help">Share your interests, expertise, or what you're studying</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="institution">Institution</label>
+          <input 
+            type="text" 
+            id="institution" 
+            class="form-input"
+            placeholder="University, company, or organization (optional)"
+            maxlength="100"
+            autocomplete="organization"
+          />
+          <div class="character-count" id="institutionCount">0/100</div>
+        </div>
+
+        <button type="submit" id="saveBtn" class="btn btn-primary" disabled>
+          <span id="saveText">Create Profile</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/scripts/createprofile/profileService.js"></script>
+  <script>
+    // XSS Protection: HTML escaping function
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Input sanitization
+    function sanitizeInput(input) {
+      return input.trim().replace(/[<>]/g, '');
+    }
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app",
+      storageBucket: "three-sided-flashcard-app.appspot.com",
+      messagingSenderId: "47503676879",
+      appId: "1:47503676879:web:27fb875159cc4459a12eba",
+      measurementId: "G-PBP1G21Q29"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const profileService = createProfileService(db);
+    
+    let currentSlug = "";
+    let slugCheckTimeout = null;
+    let isSlugAvailable = false;
+
+    // DOM elements
+    const displayNameInput = document.getElementById("displayName");
+    const bioInput = document.getElementById("bio");
+    const institutionInput = document.getElementById("institution");
+    const slugPreview = document.getElementById("slugPreview");
+    const slugStatus = document.getElementById("slugStatus");
+    const saveBtn = document.getElementById("saveBtn");
+    const saveText = document.getElementById("saveText");
+    const profileForm = document.getElementById("profileForm");
+
+    // Character counters
+    const nameCount = document.getElementById("nameCount");
+    const bioCount = document.getElementById("bioCount");
+    const institutionCount = document.getElementById("institutionCount");
+
+    // Force user login
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        alert("You must be logged in to create a profile.");
+        window.location.href = "/index.html";
+      }
+    });
+
+    // Slug generation with enhanced security
+    function slugify(name) {
+      const sanitized = sanitizeInput(name);
+      const slug = sanitized
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '')
+        .replace(/_{2,}/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 30);
+      return slug.length >= 3 ? slug : "";
+    }
+
+    // Character counter updates
+    function updateCharacterCount(input, counter, max) {
+      const count = input.value.length;
+      counter.textContent = `${count}/${max}`;
+      
+      if (count > max * 0.9) {
+        counter.className = "character-count danger";
+      } else if (count > max * 0.7) {
+        counter.className = "character-count warning";
+      } else {
+        counter.className = "character-count";
+      }
+    }
+
+    // Input validation
+    function validateForm() {
+      const name = displayNameInput.value.trim();
+      const bio = bioInput.value.trim();
+      const institution = institutionInput.value.trim();
+      
+      const isNameValid = name.length >= 2 && name.length <= 50;
+      const isBioValid = bio.length <= 1000;
+      const isInstitutionValid = institution.length <= 100;
+      
+      const isFormValid = isNameValid && isBioValid && isInstitutionValid && isSlugAvailable;
+      
+      saveBtn.disabled = !isFormValid;
+      return isFormValid;
+    }
+
+    // Enhanced slug availability check
+    async function checkSlugAvailability() {
+      const name = sanitizeInput(displayNameInput.value);
+      const slug = slugify(name);
+      currentSlug = slug;
+      
+      // Update preview with escaped content
+      slugPreview.textContent = slug || "...";
+
+      if (!slug) {
+        slugStatus.innerHTML = "";
+        slugStatus.className = "slug-status";
+        isSlugAvailable = false;
+        validateForm();
+        return;
+      }
+
+      // Show checking state
+      slugStatus.innerHTML = `<div class="loading-spinner"></div>Checking availability...`;
+      slugStatus.className = "slug-status checking";
+      isSlugAvailable = false;
+      validateForm();
+
+      try {
+        const taken = await profileService.isSlugTaken(slug);
+
+        if (taken) {
+          slugStatus.innerHTML = `❌ <strong>${escapeHtml(slug)}</strong> is already taken`;
+          slugStatus.className = "slug-status taken";
+          isSlugAvailable = false;
+        } else {
+          slugStatus.innerHTML = `✅ <strong>${escapeHtml(slug)}</strong> is available!`;
+          slugStatus.className = "slug-status available";
+          isSlugAvailable = true;
+        }
+      } catch (err) {
+        console.warn("Slug check failed:", err);
+        slugStatus.innerHTML = "❌ Error checking availability. Please try again.";
+        slugStatus.className = "slug-status taken";
+        isSlugAvailable = false;
+      }
+      
+      validateForm();
+    }
+
+    // Debounced slug check
+    function handleNameInput() {
+      updateCharacterCount(displayNameInput, nameCount, 50);
+      clearTimeout(slugCheckTimeout);
+      slugCheckTimeout = setTimeout(checkSlugAvailability, 400);
+    }
+
+    // Enhanced profile saving with security measures
+    async function saveProfile(event) {
+      event.preventDefault();
+      
+      const user = auth.currentUser;
+      if (!user) {
+        alert("You must be logged in.");
+        return;
+      }
+
+      // Sanitize all inputs
+      const displayName = sanitizeInput(displayNameInput.value);
+      const bio = sanitizeInput(bioInput.value);
+      const institution = sanitizeInput(institutionInput.value);
+
+      // Validation
+      if (!displayName || displayName.length < 2 || displayName.length > 50) {
+        alert("Display name must be between 2 and 50 characters.");
+        return;
+      }
+
+      if (bio.length > 1000) {
+        alert("Bio must be 1000 characters or less.");
+        return;
+      }
+
+      if (institution.length > 100) {
+        alert("Institution must be 100 characters or less.");
+        return;
+      }
+
+      if (!currentSlug || !isSlugAvailable) {
+        alert("Please wait for slug availability check or choose a different name.");
+        return;
+      }
+
+      try {
+        // Update button state
+        saveBtn.disabled = true;
+        saveText.innerHTML = '<div class="loading-spinner"></div>Creating Profile...';
+
+        // Double-check slug availability
+        if (await profileService.isSlugTaken(currentSlug)) {
+          alert(`Username "${currentSlug}" was just taken. Please choose another name.`);
+          isSlugAvailable = false;
+          await checkSlugAvailability();
+          return;
+        }
+
+        // Create profile with sanitized data
+        await profileService.createProfile(user.uid, currentSlug, {
+          displayName: displayName,
+          bio: bio,
+          institution: institution
+        });
+
+        // Success - redirect to profile
+        window.location.href = `/profile/${encodeURIComponent(currentSlug)}`;
+        
+      } catch (err) {
+        console.error("Error saving profile:", err);
+        alert("Something went wrong. Please try again.");
+      } finally {
+        // Reset button state
+        saveBtn.disabled = false;
+        saveText.textContent = "Create Profile";
+        validateForm();
+      }
+    }
+
+    // Event listeners
+    displayNameInput.addEventListener('input', handleNameInput);
+    bioInput.addEventListener('input', () => updateCharacterCount(bioInput, bioCount, 1000));
+    institutionInput.addEventListener('input', () => updateCharacterCount(institutionInput, institutionCount, 100));
+    profileForm.addEventListener('submit', saveProfile);
+
+    // Initialize character counters
+    updateCharacterCount(displayNameInput, nameCount, 50);
+    updateCharacterCount(bioInput, bioCount, 1000);
+    updateCharacterCount(institutionInput, institutionCount, 100);
+
+    // Form validation on input
+    [displayNameInput, bioInput, institutionInput].forEach(input => {
+      input.addEventListener('input', validateForm);
+      input.addEventListener('blur', validateForm);
+    });
+  </script>
+</body>
+</html>

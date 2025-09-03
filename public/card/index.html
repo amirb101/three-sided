@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flashcard - Three-Sided</title>
+  <meta name="description" content="Flashcard details">
+  
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <link rel="stylesheet" href="/styles/card.css">
+  
+  <script>
+    // Get slug from URL path
+    const path = window.location.pathname;
+    const slug = path.split('/card/')[1];
+    
+    if (!slug) {
+      window.location.href = '/';
+    }
+    
+    // Update title and meta description
+    document.title = `Flashcard - ${slug}`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.content = `Flashcard: ${slug}`;
+    }
+    
+    // Set canonical URL
+    const canonicalUrl = `https://three-sided.com/card/${encodeURIComponent(slug.trim())}`;
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.rel = 'canonical';
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.href = canonicalUrl;
+  </script>
+</head>
+<body>
+  <div class="container">
+    <div class="flashcard">
+      <div class="card-header">
+        <h1 class="card-title">Flashcard Preview</h1>
+        <p class="card-subtitle">Review and import this flashcard to your collection</p>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Statement</div>
+        <div class="section-content" id="statement"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Hint</div>
+        <div class="section-content" id="hints"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-label">Proof</div>
+        <div class="section-content" id="proof"></div>
+      </div>
+
+      <button class="import-button" onclick="saveCard()" id="importBtn">
+        Import to My Account
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let cardData = null;
+    let cardId = null;
+
+    auth.onAuthStateChanged(user => currentUser = user);
+
+    // Enhanced notification system
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.classList.add('show'), 100);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+
+    async function loadCard() {
+      const path = window.location.pathname;
+      const slug = path.split('/card/')[1];
+      if (!slug) {
+        showNotification("Missing card slug.", 'error');
+        return;
+      }
+
+      try {
+        const docRef = db.collection("publicCards").doc(slug);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          showNotification("Card not found.", 'error');
+          return;
+        }
+
+        cardData = doc.data();
+        cardId = doc.id;
+
+        document.getElementById("statement").innerHTML = cardData.statement;
+        document.getElementById("hints").innerHTML = cardData.hints;
+        document.getElementById("proof").innerHTML = cardData.proof;
+        MathJax.typesetPromise();
+
+        // Set unique title and meta description
+        document.title = cardData.statement ? cardData.statement.substring(0, 60) + " - Flashcard" : "Flashcard";
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+          metaDesc = document.createElement('meta');
+          metaDesc.name = "description";
+          document.head.appendChild(metaDesc);
+        }
+        metaDesc.content = cardData.statement || "Flashcard details";
+      } catch (error) {
+        showNotification("Error loading card.", 'error');
+        console.error("Error loading card:", error);
+      }
+    }
+
+    async function saveCard() {
+      if (!currentUser) {
+        window.location.href = "/index.html";
+        return;
+      }
+      if (!cardData) {
+        showNotification("Card not loaded.", 'error');
+        return;
+      }
+
+      const importBtn = document.getElementById('importBtn');
+      const originalText = importBtn.textContent;
+      
+      // Show loading state
+      importBtn.disabled = true;
+      importBtn.innerHTML = '<span class="loading-spinner"></span>Importing...';
+
+      try {
+        await db.collection("flashcards").add({
+          userId: currentUser.uid,
+          statement: cardData.statement,
+          hints: cardData.hints,
+          proof: cardData.proof,
+          tags: cardData.tags || [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showNotification("Flashcard saved to your account!");
+        importBtn.textContent = "✓ Imported Successfully";
+        
+        // Invalidate cache so homepage shows the new card
+        localStorage.setItem("invalidate_cache", "true");
+        
+        // Redirect after a delay
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+        
+      } catch (error) {
+        showNotification("Error saving flashcard.", 'error');
+        console.error("Error saving card:", error);
+        importBtn.disabled = false;
+        importBtn.textContent = originalText;
+      }
+    }
+
+    loadCard();
+  </script>
+  
+  <style>
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem;
+      border-radius: 4px;
+      color: white;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+    }
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .notification.success {
+      background-color: #2ecc71;
+    }
+    .notification.error {
+      background-color: #e74c3c;
+    }
+  </style>
+</body>
+</html> 

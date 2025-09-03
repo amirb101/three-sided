@@ -1,0 +1,87 @@
+<!-- cheatsheet.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ultimate IB Maths Cheatsheet 2025 – Three-Sided</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f9fb;
+      margin: 0;
+      padding: 2rem;
+      color: #333;
+      text-align: center;
+    }
+    .cheatsheet-box {
+      background: white;
+      padding: 2rem;
+      margin: auto;
+      max-width: 600px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+    }
+    h1 {
+      color: #0066cc;
+      margin-bottom: 1rem;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #0066cc;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background-color 0.2s;
+    }
+    a.button:hover {
+      background-color: #004a99;
+    }
+    .warning {
+      color: #cc0000;
+      font-weight: bold;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="cheatsheet-box" id="cheatsheetBox" style="display:none">
+    <h1>Ultimate 2025 IB Maths Cheatsheet</h1>
+    <p>Methods, VP, Fluids, Quantum, Linear Algebra, GRM, Analysis —
+    all the bookwork, all in one PDF. Condensed, curated, and exam-optimised.</p>
+    <a class="button" href="/files/IB_Cheatsheet_2025.pdf" target="_blank" download>
+      📄 Download Cheatsheet PDF
+    </a>
+  </div>
+  <div class="warning" id="loginWarning" style="display:none">
+    You must be logged in to access the cheatsheet. <br>
+    <a href="/">Go to homepage to log in</a>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app",
+      appId: "1:47503676879:web:27fb875159cc4459a12eba",
+      measurementId: "G-PBP1G21Q29"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        document.getElementById("cheatsheetBox").style.display = "block";
+      } else {
+        document.getElementById("loginWarning").style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

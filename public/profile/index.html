@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Profile - Three-Sided</title>
+  <meta name="description" content="View the public profile and flashcards on Three-Sided.">
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+  
+  <!-- MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles/profile.css">
+  
+  <script>
+    // Get slug from URL path
+    const path = window.location.pathname;
+    const slug = path.split('/profile/')[1];
+    
+    if (!slug) {
+      window.location.href = '/';
+    }
+    
+    // Update title and meta description
+    document.title = `${slug} - Public Profile - Three-Sided`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.content = `View ${slug}'s public profile and flashcards on Three-Sided.`;
+    }
+    
+    // Set canonical URL
+    const canonicalUrl = `https://three-sided.com/profile/${encodeURIComponent(slug.trim())}`;
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.rel = 'canonical';
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.href = canonicalUrl;
+  </script>
+</head>
+<body>
+  <div class="container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-avatar" id="avatar"></div>
+      <h1 class="profile-name" id="name">Loading...</h1>
+      <p class="profile-institution" id="institution"></p>
+      <p class="profile-bio" id="bio"></p>
+      
+      <div class="stats-row">
+        <div class="stat-item">
+          <div class="stat-number" id="cardCount">0</div>
+          <div class="stat-label">Flashcards</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="friendCount">0</div>
+          <div class="stat-label">Friends</div>
+        </div>
+      </div>
+
+      <div class="friend-controls" id="friendControls"></div>
+      <div id="mutualBadge"></div>
+      <div id="socialFriendsBtn" style="text-align:center; margin: 1rem 0; display: none;">
+        <a href="/social.html" class="btn btn-primary">👥 Social & Friends</a>
+      </div>
+    </div>
+
+    <!-- Friend Requests Section -->
+    <div class="friend-requests" id="friendRequestCenter" style="display: none;">
+      <h2 class="section-title">Friend Requests</h2>
+      <div id="friendRequestsContainer"></div>
+    </div>
+
+    <!-- Flashcards Section -->
+    <div class="flashcards-section">
+      <h2 class="section-title">Public Flashcards</h2>
+      <div class="sort-controls" style="text-align:right; margin-bottom:1rem;">
+        <label for="profileSort" style="font-weight:500; color:#4a5568;">Sort by:</label>
+        <select id="profileSort" style="margin-left:0.5rem; padding:0.25rem 0.5rem; border-radius:6px;">
+          <option value="upvotes">Upvotes (default)</option>
+          <option value="date">Date Created</option>
+        </select>
+      </div>
+      <div class="flashcard-grid" id="cardList">
+        <div class="empty-state">
+          <div class="empty-icon">📚</div>
+          <p>Loading flashcards...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Popup -->
+  <div id="editPopup" class="popup-overlay" style="display: none;">
+    <div class="popup-content">
+      <button class="popup-close" onclick="closeEditPopup()">×</button>
+      <h2 class="section-title">Edit Public Flashcard</h2>
+      <textarea id="editStatement" placeholder="Statement" rows="4"></textarea>
+      <textarea id="editHints" placeholder="Hints" rows="3"></textarea>
+      <textarea id="editProof" placeholder="Proof" rows="5"></textarea>
+      <textarea id="editTags" placeholder="Tags (comma-separated)" rows="2"></textarea>
+      <div class="friend-controls">
+        <button class="btn btn-primary" onclick="savePublicEdit()">Save Changes</button>
+        <button class="btn btn-danger" onclick="deletePublicCard()">Delete Card</button>
+        <button class="btn btn-secondary" onclick="closeEditPopup()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modular JavaScript Files -->
+  <script src="/scripts/profile/firebaseConfig.js"></script>
+  <script src="/scripts/profile/authService.js"></script>
+  <script src="/scripts/profile/profileService.js"></script>
+  <script src="/scripts/profile/friendService.js"></script>
+  <script src="/scripts/profile/publicCardService.js"></script>
+  <script src="/scripts/profile/profileRenderer.js"></script>
+  <script src="/scripts/profile/profileController.js"></script>
+  <script src="/scripts/profile/eventHandlers.js"></script>
+  <script src="/scripts/profile/main.js"></script>
+</body>
+</html> 

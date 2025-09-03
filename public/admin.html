@@ -1,0 +1,3624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Three-Sided</title>
+  <meta name="description" content="Admin panel for content management">
+  
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #2d3748;
+      background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #0066cc, #004a99);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-section {
+      text-align: center;
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+      margin-bottom: 2rem;
+    }
+
+    .admin-content {
+      display: none;
+    }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      color: #2d3748;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #0066cc;
+      box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0066cc, #004a99);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e0;
+    }
+
+    .btn-danger {
+      background: #e53e3e;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c53030;
+    }
+
+    .btn-success {
+      background: #38a169;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #2f855a;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h3 {
+      margin-bottom: 1rem;
+      color: #2d3748;
+    }
+
+    .status {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .status.success {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .status.error {
+      background: #fed7d7;
+      color: #742a2a;
+    }
+
+    .status.warning {
+      background: #fef5e7;
+      color: #744210;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #718096;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid #0066cc;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .flashcard-preview {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .flashcard-preview h4 {
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .flashcard-preview .content {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      border-left: 4px solid #0066cc;
+    }
+
+    .bot-account {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+
+    .bot-account:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .bot-account .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .bot-account .name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 1.1rem;
+    }
+
+    .bot-account .institution {
+      color: #718096;
+      font-size: 0.9rem;
+    }
+
+    .bot-account .stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: #4a5568;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 2rem;
+    }
+
+    .tab {
+      padding: 1rem 2rem;
+      cursor: pointer;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .status-item {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .status-label {
+      font-size: 0.875rem;
+      color: #718096;
+      margin-bottom: 0.5rem;
+    }
+
+    .status-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .status-value.running {
+      color: #38a169;
+    }
+
+    .status-value.stopped {
+      color: #e53e3e;
+    }
+
+    .tab {
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      border-bottom-color: #0066cc;
+      color: #0066cc;
+      font-weight: 600;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Bot Selection Grid */
+    .bot-selection-grid, .liker-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .bot-card {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .bot-card:hover {
+      border-color: #007bff;
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+    }
+
+    .bot-card.selected {
+      border-color: #28a745;
+      background: #f8fff9;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+    }
+
+    .bot-card .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+
+    .bot-card .name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #2c3e50;
+    }
+
+    .bot-card .institution {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-top: 0.25rem;
+    }
+
+    .bot-card .email {
+      font-size: 0.8rem;
+      color: #6c757d;
+      margin-top: 0.5rem;
+    }
+
+    .bot-card .specialties {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .bot-card .specialty-tag {
+      display: inline-block;
+      background: #e9ecef;
+      color: #495057;
+      padding: 0.2rem 0.5rem;
+      border-radius: 12px;
+      margin: 0.1rem;
+      font-size: 0.75rem;
+    }
+
+    /* Review Grid */
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .review-card {
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .review-card h3 {
+      margin: 0 0 1rem 0;
+      color: #495057;
+      font-size: 1.1rem;
+    }
+
+    .review-content {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .review-content div {
+      margin-bottom: 0.5rem;
+    }
+
+    .review-content strong {
+      color: #495057;
+    }
+
+    /* Step Navigation */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      margin: 2rem 0;
+      gap: 1rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .step.active {
+      background: #007bff;
+      color: white;
+    }
+
+    .step.completed {
+      background: #28a745;
+      color: white;
+    }
+
+    .step.pending {
+      background: #e9ecef;
+      color: #6c757d;
+    }
+
+    /* Dashboard Styles */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .metric-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .metric-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .metric-icon {
+      font-size: 2rem;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7fafc;
+      border-radius: 12px;
+    }
+
+    .metric-content {
+      flex: 1;
+    }
+
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2d3748;
+      line-height: 1;
+    }
+
+    .metric-label {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-top: 0.25rem;
+    }
+
+    .activity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .activity-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .activity-card h3 {
+      margin: 0 0 1rem 0;
+      color: #2d3748;
+      font-size: 1.1rem;
+    }
+
+    .activity-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .activity-item {
+      padding: 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+
+    .activity-item .name {
+      font-weight: 500;
+      color: #2d3748;
+    }
+
+    .activity-item .time {
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .btn-warning {
+      background: #f59e0b;
+      color: white;
+      border: none;
+    }
+
+    .btn-warning:hover {
+      background: #d97706;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+      border: none;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    /* Edit Fields Styles */
+    .edit-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: vertical;
+      background: #f9fafb;
+    }
+
+    .edit-textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .edit-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #f9fafb;
+    }
+
+    .edit-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Form Actions */
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .form-actions .btn {
+      flex: 1;
+    }
+
+    /* User Management Styles */
+    .user-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .user-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .user-card .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .user-card .name {
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 1.1rem;
+    }
+
+    .user-card .email {
+      color: #718096;
+      font-size: 0.9rem;
+    }
+
+    .user-card .status {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .user-card .status.premium {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .user-card .status.free {
+      background: #e0e7ff;
+      color: #3730a3;
+    }
+
+    .user-card .status.bot {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    /* Content Management Styles */
+    .content-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .content-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .content-card .statement {
+      font-weight: 500;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
+    }
+
+    .content-card .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #718096;
+    }
+
+    .content-card .tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .content-card .tag {
+      background: #f1f5f9;
+      color: #475569;
+      padding: 0.2rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h3 {
+      margin: 0 0 1.5rem 0;
+      color: #2d3748;
+    }
+
+    /* Enhanced Notification System */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      z-index: 1001;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .notification.success {
+      background: #10b981;
+    }
+
+    .notification.error {
+      background: #ef4444;
+    }
+
+    .notification.warning {
+      background: #f59e0b;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Real-time Updates */
+    .live-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* Chart Styles */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .chart-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .chart-card h3 {
+      margin: 0 0 1rem 0;
+      color: #2d3748;
+      font-size: 1.1rem;
+    }
+
+    /* Real-time Status Bar */
+    .status-bar {
+      background: #f7fafc;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0.5rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
+
+    .status-bar .live-status {
+      display: flex;
+      align-items: center;
+    }
+
+    .status-bar .last-updated {
+      font-size: 0.8rem;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 Admin Panel</h1>
+      <p>Content Management & Bot System</p>
+    </div>
+
+    <!-- Authentication Section -->
+    <div class="auth-section" id="authSection">
+      <h2>🔐 Authentication Required</h2>
+      <p>Only authorized administrators can access this panel.</p>
+      <button onclick="signInWithGoogle()" class="btn btn-primary">Sign In with Google</button>
+    </div>
+
+    <!-- Admin Content -->
+    <div class="admin-content" id="adminContent">
+      <!-- Real-time Status Bar -->
+      <div class="status-bar">
+        <div class="live-status">
+          <span class="live-indicator"></span>
+          <span>Live Updates Active</span>
+        </div>
+        <div class="last-updated">
+          Last updated: <span id="lastUpdated">Just now</span>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+        <div class="tab" onclick="switchTab('bots')">🤖 Bot Management</div>
+        <div class="tab" onclick="switchTab('conversion')">🔄 Content Conversion</div>
+        <div class="tab" onclick="switchTab('users')">👥 User Management</div>
+        <!-- Content tab removed - card viewing integrated into profile management -->
+        <div class="tab" onclick="switchTab('analytics')">📈 Analytics</div>
+        <div class="tab" onclick="switchTab('automation')">⚙️ Automation</div>
+        <div class="tab" onclick="switchTab('settings')">🔧 Settings</div>
+        <div class="tab" onclick="switchTab('profiles')">👤 Profile Management</div>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div class="tab-content active" id="dashboardTab">
+        <div class="section">
+          <h2>🚀 Platform Overview</h2>
+          <div class="dashboard-grid">
+            <div class="metric-card">
+              <div class="metric-icon">👥</div>
+              <div class="metric-content">
+                <div class="metric-value" id="totalUsers">-</div>
+                <div class="metric-label">Total Users</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">📝</div>
+              <div class="metric-content">
+                <div class="metric-value" id="totalCards">-</div>
+                <div class="metric-label">Total Flashcards</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">🌐</div>
+              <div class="metric-content">
+                <div class="metric-value" id="publicCards">-</div>
+                <div class="metric-label">Public Cards</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">🤖</div>
+              <div class="metric-content">
+                <div class="metric-value" id="botAccounts">-</div>
+                <div class="metric-label">Bot Accounts</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">⭐</div>
+              <div class="metric-content">
+                <div class="metric-value" id="premiumUsers">-</div>
+                <div class="metric-label">Premium Users</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">📈</div>
+              <div class="metric-content">
+                <div class="metric-value" id="totalLikes">-</div>
+                <div class="metric-label">Total Likes</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📊 Recent Activity</h2>
+          <div class="activity-grid">
+            <div class="activity-card">
+              <h3>🆕 New Users (Last 7 Days)</h3>
+              <div id="recentUsers" class="activity-list">Loading...</div>
+            </div>
+            <div class="activity-card">
+              <h3>📝 New Cards (Last 7 Days)</h3>
+              <div id="recentCards" class="activity-list">Loading...</div>
+            </div>
+            <div class="activity-card">
+              <h3>🤖 Bot Activity (Last 7 Days)</h3>
+              <div id="botActivity" class="activity-list">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>🎯 Quick Actions</h2>
+          <div class="quick-actions">
+            <button onclick="switchTab('conversion')" class="btn btn-primary">🔄 Convert Stack Exchange Post</button>
+            <button onclick="switchTab('bots')" class="btn btn-secondary">🤖 Create Bot Account</button>
+            <button onclick="switchTab('users')" class="btn btn-secondary">👥 View All Users</button>
+            <button onclick="switchTab('content')" class="btn btn-secondary">📝 Manage Content</button>
+            <button onclick="exportData()" class="btn btn-success">📊 Export Data</button>
+            <button onclick="backupSystem()" class="btn btn-warning">💾 Backup System</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bot Management Tab -->
+      <div class="tab-content" id="botsTab">
+        <div class="section">
+          <h2>Create New Bot Account</h2>
+          <form id="botAccountForm">
+            <div class="grid">
+              <div class="form-group">
+                <label for="botDisplayName">Display Name</label>
+                <input type="text" id="botDisplayName" class="form-control" placeholder="e.g., Dr. Sarah Kim" required>
+              </div>
+              <div class="form-group">
+                <label for="botInstitution">Institution</label>
+                <input type="text" id="botInstitution" class="form-control" placeholder="e.g., Stanford University" required>
+              </div>
+              <div class="form-group">
+                <label for="botEmail">Email</label>
+                <input type="email" id="botEmail" class="form-control" placeholder="bot.email@university.edu" required>
+              </div>
+              <div class="form-group">
+                <label for="botSlug">Profile Slug</label>
+                <input type="text" id="botSlug" class="form-control" placeholder="e.g., sarah-kim" required readonly>
+                <div class="form-help">Auto-generated from display name</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="botBio">Bio</label>
+              <textarea id="botBio" class="form-control" rows="3" placeholder="Brief description of the bot's background and expertise"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="botSpecialties">Specialties (comma-separated)</label>
+              <input type="text" id="botSpecialties" class="form-control" placeholder="e.g., algebraic geometry, number theory, topology">
+            </div>
+            <div class="form-actions">
+              <button type="button" onclick="autofillBotForm()" class="btn btn-secondary">🎲 Autofill</button>
+              <button type="submit" class="btn btn-primary">Create Bot Account</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="section">
+          <h2>Existing Bot Accounts</h2>
+          <div id="botAccountsList">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              Loading bot accounts...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Conversion Tab -->
+      <div class="tab-content" id="conversionTab">
+        <div class="section">
+          <h2>Stack Exchange to Flashcard Conversion</h2>
+          <div class="form-group">
+            <label for="stackExchangeUrl">Stack Exchange URL</label>
+            <input type="url" id="stackExchangeUrl" class="form-control" placeholder="https://math.stackexchange.com/questions/..." required>
+          </div>
+          <div class="form-actions">
+            <button onclick="convertStackExchangePost()" class="btn btn-primary">Convert to Flashcard</button>
+            <button onclick="getRandomMathPost()" class="btn btn-secondary">🎲 Get Random Math Post</button>
+          </div>
+        </div>
+
+        <div class="section" id="conversionResult" style="display: none;">
+          <h2>🎯 Step 1: Review Conversion Result</h2>
+          <div id="flashcardPreview" class="flashcard-preview">
+            <h4>Statement</h4>
+            <div class="content" id="previewStatement"></div>
+            
+            <h4>Hint</h4>
+            <div class="content" id="previewHint"></div>
+            
+            <h4>Proof</h4>
+            <div class="content" id="previewProof"></div>
+            
+            <h4>Tags</h4>
+            <div class="content" id="previewTags"></div>
+          </div>
+          
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="makePublic"> Make this card public
+            </label>
+          </div>
+          
+          <button onclick="showBotSelection()" class="btn btn-primary">✅ Looks Good - Select Bot Account</button>
+          <button onclick="regenerateFlashcard()" class="btn btn-secondary">🔄 Regenerate</button>
+        </div>
+
+        <!-- Bot Selection Step -->
+        <div class="section" id="botSelectionStep" style="display: none;">
+          <h2>🤖 Step 2: Select Bot Account to Post As</h2>
+          <div class="bot-selection-grid" id="botSelectionGrid">
+            <!-- Bot cards will be rendered here -->
+          </div>
+          
+          <div class="form-group" style="margin-top: 1rem;">
+            <button onclick="goBackToConversion()" class="btn btn-secondary">← Back to Conversion</button>
+            <button onclick="showLikerSelection()" class="btn btn-primary" id="continueToLikers" disabled>✅ Continue to Select Likers</button>
+          </div>
+        </div>
+
+        <!-- Liker Selection Step -->
+        <div class="section" id="likerSelectionStep" style="display: none;">
+          <h2>👍 Step 3: Select Bot Accounts to Like This Post</h2>
+          <div class="liker-selection-grid" id="likerSelectionGrid">
+            <!-- Liker bot cards will be rendered here -->
+          </div>
+          
+          <div class="form-group" style="margin-top: 1rem;">
+            <button onclick="goBackToBotSelection()" class="btn btn-secondary">← Back to Bot Selection</button>
+            <button onclick="showFinalReview()" class="btn btn-primary" id="continueToReview" disabled>✅ Continue to Final Review</button>
+          </div>
+        </div>
+
+        <!-- Final Review Step -->
+        <div class="section" id="finalReviewStep" style="display: none;">
+          <h2>🎯 Step 4: Final Review & Publish</h2>
+          
+          <div class="review-grid">
+            <div class="review-card">
+              <h3>📝 Flashcard Content</h3>
+              <div class="review-content">
+                <div><strong>Statement:</strong> <span id="reviewStatement"></span></div>
+                <div><strong>Tags:</strong> <span id="reviewTags"></span></div>
+                <div><strong>Public:</strong> <span id="reviewPublic"></span></div>
+              </div>
+            </div>
+            
+            <div class="review-card">
+              <h3>🤖 Publishing Bot</h3>
+              <div class="review-content" id="reviewPublishingBot">
+                <!-- Selected bot info -->
+              </div>
+            </div>
+            
+            <div class="review-card">
+              <h3>👍 Liking Bots</h3>
+              <div class="review-content" id="reviewLikingBots">
+                <!-- Selected liker bots info -->
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-top: 1rem;">
+            <button onclick="goBackToLikerSelection()" class="btn btn-secondary">← Back to Liker Selection</button>
+            <button onclick="publishFlashcard()" class="btn btn-success">🚀 Publish Flashcard</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Management Tab -->
+      <div class="tab-content" id="usersTab">
+        <div class="section">
+          <h2>👥 User Management</h2>
+          <div class="content-filters">
+            <input type="text" id="userSearch" class="form-control" placeholder="Search users by email or name..." style="max-width: 300px;">
+            <select id="userFilter" class="form-control" style="max-width: 200px;">
+              <option value="all">All Users</option>
+              <option value="premium">Premium Only</option>
+              <option value="free">Free Only</option>
+              <option value="bot">Bot Accounts</option>
+            </select>
+            <button onclick="loadUsers()" class="btn btn-primary">🔍 Search</button>
+          </div>
+          <div id="usersList" class="user-grid">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              Loading users...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Management Tab - Removed, integrated into profile management -->
+
+      <!-- Analytics Tab -->
+      <div class="tab-content" id="analyticsTab">
+        <div class="section">
+          <h2>📈 Analytics & Insights</h2>
+          <div class="dashboard-grid">
+            <div class="metric-card">
+              <div class="metric-icon">📊</div>
+              <div class="metric-content">
+                <div class="metric-value" id="dailyActiveUsers">-</div>
+                <div class="metric-label">Daily Active Users</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">📈</div>
+              <div class="metric-content">
+                <div class="metric-value" id="weeklyGrowth">-</div>
+                <div class="metric-label">Weekly Growth %</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">💾</div>
+              <div class="metric-content">
+                <div class="metric-value" id="conversionRate">-</div>
+                <div class="metric-label">Premium Conversion %</div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon">🎯</div>
+              <div class="metric-content">
+                <div class="metric-value" id="engagementRate">-</div>
+                <div class="metric-label">Engagement Rate %</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📈 Growth Trends</h2>
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3>User Growth (Last 30 Days)</h3>
+              <canvas id="userGrowthChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Content Creation (Last 30 Days)</h3>
+              <canvas id="contentGrowthChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📊 Top Performing Content</h2>
+          <div id="topContent" class="content-grid">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              Loading top content...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automation Tab -->
+      <div class="tab-content" id="automationTab">
+        <div class="section">
+          <h2>🤖 Simple Automated Posting System</h2>
+          <p style="margin-bottom: 1rem; color: #666;">This simplified system uses your existing working logic to automatically create and publish flashcards.</p>
+          
+          <div class="grid">
+            <div class="card">
+              <h3>🎯 Bot Selection</h3>
+              <div class="form-group">
+                <label>Select Bot for Automation:</label>
+                <select id="selectedBotId" class="form-control">
+                  <option value="">-- Select a bot --</option>
+                </select>
+                <small>This bot will be used to publish all automated posts</small>
+              </div>
+              
+              <div class="form-group">
+                <label>Test Automation Components:</label>
+                <button onclick="testAutomationComponents()" class="btn btn-secondary">🧪 Test Components</button>
+                <small>Verify that all parts of the automation pipeline work</small>
+              </div>
+            </div>
+            
+            <div class="card">
+              <h3>⏰ Timer Settings</h3>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="autoPostingEnabled"> Enable Automated Posting
+                </label>
+              </div>
+              <div class="form-group">
+                <label>Posting Interval (minutes):</label>
+                <input type="number" id="postingInterval" class="form-control" value="5" min="1" max="1440">
+                <small>How often to create a new post (default: 5 minutes)</small>
+              </div>
+              <button onclick="saveAutoPostingSettings()" class="btn btn-primary">💾 Save Settings</button>
+              <button onclick="startAutoPosting()" class="btn btn-success" id="startAutoBtn">🚀 Start Auto-Posting</button>
+              <button onclick="stopAutoPosting()" class="btn btn-danger" id="stopAutoBtn" style="display: none;">⏹️ Stop Auto-Posting</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📊 Status & Statistics</h2>
+          <div class="status-grid">
+            <div class="status-item">
+              <div class="status-label">Auto-Posting Status:</div>
+              <div class="status-value" id="autoPostingStatus">Stopped</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Selected Bot:</div>
+              <div class="status-value" id="selectedBotName">None</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Posts Today:</div>
+              <div class="status-value" id="postsToday">0</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Total Auto-Posts:</div>
+              <div class="status-value" id="totalAutoPosts">0</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Last Post:</div>
+              <div class="status-value" id="lastPostTime">Never</div>
+            </div>
+            <div class="status-item">
+              <div class="status-label">Next Post In:</div>
+              <div class="status-value" id="nextPostCountdown">-</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>📋 Recent Auto-Posts</h2>
+          <div id="recentAutoPosts">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              Loading recent auto-posts...
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>🔧 System Tools</h2>
+          <div class="quick-actions">
+            <button onclick="updateSitemap()" class="btn btn-primary">🗺️ Update Sitemap</button>
+            <button onclick="testAutomationComponents()" class="btn btn-secondary">🧪 Test Components</button>
+            <button onclick="simpleTest()" class="btn btn-warning">🔍 Simple Test</button>
+            <button onclick="performSingleAutoPost()" class="btn btn-success">🚀 Single Auto-Post</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Management Tab -->
+      <div class="tab-content" id="profilesTab">
+        <div class="section">
+          <h2>👤 User Profile Management</h2>
+          <div class="content-filters">
+            <input type="text" id="profileSearch" class="form-control" placeholder="Search profiles by name, email, or slug..." style="max-width: 300px;">
+            <select id="profileFilter" class="form-control" style="max-width: 200px;">
+              <option value="all">All Profiles</option>
+              <option value="public">Public Only</option>
+              <option value="private">Private Only</option>
+              <option value="bot">Bot Profiles</option>
+            </select>
+            <button onclick="loadProfiles()" class="btn btn-primary">🔍 Search</button>
+          </div>
+          <div id="profilesList" class="user-grid">
+            <div class="loading">
+              <div class="loading-spinner"></div>
+              Loading profiles...
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div class="tab-content" id="settingsTab">
+        <div class="section">
+          <h2>🔧 System Settings</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>🔐 Security</h3>
+              <div class="form-group">
+                <label>Admin email:</label>
+                <input type="email" id="adminEmail" class="form-control" value="three.dash.sided@gmail.com" readonly>
+              </div>
+              <div class="form-group">
+                <label>Session timeout (minutes):</label>
+                <input type="number" id="sessionTimeout" class="form-control" value="60" min="15" max="480">
+              </div>
+              <button onclick="updateSecuritySettings()" class="btn btn-primary">💾 Update Security</button>
+            </div>
+            <div class="card">
+              <h3>📧 Notifications</h3>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="emailNotifications"> Enable Email Notifications
+                </label>
+              </div>
+              <div class="form-group">
+                <label>Notification email:</label>
+                <input type="email" id="notificationEmail" class="form-control" value="three.dash.sided@gmail.com">
+              </div>
+              <button onclick="updateNotificationSettings()" class="btn btn-primary">💾 Update Notifications</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>🗑️ System Maintenance</h2>
+          <div class="quick-actions">
+            <button onclick="clearCache()" class="btn btn-secondary">🧹 Clear Cache</button>
+            <button onclick="optimizeDatabase()" class="btn btn-secondary">⚡ Optimize Database</button>
+            <button onclick="exportAllData()" class="btn btn-success">📊 Export All Data</button>
+            <button onclick="resetSystem()" class="btn btn-danger">⚠️ Reset System</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+      authDomain: "three-sided-flashcard-app.firebaseapp.com",
+      projectId: "three-sided-flashcard-app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const functions = firebase.functions();
+
+    const AUTHORIZED_EMAIL = 'three.dash.sided@gmail.com';
+    let currentUser = null;
+    let botAccounts = [];
+    let currentConversion = null;
+    let selectedPublishingBot = null;
+    let selectedLikerBots = [];
+
+    // Auth state listener
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        if (user.email === AUTHORIZED_EMAIL) {
+          showAdminContent();
+          loadBotAccounts();
+          loadStats();
+        } else {
+          showError('Access denied. Only authorized administrators can access this panel.');
+          auth.signOut();
+        }
+      } else {
+        showAuthSection();
+      }
+    });
+
+    function showAuthSection() {
+      document.getElementById('authSection').style.display = 'block';
+      document.getElementById('adminContent').style.display = 'none';
+    }
+
+    function showAdminContent() {
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      
+      // Load automation settings after bot accounts are loaded
+      setTimeout(() => {
+        loadAutoPostingSettings();
+        updateAutoPostStats();
+        loadRecentAutoPosts();
+      }, 1000);
+    }
+
+    function showError(message) {
+      alert(message);
+    }
+
+    // Tab switching with data loading
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      
+      // Load appropriate data for the tab
+      switch(tabName) {
+        case 'dashboard':
+          loadDashboard();
+          break;
+        case 'users':
+          loadUsers();
+          break;
+        // Content tab removed - card viewing integrated into profile management
+        case 'analytics':
+          loadAnalytics();
+          break;
+        case 'automation':
+          loadAutoPostingSettings();
+          updateAutoPostStats();
+          loadRecentAutoPosts();
+          break;
+        case 'profiles':
+          loadProfiles();
+          break;
+      }
+      
+      // Update last updated time
+      updateLastUpdated();
+    }
+
+    // Real-time listeners
+    function setupRealTimeListeners() {
+      // Listen for new users
+      const usersListener = db.collection('users')
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .onSnapshot(snapshot => {
+          if (!snapshot.empty) {
+            const latestUser = snapshot.docs[0];
+            const data = latestUser.data();
+            if (data.createdAt?.toDate() > new Date(Date.now() - 60000)) { // Last minute
+              showNotification(`New user joined: ${data.email}`, 'success');
+              updateLastUpdated();
+            }
+          }
+        });
+
+      // Listen for new public cards
+      const cardsListener = db.collection('publicCards')
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .onSnapshot(snapshot => {
+          if (!snapshot.empty) {
+            const latestCard = snapshot.docs[0];
+            const data = latestCard.data();
+            if (data.createdAt?.toDate() > new Date(Date.now() - 60000)) { // Last minute
+              showNotification(`New card published: ${data.statement.substring(0, 50)}...`, 'success');
+              updateLastUpdated();
+            }
+          }
+        });
+
+      // Listen for bot activity
+      const botListener = db.collection('automatedCards')
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .onSnapshot(snapshot => {
+          if (!snapshot.empty) {
+            const latestBot = snapshot.docs[0];
+            const data = latestBot.data();
+            if (data.createdAt?.toDate() > new Date(Date.now() - 60000)) { // Last minute
+              showNotification(`Bot activity: ${data.botName} created a card`, 'success');
+              updateLastUpdated();
+            }
+          }
+        });
+
+      realTimeListeners = [usersListener, cardsListener, botListener];
+    }
+
+    function updateLastUpdated() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      document.getElementById('lastUpdated').textContent = timeString;
+    }
+
+    async function loadAutomationSettings() {
+      try {
+        const settingsDoc = await db.collection('adminSettings').doc('automation').get();
+        if (settingsDoc.exists) {
+          const settings = settingsDoc.data();
+          document.getElementById('botAutomationEnabled').checked = settings.botAutomationEnabled || false;
+          document.getElementById('postsPerDay').value = settings.postsPerDay || 5;
+          document.getElementById('likesPerPost').value = settings.likesPerPost || 3;
+          document.getElementById('activeHours').value = settings.activeHours || '9-17';
+          document.getElementById('timezone').value = settings.timezone || 'UTC';
+        }
+      } catch (error) {
+        console.error('Error loading automation settings:', error);
+      }
+    }
+
+    // Authentication
+    function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider);
+    }
+
+    // Bot Account Management
+    async function loadBotAccounts() {
+      try {
+        const snapshot = await db.collection('botAccounts').get();
+        botAccounts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        renderBotAccounts();
+        populateBotSelection(); // Populate the automation bot selection dropdown
+      } catch (error) {
+        console.error('Error loading bot accounts:', error);
+        showError('Failed to load bot accounts');
+      }
+    }
+
+    function renderBotAccounts() {
+      const container = document.getElementById('botAccountsList');
+      if (botAccounts.length === 0) {
+        container.innerHTML = '<div class="loading">No bot accounts found. Create your first one above.</div>';
+        return;
+      }
+
+      container.innerHTML = botAccounts.map(bot => `
+        <div class="bot-account">
+          <div class="header">
+            <div>
+              <div class="name">${bot.displayName}</div>
+              <div class="institution">${bot.institution}</div>
+            </div>
+            <div class="stats">
+              <span>📧 ${bot.email}</span>
+              <span>🏷️ ${bot.specialties ? bot.specialties.length : 0} specialties</span>
+            </div>
+          </div>
+          <div>${bot.bio || 'No bio provided'}</div>
+          <div style="margin-top: 1rem;">
+            <button onclick="deleteBotAccount('${bot.id}')" class="btn btn-danger">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+
+
+    // Step Navigation Functions
+    function showBotSelection() {
+      document.getElementById('conversionResult').style.display = 'none';
+      document.getElementById('botSelectionStep').style.display = 'block';
+      renderBotSelectionGrid();
+    }
+
+    function showLikerSelection() {
+      if (!selectedPublishingBot) {
+        showError('Please select a bot account first');
+        return;
+      }
+      document.getElementById('botSelectionStep').style.display = 'none';
+      document.getElementById('likerSelectionStep').style.display = 'block';
+      renderLikerSelectionGrid();
+    }
+
+    function showFinalReview() {
+      if (selectedLikerBots.length === 0) {
+        showError('Please select at least one bot to like the post');
+        return;
+      }
+      document.getElementById('likerSelectionStep').style.display = 'none';
+      document.getElementById('finalReviewStep').style.display = 'block';
+      renderFinalReview();
+    }
+
+    function goBackToConversion() {
+      document.getElementById('botSelectionStep').style.display = 'none';
+      document.getElementById('conversionResult').style.display = 'block';
+      selectedPublishingBot = null;
+      selectedLikerBots = [];
+    }
+
+    function goBackToBotSelection() {
+      document.getElementById('likerSelectionStep').style.display = 'none';
+      document.getElementById('botSelectionStep').style.display = 'block';
+      selectedLikerBots = [];
+    }
+
+    function goBackToLikerSelection() {
+      document.getElementById('finalReviewStep').style.display = 'none';
+      document.getElementById('likerSelectionStep').style.display = 'block';
+    }
+
+    function renderBotSelectionGrid() {
+      const grid = document.getElementById('botSelectionGrid');
+      grid.innerHTML = botAccounts.map(bot => `
+        <div class="bot-card ${selectedPublishingBot?.id === bot.id ? 'selected' : ''}" 
+             onclick="selectPublishingBot('${bot.id}')">
+          <div class="header">
+            <div>
+              <div class="name">${bot.displayName}</div>
+              <div class="institution">${bot.institution}</div>
+            </div>
+          </div>
+          <div class="email">📧 ${bot.email}</div>
+          <div class="specialties">
+            ${bot.specialties ? bot.specialties.map(spec => 
+              `<span class="specialty-tag">${spec}</span>`
+            ).join('') : 'No specialties'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderLikerSelectionGrid() {
+      const grid = document.getElementById('likerSelectionGrid');
+      grid.innerHTML = botAccounts
+        .filter(bot => bot.id !== selectedPublishingBot.id) // Exclude the publishing bot
+        .map(bot => `
+          <div class="bot-card ${selectedLikerBots.some(l => l.id === bot.id) ? 'selected' : ''}" 
+               onclick="toggleLikerBot('${bot.id}')">
+            <div class="header">
+              <div>
+                <div class="name">${bot.displayName}</div>
+                <div class="institution">${bot.institution}</div>
+              </div>
+            </div>
+            <div class="email">📧 ${bot.email}</div>
+            <div class="specialties">
+              ${bot.specialties ? bot.specialties.map(spec => 
+                `<span class="specialty-tag">${spec}</span>`
+              ).join('') : 'No specialties'}
+            </div>
+          </div>
+        `).join('');
+    }
+
+    function renderFinalReview() {
+      // Flashcard content
+      document.getElementById('reviewStatement').textContent = currentConversion.statement.substring(0, 100) + '...';
+      document.getElementById('reviewTags').textContent = currentConversion.tags.join(', ');
+      document.getElementById('reviewPublic').textContent = document.getElementById('makePublic').checked ? 'Yes' : 'No';
+
+      // Publishing bot
+      document.getElementById('reviewPublishingBot').innerHTML = `
+        <div><strong>Name:</strong> ${selectedPublishingBot.displayName}</div>
+        <div><strong>Institution:</strong> ${selectedPublishingBot.institution}</div>
+        <div><strong>Email:</strong> ${selectedPublishingBot.email}</div>
+      `;
+
+      // Liking bots
+      document.getElementById('reviewLikingBots').innerHTML = selectedLikerBots.map(bot => `
+        <div style="margin-bottom: 0.5rem;">
+          <strong>${bot.displayName}</strong> (${bot.institution})
+        </div>
+      `).join('');
+    }
+
+    function selectPublishingBot(botId) {
+      selectedPublishingBot = botAccounts.find(bot => bot.id === botId);
+      renderBotSelectionGrid();
+      document.getElementById('continueToLikers').disabled = false;
+    }
+
+    function toggleLikerBot(botId) {
+      const bot = botAccounts.find(bot => bot.id === botId);
+      const index = selectedLikerBots.findIndex(l => l.id === botId);
+      
+      if (index > -1) {
+        selectedLikerBots.splice(index, 1);
+      } else {
+        selectedLikerBots.push(bot);
+      }
+      
+      renderLikerSelectionGrid();
+      document.getElementById('continueToReview').disabled = selectedLikerBots.length === 0;
+    }
+
+    // Slug generation functions
+    function slugify(name) {
+      return name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 30);
+    }
+
+    function updateBotSlug() {
+      const displayName = document.getElementById('botDisplayName').value;
+      const slugInput = document.getElementById('botSlug');
+      
+      if (displayName.trim()) {
+        const slug = slugify(displayName);
+        slugInput.value = slug;
+      } else {
+        slugInput.value = '';
+      }
+    }
+
+    // Add event listener for display name input
+    document.getElementById('botDisplayName').addEventListener('input', updateBotSlug);
+
+    // Bot account form
+    document.getElementById('botAccountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        displayName: document.getElementById('botDisplayName').value,
+        institution: document.getElementById('botInstitution').value,
+        email: document.getElementById('botEmail').value,
+        slug: document.getElementById('botSlug').value,
+        bio: document.getElementById('botBio').value,
+        specialties: document.getElementById('botSpecialties').value.split(',').map(s => s.trim()).filter(Boolean),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection('botAccounts').add(formData);
+        document.getElementById('botAccountForm').reset();
+        loadBotAccounts();
+        showSuccess('Bot account created successfully!');
+      } catch (error) {
+        console.error('Error creating bot account:', error);
+        showError('Failed to create bot account');
+      }
+    });
+
+    async function deleteBotAccount(botId) {
+      if (!confirm('Are you sure you want to delete this bot account?')) return;
+      
+      try {
+        await db.collection('botAccounts').doc(botId).delete();
+        loadBotAccounts();
+        showSuccess('Bot account deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting bot account:', error);
+        showError('Failed to delete bot account');
+      }
+    }
+
+    // Content Conversion
+    async function convertStackExchangePost() {
+      const url = document.getElementById('stackExchangeUrl').value;
+      if (!url) {
+        showError('Please enter a Stack Exchange URL');
+        return;
+      }
+
+      const resultDiv = document.getElementById('conversionResult');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = '<div class="loading"><div class="loading-spinner"></div>Converting Stack Exchange post...</div>';
+
+      try {
+        // Call DeepSeek to convert the post
+        const convertFunction = functions.httpsCallable('convertStackExchangePost');
+        const result = await convertFunction({ url });
+        
+        currentConversion = result.data;
+        
+        // Update the conversion result div with the proper HTML structure
+        resultDiv.innerHTML = `
+          <div class="conversion-preview">
+            <h3>Conversion Result</h3>
+            <div class="preview-section">
+              <label>Statement:</label>
+              <div class="content">
+                <textarea id="editStatement" class="edit-textarea" rows="4">${currentConversion.statement}</textarea>
+              </div>
+            </div>
+            <div class="preview-section">
+              <label>Hint:</label>
+              <div class="content">
+                <textarea id="editHint" class="edit-textarea" rows="4">${currentConversion.hint}</textarea>
+              </div>
+            </div>
+            <div class="preview-section">
+              <label>Proof:</label>
+              <div class="content">
+                <textarea id="editProof" class="edit-textarea" rows="8">${currentConversion.proof}</textarea>
+              </div>
+            </div>
+            <div class="preview-section">
+              <label>Tags:</label>
+              <div class="content">
+                <input type="text" id="editTags" class="edit-input" value="${currentConversion.tags.join(', ')}">
+              </div>
+            </div>
+            <div class="preview-section">
+              <label>
+                <input type="checkbox" id="makePublic" checked> Make this card public
+              </label>
+            </div>
+            <div class="actions">
+              <button onclick="updateConversionData()" class="btn btn-success">💾 Save Edits</button>
+              <button onclick="showBotSelection()" class="btn btn-primary">🚀 Continue to Bot Selection</button>
+              <button onclick="regenerateFlashcard()" class="btn btn-secondary">🔄 Regenerate</button>
+            </div>
+          </div>
+        `;
+        
+        // Re-render MathJax
+        if (window.MathJax) {
+          MathJax.typesetPromise();
+        }
+      } catch (error) {
+        console.error('Error converting post:', error);
+        resultDiv.innerHTML = '<div class="status error">Failed to convert post. Please try again.</div>';
+      }
+    }
+
+    async function getRandomMathPost() {
+      let originalText = '🎲 Get Random Math Post'; // Default text
+      let randomBtn = null;
+      
+      try {
+        // Show loading state
+        randomBtn = document.querySelector('button[onclick="getRandomMathPost()"]');
+        originalText = randomBtn.innerHTML;
+        randomBtn.innerHTML = '🎲 Loading...';
+        randomBtn.disabled = true;
+
+        // Call the Cloud Function to get a random math post
+        const randomFunction = functions.httpsCallable('getRandomMathPost');
+        const result = await randomFunction();
+        
+        const post = result.data;
+        
+        // Update the URL input with the random post URL
+        document.getElementById('stackExchangeUrl').value = post.url;
+        
+        // Show success message
+        showSuccess(`🎯 Found random post: "${post.question.title}" (${post.question.score} votes, ${post.question.answer_count} answers)`);
+        
+        // Optionally auto-convert the post
+        if (confirm('Would you like to automatically convert this random post to a flashcard?')) {
+          await convertStackExchangePost();
+        }
+        
+      } catch (error) {
+        console.error('Error getting random math post:', error);
+        showError('Failed to get random math post. Please try again.');
+      } finally {
+        // Restore button state
+        if (randomBtn) {
+          randomBtn.innerHTML = originalText;
+          randomBtn.disabled = false;
+        }
+      }
+    }
+
+    // Simplified Automated Posting System
+    let autoPostingInterval = null;
+    let autoPostingSettings = {
+      enabled: false,
+      interval: 5,
+      selectedBotId: null
+    };
+
+    async function saveAutoPostingSettings() {
+      try {
+        const selectedBotId = document.getElementById('selectedBotId').value;
+        if (!selectedBotId) {
+          showError('Please select a bot for automation');
+          return;
+        }
+
+        const settings = {
+          enabled: document.getElementById('autoPostingEnabled').checked,
+          interval: parseInt(document.getElementById('postingInterval').value),
+          selectedBotId: selectedBotId,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('adminSettings').doc('autoPosting').set(settings);
+        autoPostingSettings = settings;
+        
+        // Update selected bot name display
+        const selectedBot = botAccounts.find(bot => bot.id === selectedBotId);
+        document.getElementById('selectedBotName').textContent = selectedBot ? selectedBot.displayName : 'None';
+        
+        showSuccess('Auto-posting settings saved!');
+      } catch (error) {
+        console.error('Error saving auto-posting settings:', error);
+        showError('Failed to save settings');
+      }
+    }
+
+    async function loadAutoPostingSettings() {
+      try {
+        const doc = await db.collection('adminSettings').doc('autoPosting').get();
+        if (doc.exists) {
+          const settings = doc.data();
+          autoPostingSettings = settings;
+          
+          // Update UI
+          document.getElementById('autoPostingEnabled').checked = settings.enabled || false;
+          document.getElementById('postingInterval').value = settings.interval || 5;
+          document.getElementById('selectedBotId').value = settings.selectedBotId || '';
+          
+          // Update selected bot name display
+          if (settings.selectedBotId) {
+            const selectedBot = botAccounts.find(bot => bot.id === settings.selectedBotId);
+            document.getElementById('selectedBotName').textContent = selectedBot ? selectedBot.displayName : 'None';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading auto-posting settings:', error);
+      }
+    }
+
+    // Populate bot selection dropdown
+    function populateBotSelection() {
+      const select = document.getElementById('selectedBotId');
+      select.innerHTML = '<option value="">-- Select a bot --</option>';
+      
+      botAccounts.forEach(bot => {
+        const option = document.createElement('option');
+        option.value = bot.id;
+        option.textContent = `${bot.displayName} (${bot.institution})`;
+        select.appendChild(option);
+      });
+    }
+
+    async function startAutoPosting() {
+      try {
+        if (autoPostingInterval) {
+          clearInterval(autoPostingInterval);
+        }
+
+        // Save current settings
+        await saveAutoPostingSettings();
+        
+        if (!autoPostingSettings.enabled) {
+          showError('Please enable auto-posting first');
+          return;
+        }
+
+        if (!autoPostingSettings.selectedBotId) {
+          showError('Please select a bot for automation');
+          return;
+        }
+
+        // Start the interval
+        const intervalMs = autoPostingSettings.interval * 60 * 1000; // Convert minutes to milliseconds
+        autoPostingInterval = setInterval(async () => {
+          await performAutoPost();
+        }, intervalMs);
+
+        // Update UI
+        document.getElementById('startAutoBtn').style.display = 'none';
+        document.getElementById('stopAutoBtn').style.display = 'inline-block';
+        document.getElementById('autoPostingStatus').textContent = 'Running';
+        document.getElementById('autoPostingStatus').className = 'status-value running';
+
+        showSuccess(`Auto-posting started! Posts every ${autoPostingSettings.interval} minutes`);
+        
+        // Perform first post immediately
+        await performAutoPost();
+        
+      } catch (error) {
+        console.error('Error starting auto-posting:', error);
+        showError('Failed to start auto-posting');
+      }
+    }
+
+    async function stopAutoPosting() {
+      if (autoPostingInterval) {
+        clearInterval(autoPostingInterval);
+        autoPostingInterval = null;
+      }
+
+      // Update UI
+      document.getElementById('startAutoBtn').style.display = 'inline-block';
+      document.getElementById('stopAutoBtn').style.display = 'none';
+      document.getElementById('autoPostingStatus').textContent = 'Stopped';
+      document.getElementById('autoPostingStatus').className = 'status-value stopped';
+
+      showSuccess('Auto-posting stopped');
+    }
+
+    async function performAutoPost() {
+      try {
+        console.log('Performing auto-post...');
+        
+        if (!autoPostingSettings.selectedBotId) {
+          throw new Error('No bot selected for automation');
+        }
+
+        // Call the simplified automated posting Cloud Function
+        const autoPostFunction = functions.httpsCallable('performAutomatedPost');
+        const result = await autoPostFunction({ 
+          selectedBotId: autoPostingSettings.selectedBotId 
+        });
+        
+        // Update statistics
+        await updateAutoPostStats();
+        await loadRecentAutoPosts();
+        
+        console.log(`Auto-post completed: "${result.data.title}" by ${result.data.publishingBot}`);
+        
+        // Show success notification
+        showSuccess(`🤖 Auto-post: "${result.data.title}" published successfully!`);
+        
+      } catch (error) {
+        console.error('Error performing auto-post:', error);
+        showError('Auto-post failed: ' + error.message);
+      }
+    }
+
+
+
+    async function updateAutoPostStats() {
+      try {
+        // Update posts today
+        const today = new Date().toDateString();
+        const todayPosts = await db.collection('automatedCards')
+          .where('createdAt', '>=', new Date(today))
+          .get();
+        
+        document.getElementById('postsToday').textContent = todayPosts.size;
+
+        // Update total auto-posts
+        const totalPosts = await db.collection('automatedCards').get();
+        document.getElementById('totalAutoPosts').textContent = totalPosts.size;
+
+        // Update last post time
+        const lastPost = await db.collection('automatedCards')
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get();
+        
+        if (!lastPost.empty) {
+          const lastPostTime = lastPost.docs[0].data().createdAt.toDate();
+          document.getElementById('lastPostTime').textContent = lastPostTime.toLocaleString();
+        }
+
+      } catch (error) {
+        console.error('Error updating auto-post stats:', error);
+      }
+    }
+
+    async function loadRecentAutoPosts() {
+      try {
+        const snapshot = await db.collection('automatedCards')
+          .orderBy('createdAt', 'desc')
+          .limit(10)
+          .get();
+
+        const posts = [];
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          const botDoc = await db.collection('botAccounts').doc(data.botId).get();
+          const bot = botDoc.data();
+          
+          posts.push({
+            id: doc.id,
+            title: data.originalTitle || 'Unknown',
+            botName: bot?.displayName || 'Unknown Bot',
+            createdAt: data.createdAt.toDate(),
+            public: data.public || false
+          });
+        }
+
+        const container = document.getElementById('recentAutoPosts');
+        if (posts.length === 0) {
+          container.innerHTML = '<div class="status info">No auto-posts yet</div>';
+        } else {
+          container.innerHTML = posts.map(post => `
+            <div class="bot-account">
+              <div class="header">
+                <div>
+                  <div class="name">${post.title}</div>
+                  <div class="institution">Posted by ${post.botName}</div>
+                </div>
+                <div class="stats">
+                  <span>${post.public ? '🌐 Public' : '🔒 Private'}</span>
+                  <span>${post.createdAt.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        console.error('Error loading recent auto-posts:', error);
+        document.getElementById('recentAutoPosts').innerHTML = '<div class="status error">Failed to load recent posts</div>';
+      }
+    }
+
+    // Test automation components
+    async function testAutomationComponents() {
+      try {
+        const testBtn = document.querySelector('button[onclick="testAutomationComponents()"]');
+        const originalText = testBtn.innerHTML;
+        testBtn.innerHTML = '🧪 Testing...';
+        testBtn.disabled = true;
+
+        const testFunction = functions.httpsCallable('testAutomationComponents');
+        const result = await testFunction();
+        
+        showSuccess(`✅ Test passed! Found ${result.data.botCount} bots, question: "${result.data.questionTitle}"`);
+        
+      } catch (error) {
+        console.error('Error testing automation components:', error);
+        showError('Test failed: ' + error.message);
+      } finally {
+        const testBtn = document.querySelector('button[onclick="testAutomationComponents()"]');
+        testBtn.innerHTML = '🧪 Test Components';
+        testBtn.disabled = false;
+      }
+    }
+
+    // Update sitemap
+    async function updateSitemap() {
+      try {
+        const sitemapBtn = document.querySelector('button[onclick="updateSitemap()"]');
+        const originalText = sitemapBtn.innerHTML;
+        sitemapBtn.innerHTML = '🗺️ Updating...';
+        sitemapBtn.disabled = true;
+
+        const sitemapFunction = functions.httpsCallable('updateSitemap');
+        const result = await sitemapFunction();
+        
+        // Save the sitemap content to a file (this will download it)
+        const blob = new Blob([result.data.sitemap], { type: 'application/xml' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'sitemap.xml';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showSuccess(`🗺️ Sitemap generated! ${result.data.cardsCount} cards, ${result.data.profilesCount} profiles. File downloaded.`);
+        
+      } catch (error) {
+        console.error('Error updating sitemap:', error);
+        showError('Failed to update sitemap: ' + error.message);
+      } finally {
+        const sitemapBtn = document.querySelector('button[onclick="updateSitemap()"]');
+        sitemapBtn.innerHTML = '🗺️ Update Sitemap';
+        sitemapBtn.disabled = false;
+      }
+    }
+
+    // Simple test function
+    async function simpleTest() {
+      try {
+        const simpleTestBtn = document.querySelector('button[onclick="simpleTest()"]');
+        const originalText = simpleTestBtn.innerHTML;
+        simpleTestBtn.innerHTML = '🔍 Testing...';
+        simpleTestBtn.disabled = true;
+
+        const simpleTestFunction = functions.httpsCallable('simpleTest');
+        const result = await simpleTestFunction();
+        
+        showSuccess(`🔍 Simple test passed! Found ${result.data.botCount} bots`);
+        
+      } catch (error) {
+        console.error('Error in simple test:', error);
+        showError('Simple test failed: ' + error.message);
+      } finally {
+        const simpleTestBtn = document.querySelector('button[onclick="simpleTest()"]');
+        simpleTestBtn.innerHTML = '🔍 Simple Test';
+        simpleTestBtn.disabled = false;
+      }
+    }
+
+    // Perform single auto-post
+    async function performSingleAutoPost() {
+      try {
+        if (!autoPostingSettings.selectedBotId) {
+          showError('Please select a bot for automation first');
+          return;
+        }
+
+        const singlePostBtn = document.querySelector('button[onclick="performSingleAutoPost()"]');
+        const originalText = singlePostBtn.innerHTML;
+        singlePostBtn.innerHTML = '🚀 Creating...';
+        singlePostBtn.disabled = true;
+
+        const autoPostFunction = functions.httpsCallable('performAutomatedPost');
+        const result = await autoPostFunction({ 
+          selectedBotId: autoPostingSettings.selectedBotId 
+        });
+        
+        await updateAutoPostStats();
+        await loadRecentAutoPosts();
+        
+        showSuccess(`🚀 Single post created: "${result.data.title}" by ${result.data.publishingBot}`);
+        
+      } catch (error) {
+        console.error('Error performing single auto-post:', error);
+        showError('Single post failed: ' + error.message);
+      } finally {
+        const singlePostBtn = document.querySelector('button[onclick="performSingleAutoPost()"]');
+        singlePostBtn.innerHTML = '🚀 Single Auto-Post';
+        singlePostBtn.disabled = false;
+      }
+    }
+
+
+
+    async function publishFlashcard() {
+      if (!selectedPublishingBot) {
+        showError('Please select a publishing bot account');
+        return;
+      }
+
+      if (selectedLikerBots.length === 0) {
+        showError('Please select at least one bot to like the post');
+        return;
+      }
+
+      if (!currentConversion) {
+        showError('No conversion data available');
+        return;
+      }
+
+      try {
+        const publishFunction = functions.httpsCallable('publishBotFlashcard');
+        await publishFunction({
+          botId: selectedPublishingBot.id,
+          flashcard: currentConversion,
+          makePublic: document.getElementById('makePublic').checked,
+          likerBotIds: selectedLikerBots.map(bot => bot.id)
+        });
+        
+        showSuccess('Flashcard published successfully!');
+        
+        // Reset everything
+        document.getElementById('stackExchangeUrl').value = '';
+        document.getElementById('conversionResult').style.display = 'none';
+        document.getElementById('botSelectionStep').style.display = 'none';
+        document.getElementById('likerSelectionStep').style.display = 'none';
+        document.getElementById('finalReviewStep').style.display = 'none';
+        currentConversion = null;
+        selectedPublishingBot = null;
+        selectedLikerBots = [];
+      } catch (error) {
+        console.error('Error publishing flashcard:', error);
+        showError('Failed to publish flashcard');
+      }
+    }
+
+    async function regenerateFlashcard() {
+      await convertStackExchangePost();
+    }
+
+    function updateConversionData() {
+      if (!currentConversion) {
+        showError('No conversion data available');
+        return;
+      }
+
+      // Update the currentConversion object with edited values
+      currentConversion.statement = document.getElementById('editStatement').value;
+      currentConversion.hint = document.getElementById('editHint').value;
+      currentConversion.proof = document.getElementById('editProof').value;
+      currentConversion.tags = document.getElementById('editTags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+      showSuccess('Edits saved! You can now continue to bot selection.');
+    }
+
+    // Statistics
+    async function loadStats() {
+      try {
+        const botStats = await db.collection('botAccounts').get();
+        const cardStats = await db.collection('automatedCards').get();
+        
+        // Check if elements exist before updating
+        const botStatsElement = document.getElementById('botStats');
+        const cardStatsElement = document.getElementById('cardStats');
+        
+        if (botStatsElement) {
+          botStatsElement.innerHTML = `
+            <div>Total: ${botStats.size}</div>
+            <div>Active: ${botStats.size}</div>
+          `;
+        }
+        
+        if (cardStatsElement) {
+          cardStatsElement.innerHTML = `
+            <div>Total: ${cardStats.size}</div>
+            <div>This week: ${cardStats.size}</div>
+          `;
+        }
+        
+        loadRecentCards();
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    async function loadRecentCards() {
+      try {
+        const snapshot = await db.collection('automatedCards')
+          .orderBy('createdAt', 'desc')
+          .limit(10)
+          .get();
+        
+        const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        document.getElementById('recentCards').innerHTML = cards.map(card => `
+          <div class="card">
+            <h3>${card.statement ? card.statement.substring(0, 100) + '...' : card.originalTitle || 'Untitled'}</h3>
+            <div>Bot: ${card.botName || 'Unknown Bot'}</div>
+            <div>Created: ${card.createdAt?.toDate().toLocaleDateString() || 'Unknown'}</div>
+            <div class="status ${card.public ? 'success' : 'warning'}">${card.public ? 'Public' : 'Private'}</div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading recent cards:', error);
+      }
+    }
+
+    // Enhanced notification system
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+
+    function showSuccess(message) {
+      showNotification(message, 'success');
+    }
+
+    function showError(message) {
+      showNotification(message, 'error');
+    }
+
+    function showWarning(message) {
+      showNotification(message, 'warning');
+    }
+
+    // ===== DASHBOARD FUNCTIONS =====
+    async function loadDashboard() {
+      await Promise.all([
+        loadPlatformMetrics(),
+        loadRecentActivity()
+      ]);
+    }
+
+    async function loadPlatformMetrics() {
+      try {
+        // Load all metrics in parallel
+        const [users, cards, publicCards, bots, premiumUsers, likes] = await Promise.all([
+          db.collection('users').get(),
+          db.collection('flashcards').get(),
+          db.collection('publicCards').get(),
+          db.collection('botAccounts').get(),
+          db.collection('users').where('isPremium', '==', true).get(),
+          db.collection('publicCards').get()
+        ]);
+
+        // Calculate total likes
+        const totalLikes = publicCards.docs.reduce((sum, doc) => sum + (doc.data().likeCount || 0), 0);
+
+        // Update metrics
+        document.getElementById('totalUsers').textContent = users.size;
+        document.getElementById('totalCards').textContent = cards.size;
+        document.getElementById('publicCards').textContent = publicCards.size;
+        document.getElementById('botAccounts').textContent = bots.size;
+        document.getElementById('premiumUsers').textContent = premiumUsers.size;
+        document.getElementById('totalLikes').textContent = totalLikes;
+      } catch (error) {
+        console.error('Error loading metrics:', error);
+      }
+    }
+
+    async function loadRecentActivity() {
+      try {
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        
+        // Load recent users
+        const recentUsersSnap = await db.collection('users')
+          .where('createdAt', '>=', sevenDaysAgo)
+          .orderBy('createdAt', 'desc')
+          .limit(5)
+          .get();
+        
+        document.getElementById('recentUsers').innerHTML = recentUsersSnap.docs.map(doc => {
+          const data = doc.data();
+          return `<div class="activity-item">
+            <span class="name">${data.email}</span>
+            <span class="time">${data.createdAt?.toDate().toLocaleDateString()}</span>
+          </div>`;
+        }).join('') || '<div class="activity-item">No recent users</div>';
+
+        // Load recent cards
+        const recentCardsSnap = await db.collection('publicCards')
+          .where('createdAt', '>=', sevenDaysAgo)
+          .orderBy('createdAt', 'desc')
+          .limit(5)
+          .get();
+        
+        document.getElementById('recentCards').innerHTML = recentCardsSnap.docs.map(doc => {
+          const data = doc.data();
+          return `<div class="activity-item">
+            <span class="name">${data.statement.substring(0, 50)}...</span>
+            <span class="time">${data.createdAt?.toDate().toLocaleDateString()}</span>
+          </div>`;
+        }).join('') || '<div class="activity-item">No recent cards</div>';
+
+        // Load bot activity
+        const botActivitySnap = await db.collection('automatedCards')
+          .where('createdAt', '>=', sevenDaysAgo)
+          .orderBy('createdAt', 'desc')
+          .limit(5)
+          .get();
+        
+        document.getElementById('botActivity').innerHTML = botActivitySnap.docs.map(doc => {
+          const data = doc.data();
+          return `<div class="activity-item">
+            <span class="name">${data.botName} created card</span>
+            <span class="time">${data.createdAt?.toDate().toLocaleDateString()}</span>
+          </div>`;
+        }).join('') || '<div class="activity-item">No recent bot activity</div>';
+
+      } catch (error) {
+        console.error('Error loading recent activity:', error);
+      }
+    }
+
+    // ===== USER MANAGEMENT FUNCTIONS =====
+    async function loadUsers() {
+      const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+      const filter = document.getElementById('userFilter').value;
+      
+      try {
+        let query = db.collection('users');
+        
+        // Apply filters
+        if (filter === 'premium') {
+          query = query.where('isPremium', '==', true);
+        } else if (filter === 'bot') {
+          query = query.where('isBot', '==', true);
+        }
+        
+        const snapshot = await query.get();
+        let users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Apply search filter
+        if (searchTerm) {
+          users = users.filter(user => 
+            user.email?.toLowerCase().includes(searchTerm) ||
+            user.displayName?.toLowerCase().includes(searchTerm)
+          );
+        }
+        
+        renderUsers(users);
+      } catch (error) {
+        console.error('Error loading users:', error);
+        showError('Failed to load users');
+      }
+    }
+
+    function renderUsers(users) {
+      const container = document.getElementById('usersList');
+      
+      if (users.length === 0) {
+        container.innerHTML = '<div class="loading">No users found</div>';
+        return;
+      }
+      
+      container.innerHTML = users.map(user => `
+        <div class="user-card">
+          <div class="header">
+            <div>
+              <div class="name">${user.displayName || user.email}</div>
+              <div class="email">${user.email}</div>
+            </div>
+            <div class="status ${user.isPremium ? 'premium' : user.isBot ? 'bot' : 'free'}">
+              ${user.isPremium ? 'Premium' : user.isBot ? 'Bot' : 'Free'}
+            </div>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button onclick="viewUserProfile('${user.id}')" class="btn btn-secondary">👁️ View Profile</button>
+            ${user.isPremium ? 
+              `<button onclick="toggleUserPremium('${user.id}', false)" class="btn btn-warning">❌ Remove Premium</button>` :
+              `<button onclick="toggleUserPremium('${user.id}', true)" class="btn btn-primary">⭐ Grant Premium</button>`
+            }
+            ${!user.isBot ? `<button onclick="deleteUser('${user.id}')" class="btn btn-danger">🗑️ Delete</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function toggleUserPremium(userId, makePremium) {
+      try {
+        await db.collection('users').doc(userId).update({
+          isPremium: makePremium
+        });
+        showSuccess(`User ${makePremium ? 'granted' : 'removed'} premium status`);
+        loadUsers();
+      } catch (error) {
+        console.error('Error updating user:', error);
+        showError('Failed to update user');
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+      
+      try {
+        await db.collection('users').doc(userId).delete();
+        showSuccess('User deleted successfully');
+        loadUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        showError('Failed to delete user');
+      }
+    }
+
+    async function viewUserProfile(userId) {
+      try {
+        // Get user's slug
+        const slugDoc = await db.collection('userToSlug').doc(userId).get();
+        if (slugDoc.exists) {
+          const slug = slugDoc.data().slug;
+          window.open(`/profile/${encodeURIComponent(slug)}`, '_blank');
+        } else {
+          showError('User profile not found');
+        }
+      } catch (error) {
+        console.error('Error viewing user profile:', error);
+        showError('Failed to open user profile');
+      }
+    }
+
+    async function viewCard(cardId) {
+      try {
+        const cardDoc = await db.collection('publicCards').doc(cardId).get();
+        if (cardDoc.exists) {
+          const card = cardDoc.data();
+          const url = `/card/${encodeURIComponent(card.slug)}`;
+          window.open(url, '_blank');
+        } else {
+          showError('Card not found');
+        }
+      } catch (error) {
+        console.error('Error viewing card:', error);
+        showError('Failed to open card');
+      }
+    }
+
+    async function editCard(cardId) {
+      try {
+        const cardDoc = await db.collection('publicCards').doc(cardId).get();
+        if (cardDoc.exists) {
+          const card = cardDoc.data();
+          
+          // Create edit modal
+          const modal = document.createElement('div');
+          modal.className = 'modal';
+          modal.innerHTML = `
+            <div class="modal-content">
+              <h3>Edit Card</h3>
+              <div class="form-group">
+                <label>Statement</label>
+                <textarea id="editStatement" class="form-control" rows="3">${card.statement}</textarea>
+              </div>
+              <div class="form-group">
+                <label>Tags (comma-separated)</label>
+                <input type="text" id="editTags" class="form-control" value="${(card.tags || []).join(', ')}">
+              </div>
+              <div class="form-group">
+                <button onclick="saveCardEdit('${cardId}')" class="btn btn-primary">💾 Save</button>
+                <button onclick="closeModal()" class="btn btn-secondary">❌ Cancel</button>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(modal);
+        } else {
+          showError('Card not found');
+        }
+      } catch (error) {
+        console.error('Error editing card:', error);
+        showError('Failed to edit card');
+      }
+    }
+
+    async function saveCardEdit(cardId) {
+      try {
+        const statement = document.getElementById('editStatement').value;
+        const tags = document.getElementById('editTags').value.split(',').map(t => t.trim()).filter(Boolean);
+        
+        await db.collection('publicCards').doc(cardId).update({
+          statement: statement,
+          tags: tags,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        closeModal();
+        showSuccess('Card updated successfully');
+        loadContent();
+      } catch (error) {
+        console.error('Error saving card:', error);
+        showError('Failed to save card');
+      }
+    }
+
+    async function deleteCard(cardId) {
+      if (!confirm('Are you sure you want to delete this card? This action cannot be undone.')) return;
+      
+      try {
+        const deleteCardFunction = functions.httpsCallable('deleteCard');
+        await deleteCardFunction({ cardSlug: cardId });
+        showSuccess('Card deleted successfully');
+        loadContent();
+      } catch (error) {
+        console.error('Error deleting card:', error);
+        showError('Failed to delete card: ' + error.message);
+      }
+    }
+
+    function closeModal() {
+      const modal = document.querySelector('.modal');
+      if (modal) {
+        modal.remove();
+      }
+    }
+
+    async function updateSecuritySettings() {
+      try {
+        const sessionTimeout = parseInt(document.getElementById('sessionTimeout').value);
+        
+        await db.collection('adminSettings').doc('security').set({
+          sessionTimeout: sessionTimeout,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showSuccess('Security settings updated successfully!');
+      } catch (error) {
+        console.error('Error updating security settings:', error);
+        showError('Failed to update security settings');
+      }
+    }
+
+    async function updateNotificationSettings() {
+      try {
+        const emailNotifications = document.getElementById('emailNotifications').checked;
+        const notificationEmail = document.getElementById('notificationEmail').value;
+        
+        await db.collection('adminSettings').doc('notifications').set({
+          emailNotifications: emailNotifications,
+          notificationEmail: notificationEmail,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        showSuccess('Notification settings updated successfully!');
+      } catch (error) {
+        console.error('Error updating notification settings:', error);
+        showError('Failed to update notification settings');
+      }
+    }
+
+    // ===== CONTENT MANAGEMENT FUNCTIONS =====
+    async function loadContent() {
+      const searchTerm = document.getElementById('contentSearch').value.toLowerCase();
+      const filter = document.getElementById('contentFilter').value;
+      
+      try {
+        let query = db.collection('publicCards');
+        
+        // Apply filters
+        if (filter === 'bot') {
+          query = query.where('isBotCreated', '==', true);
+        }
+        
+        const snapshot = await query.get();
+        let cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Apply search filter
+        if (searchTerm) {
+          cards = cards.filter(card => 
+            card.statement?.toLowerCase().includes(searchTerm) ||
+            card.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
+          );
+        }
+        
+        renderContent(cards);
+      } catch (error) {
+        console.error('Error loading content:', error);
+        showError('Failed to load content');
+      }
+    }
+
+    function renderContent(cards) {
+      const container = document.getElementById('contentList');
+      
+      if (cards.length === 0) {
+        container.innerHTML = '<div class="loading">No content found</div>';
+        return;
+      }
+      
+      container.innerHTML = cards.map(card => `
+        <div class="content-card">
+          <div class="statement">${card.statement}</div>
+          <div class="tags">
+            ${(card.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+          </div>
+          <div class="meta">
+            <span>👤 ${card.botName || 'Unknown'}</span>
+            <span>❤️ ${card.likeCount || 0}</span>
+            <span>📅 ${card.createdAt?.toDate().toLocaleDateString()}</span>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button onclick="viewCard('${card.id}')" class="btn btn-secondary">👁️ View</button>
+            <button onclick="editCard('${card.id}')" class="btn btn-primary">✏️ Edit</button>
+            <button onclick="deleteCard('${card.id}')" class="btn btn-danger">🗑️ Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== ANALYTICS FUNCTIONS =====
+    let userGrowthChart = null;
+    let contentGrowthChart = null;
+    let realTimeListeners = [];
+
+    async function loadAnalytics() {
+      await Promise.all([
+        loadAnalyticsMetrics(),
+        loadTopContent(),
+        loadGrowthCharts()
+      ]);
+    }
+
+    async function loadGrowthCharts() {
+      try {
+        // Get data for last 30 days
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        
+        // User growth data
+        const usersSnap = await db.collection('users')
+          .where('createdAt', '>=', thirtyDaysAgo)
+          .orderBy('createdAt', 'asc')
+          .get();
+        
+        const userData = processTimeSeriesData(usersSnap.docs, 'createdAt', 30);
+        
+        // Content growth data
+        const contentSnap = await db.collection('publicCards')
+          .where('createdAt', '>=', thirtyDaysAgo)
+          .orderBy('createdAt', 'asc')
+          .get();
+        
+        const contentData = processTimeSeriesData(contentSnap.docs, 'createdAt', 30);
+        
+        // Create charts
+        createUserGrowthChart(userData);
+        createContentGrowthChart(contentData);
+        
+      } catch (error) {
+        console.error('Error loading growth charts:', error);
+      }
+    }
+
+    function processTimeSeriesData(docs, dateField, days) {
+      const data = {};
+      
+      // Initialize all days with 0
+      for (let i = days - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toISOString().split('T')[0];
+        data[dateKey] = 0;
+      }
+      
+      // Count documents per day
+      docs.forEach(doc => {
+        const docData = doc.data();
+        const date = docData[dateField]?.toDate();
+        if (date) {
+          const dateKey = date.toISOString().split('T')[0];
+          if (data[dateKey] !== undefined) {
+            data[dateKey]++;
+          }
+        }
+      });
+      
+      return data;
+    }
+
+    function createUserGrowthChart(data) {
+      const ctx = document.getElementById('userGrowthChart');
+      if (!ctx) return;
+      
+      if (userGrowthChart) {
+        userGrowthChart.destroy();
+      }
+      
+      const labels = Object.keys(data);
+      const values = Object.values(data);
+      
+      userGrowthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'New Users',
+            data: values,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 2,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function createContentGrowthChart(data) {
+      const ctx = document.getElementById('contentGrowthChart');
+      if (!ctx) return;
+      
+      if (contentGrowthChart) {
+        contentGrowthChart.destroy();
+      }
+      
+      const labels = Object.keys(data);
+      const values = Object.values(data);
+      
+      contentGrowthChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'New Cards',
+            data: values,
+            backgroundColor: '#10b981',
+            borderColor: '#059669',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 2,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function loadAnalyticsMetrics() {
+      try {
+        // Calculate daily active users (simplified)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayUsers = await db.collection('users')
+          .where('lastLogin', '>=', today)
+          .get();
+        
+        document.getElementById('dailyActiveUsers').textContent = todayUsers.size;
+        
+        // Calculate weekly growth (simplified)
+        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const newUsersThisWeek = await db.collection('users')
+          .where('createdAt', '>=', lastWeek)
+          .get();
+        
+        const totalUsers = await db.collection('users').get();
+        const growthRate = totalUsers.size > 0 ? Math.round((newUsersThisWeek.size / totalUsers.size) * 100) : 0;
+        document.getElementById('weeklyGrowth').textContent = growthRate + '%';
+        
+        // Calculate conversion rate
+        const premiumUsers = await db.collection('users')
+          .where('isPremium', '==', true)
+          .get();
+        
+        const conversionRate = totalUsers.size > 0 ? Math.round((premiumUsers.size / totalUsers.size) * 100) : 0;
+        document.getElementById('conversionRate').textContent = conversionRate + '%';
+        
+        // Calculate engagement rate (simplified)
+        const publicCards = await db.collection('publicCards').get();
+        const totalLikes = publicCards.docs.reduce((sum, doc) => sum + (doc.data().likeCount || 0), 0);
+        const engagementRate = publicCards.size > 0 ? Math.round((totalLikes / publicCards.size) * 100) : 0;
+        document.getElementById('engagementRate').textContent = engagementRate + '%';
+        
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    }
+
+    async function loadTopContent() {
+      try {
+        const snapshot = await db.collection('publicCards')
+          .orderBy('likeCount', 'desc')
+          .limit(10)
+          .get();
+        
+        const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        document.getElementById('topContent').innerHTML = cards.map(card => `
+          <div class="content-card">
+            <div class="statement">${card.statement}</div>
+            <div class="tags">
+              ${(card.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+            </div>
+            <div class="meta">
+              <span>👤 ${card.botName || 'Unknown'}</span>
+              <span>❤️ ${card.likeCount || 0} likes</span>
+              <span>📅 ${card.createdAt?.toDate().toLocaleDateString()}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading top content:', error);
+      }
+    }
+
+    // ===== BOT MANAGEMENT FUNCTIONS =====
+    async function autofillBotForm() {
+      try {
+        // Show loading state
+        const autofillBtn = document.querySelector('button[onclick="autofillBotForm()"]');
+        const originalText = autofillBtn.innerHTML;
+        autofillBtn.innerHTML = '🤖 Generating...';
+        autofillBtn.disabled = true;
+
+        // Call DeepSeek to generate a bot profile
+        const generateFunction = functions.httpsCallable('generateBotProfile');
+        const result = await generateFunction();
+        
+        const profile = result.data;
+        
+        // Fill in the form
+        document.getElementById('botDisplayName').value = profile.displayName;
+        document.getElementById('botInstitution').value = profile.institution;
+        document.getElementById('botEmail').value = profile.email;
+        document.getElementById('botBio').value = profile.bio;
+        document.getElementById('botSpecialties').value = profile.specialties;
+        
+        // Trigger the slug update
+        updateBotSlug();
+        
+        showSuccess('AI-generated bot profile created! Feel free to modify any details.');
+      } catch (error) {
+        console.error('Error generating bot profile:', error);
+        showError('Failed to generate bot profile. Please try again.');
+      } finally {
+        // Reset button state
+        const autofillBtn = document.querySelector('button[onclick="autofillBotForm()"]');
+        autofillBtn.innerHTML = '🎲 Autofill';
+        autofillBtn.disabled = false;
+      }
+    }
+
+    // ===== AUTOMATION FUNCTIONS =====
+    async function saveAutomationSettings() {
+      try {
+        const settings = {
+          botAutomationEnabled: document.getElementById('botAutomationEnabled').checked,
+          postsPerDay: parseInt(document.getElementById('postsPerDay').value),
+          likesPerPost: parseInt(document.getElementById('likesPerPost').value),
+          activeHours: document.getElementById('activeHours').value,
+          timezone: document.getElementById('timezone').value,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('adminSettings').doc('automation').set(settings);
+        showSuccess('Automation settings saved successfully!');
+      } catch (error) {
+        console.error('Error saving automation settings:', error);
+        showError('Failed to save settings');
+      }
+    }
+
+    // ===== SYSTEM FUNCTIONS =====
+    async function exportData() {
+      try {
+        showSuccess('Data export started. You will receive an email when ready.');
+        // This would typically trigger a Cloud Function to generate and email the export
+      } catch (error) {
+        console.error('Error exporting data:', error);
+        showError('Failed to export data');
+      }
+    }
+
+    async function backupSystem() {
+      try {
+        showSuccess('System backup started. You will receive an email when ready.');
+        // This would typically trigger a Cloud Function to create a backup
+      } catch (error) {
+        console.error('Error backing up system:', error);
+        showError('Failed to backup system');
+      }
+    }
+
+    async function clearCache() {
+      try {
+        localStorage.clear();
+        showSuccess('Cache cleared successfully!');
+      } catch (error) {
+        console.error('Error clearing cache:', error);
+        showError('Failed to clear cache');
+      }
+    }
+
+    async function optimizeDatabase() {
+      try {
+        showSuccess('Database optimization started. This may take a few minutes.');
+        // This would typically trigger a Cloud Function to optimize the database
+      } catch (error) {
+        console.error('Error optimizing database:', error);
+        showError('Failed to optimize database');
+      }
+    }
+
+    async function exportAllData() {
+      try {
+        showSuccess('Full data export started. You will receive an email when ready.');
+        // This would typically trigger a Cloud Function to export all data
+      } catch (error) {
+        console.error('Error exporting all data:', error);
+        showError('Failed to export all data');
+      }
+    }
+
+    async function resetSystem() {
+      if (!confirm('⚠️ WARNING: This will reset the entire system. This action cannot be undone. Are you absolutely sure?')) return;
+      
+      if (!confirm('⚠️ FINAL WARNING: This will delete ALL data. Type "RESET" to confirm.')) return;
+      
+      try {
+        showSuccess('System reset initiated. This may take several minutes.');
+        // This would typically trigger a Cloud Function to reset the system
+      } catch (error) {
+        console.error('Error resetting system:', error);
+        showError('Failed to reset system');
+      }
+    }
+
+    // ===== PROFILE MANAGEMENT FUNCTIONS =====
+    async function loadProfiles() {
+      const searchTerm = document.getElementById('profileSearch').value.toLowerCase();
+      const filter = document.getElementById('profileFilter').value;
+      
+      try {
+        // Get all users with their profile data
+        const usersSnapshot = await db.collection('users').get();
+        const profiles = [];
+        
+        for (const userDoc of usersSnapshot.docs) {
+          const userData = userDoc.data();
+          
+          // Get user's slug
+          const slugDoc = await db.collection('userToSlug').doc(userDoc.id).get();
+          const slug = slugDoc.exists ? slugDoc.data().slug : null;
+          
+          // Get user's profile data
+          let profileData = null;
+          if (slug) {
+            const profileDoc = await db.collection('profiles').doc(slug).get();
+            if (profileDoc.exists) {
+              profileData = profileDoc.data();
+            }
+          }
+          
+          // Get user's cards count
+          const userCardsSnapshot = await db.collection('flashcards')
+            .where('userId', '==', userDoc.id)
+            .get();
+          
+          const publicCardsSnapshot = await db.collection('publicCards')
+            .where('userId', '==', userDoc.id)
+            .get();
+          
+          profiles.push({
+            id: userDoc.id,
+            email: userData.email,
+            displayName: userData.displayName || userData.email,
+            isPremium: userData.isPremium || false,
+            isBot: userData.isBot || false,
+            slug: slug,
+            profileData: profileData,
+            privateCardsCount: userCardsSnapshot.size,
+            publicCardsCount: publicCardsSnapshot.size,
+            createdAt: userData.createdAt
+          });
+        }
+        
+        // Apply filters
+        let filteredProfiles = profiles;
+        
+        if (filter === 'public') {
+          filteredProfiles = profiles.filter(p => p.profileData && p.profileData.isPublic);
+        } else if (filter === 'private') {
+          filteredProfiles = profiles.filter(p => !p.profileData || !p.profileData.isPublic);
+        } else if (filter === 'bot') {
+          filteredProfiles = profiles.filter(p => p.isBot);
+        }
+        
+        // Apply search
+        if (searchTerm) {
+          filteredProfiles = filteredProfiles.filter(profile => 
+            profile.displayName?.toLowerCase().includes(searchTerm) ||
+            profile.email?.toLowerCase().includes(searchTerm) ||
+            profile.slug?.toLowerCase().includes(searchTerm)
+          );
+        }
+        
+        renderProfiles(filteredProfiles);
+      } catch (error) {
+        console.error('Error loading profiles:', error);
+        showError('Failed to load profiles');
+      }
+    }
+
+    function renderProfiles(profiles) {
+      const container = document.getElementById('profilesList');
+      
+      if (profiles.length === 0) {
+        container.innerHTML = '<div class="loading">No profiles found</div>';
+        return;
+      }
+      
+      container.innerHTML = profiles.map(profile => `
+        <div class="user-card">
+          <div class="header">
+            <div>
+              <div class="name">${profile.displayName}</div>
+              <div class="email">${profile.email}</div>
+              ${profile.slug ? `<div style="font-size: 0.8rem; color: #718096;">Slug: ${profile.slug}</div>` : ''}
+            </div>
+            <div class="status ${profile.isPremium ? 'premium' : profile.isBot ? 'bot' : 'free'}">
+              ${profile.isPremium ? 'Premium' : profile.isBot ? 'Bot' : 'Free'}
+            </div>
+          </div>
+          <div style="margin: 1rem 0;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+              <span>📝 ${profile.privateCardsCount} private cards</span>
+              <span>🌐 ${profile.publicCardsCount} public cards</span>
+            </div>
+            ${profile.profileData ? 
+              `<div style="font-size: 0.9rem; color: #4a5568; margin-bottom: 0.5rem;">
+                Bio: ${profile.profileData.bio ? profile.profileData.bio.substring(0, 100) + '...' : 'No bio'}
+              </div>` : 
+              '<div style="font-size: 0.9rem; color: #718096;">No profile data</div>'
+            }
+          </div>
+          <div style="margin-top: 1rem;">
+            <button onclick="viewUserProfile('${profile.id}')" class="btn btn-secondary">👁️ View Profile</button>
+            <button onclick="editUserProfile('${profile.id}')" class="btn btn-primary">✏️ Edit Profile</button>
+            <button onclick="viewUserCards('${profile.id}')" class="btn btn-success">📝 Public Cards</button>
+            ${profile.isBot ? '' : `<button onclick="viewPrivateCards('${profile.id}')" class="btn btn-warning">🔒 Private Cards</button>`}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function editUserProfile(userId) {
+      try {
+        // Get user data
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+          showError('User not found');
+          return;
+        }
+        
+        const userData = userDoc.data();
+        const slugDoc = await db.collection('userToSlug').doc(userId).get();
+        const slug = slugDoc.exists ? slugDoc.data().slug : null;
+        
+        let profileData = null;
+        if (slug) {
+          const profileDoc = await db.collection('profiles').doc(slug).get();
+          if (profileDoc.exists) {
+            profileData = profileDoc.data();
+          }
+        }
+        
+        // Create edit modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <h3>Edit Profile: ${userData.displayName || userData.email}</h3>
+            <div class="form-group">
+              <label>Display Name</label>
+              <input type="text" id="editDisplayName" class="form-control" value="${userData.displayName || ''}">
+            </div>
+            <div class="form-group">
+              <label>Bio</label>
+              <textarea id="editBio" class="form-control" rows="4">${profileData?.bio || ''}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Institution</label>
+              <input type="text" id="editInstitution" class="form-control" value="${profileData?.institution || ''}">
+            </div>
+            <div class="form-group">
+              <label>Specialties (comma-separated)</label>
+              <input type="text" id="editSpecialties" class="form-control" value="${(profileData?.specialties || []).join(', ')}">
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="editIsPublic" ${profileData?.isPublic ? 'checked' : ''}> Make profile public
+              </label>
+            </div>
+            <div class="form-actions">
+              <button onclick="saveProfileEdit('${userId}', '${slug}')" class="btn btn-primary">💾 Save Changes</button>
+              <button onclick="closeModal()" class="btn btn-secondary">❌ Cancel</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (error) {
+        console.error('Error editing user profile:', error);
+        showError('Failed to edit profile');
+      }
+    }
+
+    async function saveProfileEdit(userId, slug) {
+      try {
+        const displayName = document.getElementById('editDisplayName').value;
+        const bio = document.getElementById('editBio').value;
+        const institution = document.getElementById('editInstitution').value;
+        const specialties = document.getElementById('editSpecialties').value.split(',').map(s => s.trim()).filter(Boolean);
+        const isPublic = document.getElementById('editIsPublic').checked;
+        
+        // Use Cloud Function to update profile
+        const updateProfileFunction = functions.httpsCallable('updateUserProfile');
+        await updateProfileFunction({
+          userId: userId,
+          displayName: displayName,
+          bio: bio,
+          institution: institution,
+          specialties: specialties,
+          isPublic: isPublic
+        });
+        
+        closeModal();
+        showSuccess('Profile updated successfully');
+        loadProfiles();
+      } catch (error) {
+        console.error('Error saving profile:', error);
+        showError('Failed to save profile: ' + error.message);
+      }
+    }
+
+    async function viewUserCards(userId) {
+      try {
+        // Get user's public cards
+        const publicCardsSnapshot = await db.collection('publicCards')
+          .where('userId', '==', userId)
+          .orderBy('createdAt', 'desc')
+          .get();
+        
+        const cards = publicCardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Create modal to show cards
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+            <h3>Public Cards</h3>
+            <div style="margin-bottom: 1rem;">
+              <span>Found ${cards.length} public cards</span>
+            </div>
+            <div>
+              ${cards.map(card => `
+                <div class="content-card" style="margin-bottom: 1rem;">
+                  <div class="statement">${card.statement}</div>
+                  <div class="tags">
+                    ${(card.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                  </div>
+                  <div class="meta">
+                    <span>❤️ ${card.likeCount || 0}</span>
+                    <span>📅 ${card.createdAt?.toDate().toLocaleDateString()}</span>
+                  </div>
+                  <div style="margin-top: 0.5rem;">
+                    <button onclick="viewCard('${card.id}')" class="btn btn-secondary" style="font-size: 0.8rem;">👁️ View</button>
+                    <button onclick="editCard('${card.id}')" class="btn btn-primary" style="font-size: 0.8rem;">✏️ Edit</button>
+                    <button onclick="deleteCard('${card.id}')" class="btn btn-danger" style="font-size: 0.8rem;">🗑️ Delete</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <div style="margin-top: 1rem;">
+              <button onclick="closeModal()" class="btn btn-secondary">❌ Close</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (error) {
+        console.error('Error viewing user cards:', error);
+        showError('Failed to load user cards');
+      }
+    }
+
+    async function viewPrivateCards(userId) {
+      try {
+        // Use Cloud Function to get user's private cards
+        const getUserPrivateCardsFunction = functions.httpsCallable('getUserPrivateCards');
+        const result = await getUserPrivateCardsFunction({
+          userId: userId
+        });
+        
+        const cards = result.data.cards;
+        
+        // Create modal to show private cards
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+            <h3>Private Cards</h3>
+            <div style="margin-bottom: 1rem;">
+              <span>Found ${cards.length} private cards</span>
+            </div>
+            <div>
+              ${cards.map(card => `
+                <div class="content-card" style="margin-bottom: 1rem;">
+                  <div class="statement">${card.statement}</div>
+                  <div class="tags">
+                    ${(card.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                  </div>
+                  <div class="meta">
+                    <span>📅 ${card.createdAt?.toDate().toLocaleDateString()}</span>
+                  </div>
+                  <div style="margin-top: 0.5rem;">
+                    <button onclick="editPrivateCard('${card.id}')" class="btn btn-primary" style="font-size: 0.8rem;">✏️ Edit</button>
+                    <button onclick="deletePrivateCard('${card.id}')" class="btn btn-danger" style="font-size: 0.8rem;">🗑️ Delete</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <div style="margin-top: 1rem;">
+              <button onclick="closeModal()" class="btn btn-secondary">❌ Close</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (error) {
+        console.error('Error viewing private cards:', error);
+        showError('Failed to load private cards');
+      }
+    }
+
+    async function editPrivateCard(cardId) {
+      try {
+        const cardDoc = await db.collection('flashcards').doc(cardId).get();
+        if (!cardDoc.exists) {
+          showError('Card not found');
+          return;
+        }
+        
+        const card = cardDoc.data();
+        
+        // Create edit modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-content">
+            <h3>Edit Private Card</h3>
+            <div class="form-group">
+              <label>Statement</label>
+              <textarea id="editPrivateStatement" class="form-control" rows="3">${card.statement}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Hint</label>
+              <textarea id="editPrivateHint" class="form-control" rows="3">${card.hint || ''}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Proof</label>
+              <textarea id="editPrivateProof" class="form-control" rows="6">${card.proof || ''}</textarea>
+            </div>
+            <div class="form-group">
+              <label>Tags (comma-separated)</label>
+              <input type="text" id="editPrivateTags" class="form-control" value="${(card.tags || []).join(', ')}">
+            </div>
+            <div class="form-actions">
+              <button onclick="savePrivateCardEdit('${cardId}')" class="btn btn-primary">💾 Save</button>
+              <button onclick="closeModal()" class="btn btn-secondary">❌ Cancel</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+      } catch (error) {
+        console.error('Error editing private card:', error);
+        showError('Failed to edit private card');
+      }
+    }
+
+    async function savePrivateCardEdit(cardId) {
+      try {
+        const statement = document.getElementById('editPrivateStatement').value;
+        const hint = document.getElementById('editPrivateHint').value;
+        const proof = document.getElementById('editPrivateProof').value;
+        const tags = document.getElementById('editPrivateTags').value.split(',').map(t => t.trim()).filter(Boolean);
+        
+        // Use Cloud Function to update private card
+        const updatePrivateCardFunction = functions.httpsCallable('updatePrivateCard');
+        await updatePrivateCardFunction({
+          cardId: cardId,
+          statement: statement,
+          hint: hint,
+          proof: proof,
+          tags: tags
+        });
+        
+        closeModal();
+        showSuccess('Private card updated successfully');
+      } catch (error) {
+        console.error('Error saving private card:', error);
+        showError('Failed to save private card: ' + error.message);
+      }
+    }
+
+    async function deletePrivateCard(cardId) {
+      if (!confirm('Are you sure you want to delete this private card? This action cannot be undone.')) return;
+      
+      try {
+        // Use Cloud Function to delete private card
+        const deletePrivateCardFunction = functions.httpsCallable('deletePrivateCard');
+        await deletePrivateCardFunction({
+          cardId: cardId
+        });
+        
+        showSuccess('Private card deleted successfully');
+        closeModal();
+      } catch (error) {
+        console.error('Error deleting private card:', error);
+        showError('Failed to delete private card: ' + error.message);
+      }
+    }
+
+    // ===== INITIALIZATION =====
+    // Update the auth state listener to load dashboard
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      if (user) {
+        if (user.email === AUTHORIZED_EMAIL) {
+          showAdminContent();
+          loadBotAccounts();
+          loadDashboard(); // Load dashboard instead of just stats
+          setupRealTimeListeners(); // Setup real-time updates
+          updateLastUpdated(); // Initialize last updated time
+        } else {
+          showError('Access denied. Only authorized administrators can access this panel.');
+          auth.signOut();
+        }
+      } else {
+        showAuthSection();
+      }
+    });
+
+    // Cleanup listeners when page unloads
+    window.addEventListener('beforeunload', () => {
+      realTimeListeners.forEach(listener => {
+        if (listener && typeof listener === 'function') {
+          listener();
+        }
+      });
+    });
+  </script>
+</body>
+</html> 

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friends - Three-Sided</title>
+  <meta name="description" content="View friends on Three-Sided.">
+  <script>
+    // Handle path-based URLs and redirect to query parameter version
+    (function handleFriendsUrl() {
+      const path = window.location.pathname;
+      const slug = path.split('/friends/')[1];
+      
+      if (slug) {
+        // Redirect to the query parameter version for backward compatibility
+        window.location.href = `/friends.html?slug=${encodeURIComponent(slug)}`;
+      } else {
+        // No slug provided, redirect to home
+        window.location.href = '/';
+      }
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html> 

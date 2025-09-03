@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://three-sided.com/sitemap.xml 

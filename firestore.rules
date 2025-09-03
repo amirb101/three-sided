@@ -1,0 +1,128 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow reading friend lists publicly, only owner can write
+    match /userFriends/{userId} {
+      allow read: if true;
+
+      match /friends/{friendId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Friend request system
+    match /friendRequests/{requestId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.from || 
+        request.auth.uid == resource.data.to
+      );
+
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.from;
+
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.from || 
+        request.auth.uid == resource.data.to
+      );
+    }
+
+    // User upvotes system (for search.html)
+    match /userUpvotes/{docId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+
+    // Guest usage tracking (for rate limiting)
+    match /guestUsage/{ip} {
+      allow read, write: if true;
+    }
+
+    // 🔐 Flashcards (private)
+    match /flashcards/{docId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+      
+      allow list: if request.auth != null;
+    }
+
+    match /profiles/{document=**} {
+      allow list: if true;
+    }
+
+    // 🔓 Public profiles by slug
+    match /profiles/{slug} {
+      allow read: if true;
+      allow write: if request.auth != null && (
+        request.auth.uid == request.resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+    }
+
+    match /userToSlug/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    match /publicCards/{cardId} {
+      allow read: if true;
+
+      allow create: if request.auth != null;
+
+      allow update: if request.auth != null && (
+        // Allow card owner to update their own cards (except likeCount/viewCount)
+        (request.auth.uid == resource.data.userId && 
+         !(("likeCount" in request.resource.data) || ("viewCount" in request.resource.data)))
+        ||
+        // Allow anyone to update likeCount and viewCount (for upvoting and view tracking)
+        (("likeCount" in request.resource.data) || ("viewCount" in request.resource.data) || ("importCount" in request.resource.data))
+      );
+      
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.userId
+    }
+
+    // 🔐 User metadata
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && (
+        request.auth.uid == uid ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+    }
+
+    // 🔐 DeepSeek usage tracking
+    match /users/{uid}/usage/{doc} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // 🔐 Admin-only collections
+    match /botAccounts/{docId} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /automatedCards/{docId} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /botLikes/{docId} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /adminSettings/{docId} {
+      allow read, write: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+  }
+}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Public Profile - Three-Sided</title>
+  <meta name="description" content="View the public profile and flashcards on Three-Sided.">
+  <script>
+    // Redirect to new path-based URL format
+    (function redirectToNewFormat() {
+      const url = new URL(window.location.href);
+      const slug = url.searchParams.get('slug');
+      
+      if (slug && slug.trim()) {
+        // Redirect to the new path-based format
+        window.location.href = `/profile/${encodeURIComponent(slug.trim())}`;
+      } else {
+        // No slug provided, redirect to home
+        window.location.href = '/';
+      }
+    })();
+  </script>
+</head>
+<body>
+  <div style="text-align: center; padding: 2rem; font-family: Arial, sans-serif;">
+    <h2>Redirecting...</h2>
+    <p>Please wait while we redirect you to the new profile format.</p>
+  </div>
+</body>
+</html>
