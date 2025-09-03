@@ -71,6 +71,7 @@
   </div>
 
   <script src="/scripts/createprofile/profileService.js"></script>
+  <script src="/scripts/main/firebaseConfig.js"></script>
   <script>
     // XSS Protection: HTML escaping function
     function escapeHtml(text) {
@@ -84,19 +85,7 @@
       return input.trim().replace(/[<>]/g, '');
     }
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
-      authDomain: "three-sided-flashcard-app.firebaseapp.com",
-      projectId: "three-sided-flashcard-app",
-      storageBucket: "three-sided-flashcard-app.appspot.com",
-      messagingSenderId: "47503676879",
-      appId: "1:47503676879:web:27fb875159cc4459a12eba",
-      measurementId: "G-PBP1G21Q29"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const { auth, db } = initializeFirebase();
     const profileService = createProfileService(db);
     
     let currentSlug = "";

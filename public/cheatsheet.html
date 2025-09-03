@@ -8,6 +8,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
+  <script src="/scripts/main/firebaseConfig.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -65,15 +66,7 @@
   </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
-      authDomain: "three-sided-flashcard-app.firebaseapp.com",
-      projectId: "three-sided-flashcard-app",
-      appId: "1:47503676879:web:27fb875159cc4459a12eba",
-      measurementId: "G-PBP1G21Q29"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const { auth, db } = initializeFirebase();
 
     auth.onAuthStateChanged((user) => {
       if (user) {
