@@ -1,7 +1,7 @@
 // Firebase configuration and initialization
 function initializeFirebase() {
   const firebaseConfig = {
-    apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
+    apiKey: "AIzaSyDQnrbvsx52ikiWELf6hc4YiXQTC1G5tpY",
     authDomain: "three-sided-flashcard-app.firebaseapp.com",
     projectId: "three-sided-flashcard-app",
     storageBucket: "three-sided-flashcard-app.firebasestorage.app",
