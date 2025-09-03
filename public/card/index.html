@@ -74,15 +74,9 @@
     </div>
   </div>
 
+  <script src="/scripts/main/firebaseConfig.js"></script>
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyBU6LsdsoOTl6stATDTyeG4hmRohN9C9h0",
-      authDomain: "three-sided-flashcard-app.firebaseapp.com",
-      projectId: "three-sided-flashcard-app"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const { auth, db } = initializeFirebase();
 
     let currentUser = null;
     let cardData = null;

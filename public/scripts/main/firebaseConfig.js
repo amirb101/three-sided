@@ -16,7 +16,7 @@ function initializeFirebase() {
   // Get Firebase services
   const auth = firebase.auth();
   const db = firebase.firestore();
-  const analytics = firebase.analytics();
+  const analytics = (firebase.analytics && typeof firebase.analytics === 'function') ? firebase.analytics() : null;
 
   return { firebase, auth, db, analytics };
 }
