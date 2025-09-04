@@ -16,12 +16,12 @@ import {
 import { db } from '../firebase';
 
 export class FlashcardService {
-  // Get flashcards for a user
+  // Get flashcards for a user (from private cards collection)
   static async getUserFlashcards(userId, resultLimit = 50) {
     try {
       const q = query(
-        collection(db, 'flashcards'),
-        where('authorId', '==', userId),
+        collection(db, 'cards'),
+        where('userId', '==', userId),
         orderBy('createdAt', 'desc'),
         limit(resultLimit)
       );
@@ -41,8 +41,7 @@ export class FlashcardService {
   static async getPublicFlashcards(resultLimit = 50) {
     try {
       const q = query(
-        collection(db, 'flashcards'),
-        where('isPublic', '==', true),
+        collection(db, 'publicCards'),
         orderBy('createdAt', 'desc'),
         limit(resultLimit)
       );
@@ -58,20 +57,44 @@ export class FlashcardService {
     }
   }
 
-  // Create a new flashcard
+  // Create a new flashcard (private first, then optionally make public)
   static async createFlashcard(flashcardData, userId) {
     try {
-      const docRef = await addDoc(collection(db, 'flashcards'), {
-        ...flashcardData,
-        authorId: userId,
+      // Create private card first
+      const cardRef = await addDoc(collection(db, 'cards'), {
+        statement: flashcardData.question || flashcardData.statement,
+        hints: flashcardData.hints || flashcardData.answer,
+        proof: flashcardData.proof || flashcardData.answer,
+        tags: flashcardData.tags || [],
+        userId: userId,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        upvotes: 0,
-        downvotes: 0,
-        isPublic: true
+        isPublic: false
       });
+
+      // If marked as public, also add to publicCards collection
+      if (flashcardData.isPublic) {
+        // Generate a simple slug from the statement
+        const slug = (flashcardData.question || flashcardData.statement)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .slice(0, 50) + '-' + Date.now();
+
+        await addDoc(collection(db, 'publicCards'), {
+          statement: flashcardData.question || flashcardData.statement,
+          hints: flashcardData.hints || flashcardData.answer,
+          proof: flashcardData.proof || flashcardData.answer,
+          tags: flashcardData.tags || [],
+          userId: userId,
+          authorSlug: userId, // This should be the user's slug, but we'll use userId for now
+          slug: slug,
+          createdAt: serverTimestamp(),
+          likeCount: 0,
+          viewCount: 0,
+          importCount: 0
+        });
+      }
       
-      return docRef.id;
+      return cardRef.id;
     } catch (error) {
       console.error('Error creating flashcard:', error);
       throw error;
@@ -81,7 +104,7 @@ export class FlashcardService {
   // Update a flashcard
   static async updateFlashcard(flashcardId, updates) {
     try {
-      const docRef = doc(db, 'flashcards', flashcardId);
+      const docRef = doc(db, 'cards', flashcardId);
       await updateDoc(docRef, {
         ...updates,
         updatedAt: serverTimestamp()
@@ -95,7 +118,7 @@ export class FlashcardService {
   // Delete a flashcard
   static async deleteFlashcard(flashcardId) {
     try {
-      const docRef = doc(db, 'flashcards', flashcardId);
+      const docRef = doc(db, 'cards', flashcardId);
       await deleteDoc(docRef);
     } catch (error) {
       console.error('Error deleting flashcard:', error);

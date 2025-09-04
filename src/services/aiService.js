@@ -1,35 +1,28 @@
+import { auth } from '../firebase';
+
 class AIService {
   static async generateHint(question, answer) {
     try {
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      // Use your existing deepseekAutofill Firebase Function
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-three-sided-flashcard-app.cloudfunctions.net/deepseekAutofill', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_DEEPSEEK_API_KEY}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a helpful math tutor. Generate a helpful hint for a flashcard that guides the student toward the answer without giving it away completely.'
-            },
-            {
-              role: 'user',
-              content: `Question: ${question}\nAnswer: ${answer}\n\nGenerate a helpful hint:`
-            }
-          ],
-          max_tokens: 150,
-          temperature: 0.7
+          statement: `Question: ${question}\nAnswer: ${answer}\n\nGenerate a helpful hint that guides the student toward the answer without giving it away completely.`
         })
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      return data.hints || 'Try breaking down the problem into smaller steps.';
     } catch (error) {
       console.error('Error generating hint:', error);
       // Fallback to a generic hint
@@ -39,35 +32,26 @@ class AIService {
 
   static async generateProof(question, answer) {
     try {
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      // Use your existing deepseekAutofill Firebase Function
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-three-sided-flashcard-app.cloudfunctions.net/deepseekAutofill', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_DEEPSEEK_API_KEY}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a math tutor. Provide a clear, step-by-step proof or solution for the given problem.'
-            },
-            {
-              role: 'user',
-              content: `Question: ${question}\nAnswer: ${answer}\n\nProvide a step-by-step proof:`
-            }
-          ],
-          max_tokens: 300,
-          temperature: 0.5
+          statement: `Question: ${question}\nAnswer: ${answer}\n\nProvide a clear, step-by-step proof or solution.`
         })
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      return data.proof || '1. Start with the given information\n2. Apply relevant mathematical principles\n3. Work through the steps systematically\n4. Verify your answer';
     } catch (error) {
       console.error('Error generating proof:', error);
       // Fallback to a generic proof structure
@@ -77,35 +61,27 @@ class AIService {
 
   static async generateSuggestions(question, answer) {
     try {
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      // Use your autoTagOnly function for suggestions
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-three-sided-flashcard-app.cloudfunctions.net/autoTagOnly', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_DEEPSEEK_API_KEY}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a math tutor. Suggest ways to improve this flashcard to make it more effective for learning.'
-            },
-            {
-              role: 'user',
-              content: `Question: ${question}\nAnswer: ${answer}\n\nSuggest improvements:`
-            }
-          ],
-          max_tokens: 200,
-          temperature: 0.7
+          statement: `Question: ${question}\nAnswer: ${answer}`
         })
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      const tags = data.tags || [];
+      return `Consider focusing on these topics: ${tags.join(', ')}. Also think about adding more context, breaking down complex steps, or including visual aids if applicable.`;
     } catch (error) {
       console.error('Error generating suggestions:', error);
       // Fallback to generic suggestions
@@ -115,35 +91,26 @@ class AIService {
 
   static async generateRelatedQuestions(question, answer) {
     try {
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      // Use your deepseekAutofill function for related questions
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-three-sided-flashcard-app.cloudfunctions.net/deepseekAutofill', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_DEEPSEEK_API_KEY}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a math tutor. Generate 2-3 related questions that would help reinforce the concepts in this flashcard.'
-            },
-            {
-              role: 'user',
-              content: `Question: ${question}\nAnswer: ${answer}\n\nGenerate related questions:`
-            }
-          ],
-          max_tokens: 250,
-          temperature: 0.7
+          statement: `Based on this flashcard - Question: ${question}\nAnswer: ${answer}\n\nGenerate 2-3 related questions that would help reinforce these concepts.`
         })
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      return data.hints || '1. What if we change the parameters?\n2. How would you solve a similar problem?\n3. What are the key concepts here?';
     } catch (error) {
       console.error('Error generating related questions:', error);
       // Fallback to generic related questions
@@ -153,35 +120,26 @@ class AIService {
 
   static async convertToLaTeX(naturalLanguage) {
     try {
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      // Use your existing convertToLatex Firebase Function
+      const token = await auth.currentUser?.getIdToken();
+      const response = await fetch('https://us-central1-three-sided-flashcard-app.cloudfunctions.net/convertToLatex', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_DEEPSEEK_API_KEY}`
+          'Authorization': token ? `Bearer ${token}` : ''
         },
         body: JSON.stringify({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a LaTeX expert. Convert natural language mathematical expressions to proper LaTeX code. Only return the LaTeX code, nothing else.'
-            },
-            {
-              role: 'user',
-              content: `Convert this to LaTeX: ${naturalLanguage}`
-            }
-          ],
-          max_tokens: 100,
-          temperature: 0.3
+          input: naturalLanguage
         })
       });
 
       if (!response.ok) {
-        throw new Error('API request failed');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'API request failed');
       }
 
       const data = await response.json();
-      return data.choices[0].message.content.trim();
+      return data.latex || naturalLanguage;
     } catch (error) {
       console.error('Error converting to LaTeX:', error);
       // Fallback to common LaTeX patterns

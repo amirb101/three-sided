@@ -1,8 +1,43 @@
 import { useState } from 'react'
+import StripeService from '../services/stripeService'
 
 const PremiumFeatures = ({ onClose, isVisible = false }) => {
   const [selectedPlan, setSelectedPlan] = useState('monthly')
   const [loading, setLoading] = useState(false)
+
+  const handleSubscribe = async (plan) => {
+    try {
+      setLoading(true)
+      
+      // Create checkout session using your Firebase Function
+      const sessionId = await StripeService.createCheckoutSession()
+      
+      // Redirect to Stripe Checkout
+      await StripeService.redirectToCheckout(sessionId)
+    } catch (error) {
+      console.error('Error creating subscription:', error)
+      alert('Failed to start subscription process. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleManageSubscription = async () => {
+    try {
+      setLoading(true)
+      
+      // Create billing portal link using your Firebase Function
+      const portalUrl = await StripeService.createPortalLink()
+      
+      // Redirect to Stripe Customer Portal
+      window.open(portalUrl, '_blank')
+    } catch (error) {
+      console.error('Error accessing subscription management:', error)
+      alert('Failed to access subscription management. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const plans = {
     monthly: {
@@ -78,30 +113,6 @@ const PremiumFeatures = ({ onClose, isVisible = false }) => {
     }
   ]
 
-  const handleSubscribe = async (plan) => {
-    setLoading(true)
-    try {
-      // In a real app, this would integrate with Stripe
-      console.log(`Subscribing to ${plan} plan`)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Show success message
-      alert(`Successfully subscribed to ${plan} plan!`)
-      onClose()
-    } catch (error) {
-      console.error('Subscription error:', error)
-      alert('Subscription failed. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleManageSubscription = () => {
-    // In a real app, this would open Stripe billing portal
-    alert('Billing portal would open here')
-  }
 
   if (!isVisible) return null
 
