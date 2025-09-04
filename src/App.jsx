@@ -3,15 +3,25 @@ import { useAuth } from './contexts/AuthContext'
 import { UserService } from './services/userService'
 import FlashcardCreator from './components/FlashcardCreator'
 import StudyMode from './components/StudyMode'
-import './App.css'
+import SearchAndDiscovery from './components/SearchAndDiscovery'
+import LeaderboardAndStats from './components/LeaderboardAndStats'
+import UserDashboard from './components/UserDashboard'
+import TagSystem from './components/TagSystem'
+import SpacedRepetition from './components/SpacedRepetition'
+import LaTeXConverter from './components/LaTeXConverter'
+import PremiumFeatures from './components/PremiumFeatures'
+import './index.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [currentMode, setCurrentMode] = useState('home') // 'home', 'create', 'study'
+  const [currentMode, setCurrentMode] = useState('home')
   const [onboardingStatus, setOnboardingStatus] = useState({
     hasProfile: false,
     hasCards: false
   })
+  const [showTagSystem, setShowTagSystem] = useState(false)
+  const [showSpacedRepetition, setShowSpacedRepetition] = useState(false)
+  const [showLaTeXConverter, setShowLaTeXConverter] = useState(false)
+  const [showPremiumFeatures, setShowPremiumFeatures] = useState(false)
   const { user, signInWithGoogle, logout } = useAuth()
 
   useEffect(() => {
@@ -30,496 +40,192 @@ function App() {
   };
 
   const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error('Error signing in:', error);
-    }
+    try { await signInWithGoogle(); } catch (error) { console.error('Error signing in:', error); }
   };
-
   const handleSignOut = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    try { await logout(); } catch (error) { console.error('Error signing out:', error); }
   };
 
   const handleChecklistClick = async (step) => {
-    if (!user) {
-      await handleSignIn();
-      return;
-    }
-
+    if (!user) { await handleSignIn(); return; }
     if (step === 'profile' && !onboardingStatus.hasProfile) {
-      // Create user profile
       try {
-        await UserService.createUserProfile(user.uid, {
-          email: user.email,
-          displayName: user.displayName,
-          photoURL: user.photoURL
-        });
+        await UserService.createUserProfile(user.uid, { email: user.email, displayName: user.displayName, photoURL: user.photoURL });
         await checkOnboardingStatus();
-      } catch (error) {
-        console.error('Error creating profile:', error);
-      }
+      } catch (error) { console.error('Error creating profile:', error); }
     }
   };
 
-  const handleCardCreated = async (cardId) => {
-    await checkOnboardingStatus();
-    setCurrentMode('home');
-  };
+  const handleCardCreated = async () => { await checkOnboardingStatus(); setCurrentMode('home'); };
 
   const renderContent = () => {
     switch (currentMode) {
-      case 'create':
-        return (
-          <FlashcardCreator 
-            onCardCreated={handleCardCreated}
-            onClose={() => setCurrentMode('home')}
-          />
-        );
-      case 'study':
-        return <StudyMode />;
-      default:
-        return renderHomeContent();
+      case 'create': return <FlashcardCreator onCardCreated={handleCardCreated} onClose={() => setCurrentMode('home')} />
+      case 'study': return <StudyMode />
+      case 'search': return <SearchAndDiscovery />
+      case 'leaderboard': return <LeaderboardAndStats />
+      case 'dashboard': return <UserDashboard />
+      default: return renderHomeContent()
     }
   };
+
+  const NavBar = () => (
+    <div className="navbar">
+      <div className="container py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src="/files/three-sided_logo.png" alt="Three-Sided" width="36" height="36" style={{borderRadius:'8px'}} />
+          <span className="text-gradient text-xl font-bold">Three‑Sided</span>
+        </div>
+        <div className="hidden sm:flex items-center gap-2">
+          <button className="btn btn-secondary" onClick={() => setCurrentMode('search')}>Search</button>
+          <button className="btn btn-secondary" onClick={() => setCurrentMode('leaderboard')}>Leaderboard</button>
+          <button className="btn btn-secondary" onClick={() => setCurrentMode('dashboard')}>Dashboard</button>
+          {user ? (
+            <button className="btn btn-primary" onClick={handleSignOut}>Sign out</button>
+          ) : (
+            <button className="btn btn-primary" onClick={handleSignIn}>Sign in</button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 
   const renderHomeContent = () => (
     <>
       {/* Hero Section */}
-      <section className="hero-section" style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        padding: '4rem 2rem',
-        textAlign: 'center'
-      }}>
-        <div className="hero-content">
-          <h1 className="hero-title" style={{fontSize: '3rem', marginBottom: '1rem'}}>Three-Sided</h1>
-          <p className="hero-subtitle" style={{fontSize: '1.2rem', marginBottom: '2rem', opacity: 0.9}}>
-            Join a community of STEM students sharing and studying flashcards together. 
-            Create, discover, and learn from thousands of user-generated cards with AI-powered assistance.
-          </p>
-          <div className="hero-cta">
-            <a href="/search.html" className="btn btn-primary" style={{
-              background: '#007bff',
-              color: 'white',
-              padding: '0.75rem 2rem',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              margin: '0 0.5rem',
-              display: 'inline-block'
-            }}>
-              🔍 Search Flashcards
-            </a>
-            <a href="/updates.html" className="btn btn-secondary" style={{
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              padding: '0.75rem 2rem',
-              borderRadius: '6px',
-              textDecoration: 'none',
-              margin: '0 0.5rem',
-              display: 'inline-block',
-              border: '2px solid rgba(255,255,255,0.3)'
-            }}>
-              📋 What's New?
-            </a>
+      <section className="hero-mesh">
+        <div className="hero-overlay"></div>
+        <div className="container py-24 text-center">
+          <div className="badge mb-4 reveal-up">React Preview</div>
+          <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight text-gradient reveal-up reveal-delay-1">Master Any Subject with Three‑Sided</h1>
+          <p className="subtle max-w-2xl mx-auto mt-5 text-lg reveal-up reveal-delay-2">Create, study, and share flashcards with AI assistance. Learn faster with spaced repetition and a community library.</p>
+          <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center reveal-up reveal-delay-3">
+            <button onClick={() => setCurrentMode('search')} className="btn btn-primary">🔍 Search Flashcards</button>
+            <button onClick={() => setCurrentMode('leaderboard')} className="btn btn-secondary">🏆 View Leaderboard</button>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <div className="main-content" style={{padding: '2rem', maxWidth: '1200px', margin: '0 auto'}}>
-        <div className="container">
-          {/* Quick Actions */}
-          {user && (
-            <div style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '12px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              marginBottom: '2rem',
-              textAlign: 'center'
-            }}>
-              <h2 style={{color: '#333', marginBottom: '1.5rem'}}>🚀 Quick Actions</h2>
-              <div style={{
-                display: 'flex',
-                gap: '1rem',
-                justifyContent: 'center',
-                flexWrap: 'wrap'
-              }}>
-                <button
-                  onClick={() => setCurrentMode('create')}
-                  style={{
-                    background: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    padding: '1rem 2rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  ✏️ Create Flashcard
-                </button>
-                <button
-                  onClick={() => setCurrentMode('study')}
-                  style={{
-                    background: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    padding: '1rem 2rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  📚 Study Mode
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Features Grid */}
-          <div className="features-grid" style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '2rem',
-            marginBottom: '3rem'
-          }}>
-            <div className="feature-card" style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '12px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <div className="feature-icon" style={{fontSize: '3rem', marginBottom: '1rem'}}>👥</div>
-              <h3 className="feature-title" style={{fontSize: '1.5rem', marginBottom: '1rem', color: '#333'}}>Community-Driven</h3>
-              <p className="feature-description" style={{color: '#666', lineHeight: '1.6'}}>Discover and share flashcards with students worldwide. Learn from the community's collective knowledge.</p>
-            </div>
-            
-            <div className="feature-card" style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '12px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <div className="feature-icon" style={{fontSize: '3rem', marginBottom: '1rem'}}>🧠</div>
-              <h3 className="feature-title" style={{fontSize: '1.5rem', marginBottom: '1rem', color: '#333'}}>AI-Powered Assistance</h3>
-              <p className="feature-description" style={{color: '#666', lineHeight: '1.6'}}>Get AI-generated hints and proofs to help you create better flashcards faster.</p>
-            </div>
-            
-            <div className="feature-card" style={{
-              background: 'white',
-              padding: '2rem',
-              borderRadius: '12px',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-              textAlign: 'center'
-            }}>
-              <a href="/latex_guide.html" style={{textDecoration: 'none', color: 'inherit'}}>
-                <div className="feature-icon" style={{fontSize: '3rem', marginBottom: '1rem'}}>📐</div>
-                <h3 className="feature-title" style={{fontSize: '1.5rem', marginBottom: '1rem', color: '#333'}}>LaTeX Support</h3>
-                <p className="feature-description" style={{color: '#666', lineHeight: '1.6'}}>Beautiful mathematical notation with full LaTeX rendering. Wrap math in <code>$ $</code> for inline or <code>$$ $$</code> for blocks.</p>
-              </a>
-            </div>
-          </div>
-
-          {/* Onboarding Checklist */}
-          <div className="section" id="onboardingSection" style={{marginTop: '2rem', marginBottom: '3rem'}}>
-            <h2 className="section-title" style={{textAlign: 'center', fontSize: '2rem', marginBottom: '2rem', color: '#333'}}>🚀 Get Started with Three-Sided</h2>
-            <p style={{textAlign: 'center', fontSize: '1.1rem', opacity: 0.9, marginBottom: '2rem', color: '#666'}}>
-              Complete these steps to join our community and start sharing flashcards!
-            </p>
-            
-            <div className="onboarding-checklist" style={{maxWidth: '600px', margin: '0 auto'}}>
-              <div 
-                className="checklist-item" 
-                onClick={() => handleChecklistClick('login')}
-                style={{
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '1rem', 
-                  marginBottom: '1rem', 
-                  background: '#fff', 
-                  borderRadius: '12px', 
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-                  cursor: 'pointer', 
-                  transition: 'all 0.2s',
-                  opacity: user ? 0.5 : 1
-                }}
-              >
-                <div className="checklist-icon" style={{
-                  width: '24px', 
-                  height: '24px', 
-                  borderRadius: '50%', 
-                  border: `2px solid ${user ? '#e2e8f0' : '#007bff'}`, 
-                  marginRight: '1rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '14px', 
-                  color: user ? '#e2e8f0' : '#007bff'
-                }}>1</div>
-                <div className="checklist-content" style={{flex: 1}}>
-                  <h3 style={{margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#333'}}>
-                    {user ? '✅ Signed in' : 'Sign in to your account'}
-                  </h3>
-                  <p style={{margin: 0, color: '#718096', fontSize: '0.9rem'}}>
-                    {user ? `Welcome, ${user.displayName || user.email}!` : 'Log in to start creating and sharing flashcards'}
-                  </p>
-                </div>
-                <div className="checklist-arrow" style={{color: '#a0aec0', fontSize: '1.2rem'}}>→</div>
-              </div>
-
-              <div 
-                className="checklist-item" 
-                onClick={() => handleChecklistClick('profile')}
-                style={{
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '1rem', 
-                  marginBottom: '1rem', 
-                  background: '#fff', 
-                  borderRadius: '12px', 
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-                  cursor: user ? 'pointer' : 'default', 
-                  transition: 'all 0.2s',
-                  opacity: onboardingStatus.hasProfile ? 0.5 : (user ? 1 : 0.5)
-                }}
-              >
-                <div className="checklist-icon" style={{
-                  width: '24px', 
-                  height: '24px', 
-                  borderRadius: '50%', 
-                  border: `2px solid ${onboardingStatus.hasProfile ? '#e2e8f0' : (user ? '#007bff' : '#e2e8f0')}`, 
-                  marginRight: '1rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '14px', 
-                  color: onboardingStatus.hasProfile ? '#e2e8f0' : (user ? '#007bff' : '#e2e8f0')
-                }}>2</div>
-                <div className="checklist-content" style={{flex: 1}}>
-                  <h3 style={{margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#333'}}>
-                    {onboardingStatus.hasProfile ? '✅ Profile created' : 'Create your public profile'}
-                  </h3>
-                  <p style={{margin: 0, color: '#718096', fontSize: '0.9rem'}}>
-                    {onboardingStatus.hasProfile ? 'Your profile is ready!' : 'Set up your profile to share with the community'}
-                  </p>
-                </div>
-                <div className="checklist-arrow" style={{color: '#a0aec0', fontSize: '1.2rem'}}>→</div>
-              </div>
-
-              <div 
-                className="checklist-item" 
-                style={{
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  padding: '1rem', 
-                  marginBottom: '1rem', 
-                  background: '#fff', 
-                  borderRadius: '12px', 
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
-                  cursor: 'default', 
-                  transition: 'all 0.2s',
-                  opacity: onboardingStatus.hasCards ? 0.5 : (onboardingStatus.hasProfile ? 1 : 0.5)
-                }}
-              >
-                <div className="checklist-icon" style={{
-                  width: '24px', 
-                  height: '24px', 
-                  borderRadius: '50%', 
-                  border: `2px solid ${onboardingStatus.hasCards ? '#e2e8f0' : (onboardingStatus.hasProfile ? '#007bff' : '#e2e8f0')}`, 
-                  marginRight: '1rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  fontSize: '14px', 
-                  color: onboardingStatus.hasCards ? '#e2e8f0' : (onboardingStatus.hasProfile ? '#007bff' : '#e2e8f0')
-                }}>3</div>
-                <div className="checklist-content" style={{flex: 1}}>
-                  <h3 style={{margin: '0 0 0.25rem 0', fontSize: '1.1rem', color: '#333'}}>
-                    {onboardingStatus.hasCards ? '✅ First card published' : 'Publish your first card'}
-                  </h3>
-                  <p style={{margin: 0, color: '#718096', fontSize: '0.9rem'}}>
-                    {onboardingStatus.hasCards ? 'You\'re sharing knowledge!' : 'Create and share a flashcard with the community'}
-                  </p>
-                </div>
-                <div className="checklist-arrow" style={{color: '#a0aec0', fontSize: '1.2rem'}}>→</div>
+      <div className="container section">
+        {/* Quick Actions */}
+        {user && (
+          <div className="card hover-lift p-8 mb-12 gradient-border">
+            <div className="p-1 rounded-2xl">
+              <h2 className="text-3xl font-bold text-gradient mb-6">🚀 Quick Actions</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button onClick={() => setCurrentMode('create')} className="btn btn-success h-auto py-5 flex-col gap-2">✏️ Create Flashcard</button>
+                <button onClick={() => setCurrentMode('study')} className="btn btn-primary h-auto py-5 flex-col gap-2">📚 Study Mode</button>
+                <button onClick={() => setCurrentMode('search')} className="btn btn-accent h-auto py-5 flex-col gap-2">🔍 Search & Discover</button>
+                <button onClick={() => setCurrentMode('dashboard')} className="btn btn-warning h-auto py-5 flex-col gap-2">🎯 My Dashboard</button>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Search Widget */}
-          <div className="section" style={{marginTop: '2rem', marginBottom: '3rem'}}>
-            <div className="search-widget" style={{
-              background: 'linear-gradient(135deg, #0066cc 0%, #004a99 100%)', 
-              borderRadius: '16px', 
-              padding: '2rem', 
-              textAlign: 'center', 
-              color: 'white', 
-              boxShadow: '0 10px 30px rgba(0, 102, 204, 0.4)'
-            }}>
-              <div className="search-icon" style={{fontSize: '3rem', marginBottom: '1rem'}}>🔍</div>
-              <h2 style={{fontSize: '1.8rem', marginBottom: '0.5rem', color: 'white'}}>
-                Looking for a specific flashcard?
-              </h2>
-              <p style={{fontSize: '1.1rem', marginBottom: '2rem', opacity: 0.95, color: 'white'}}>
-                Search our community flashcard database for exactly what you need. 
-                Find cards from thousands of STEM students worldwide.
-              </p>
-              <a 
-                href="/search.html" 
-                className="btn btn-secondary" 
-                style={{
-                  background: 'rgba(255, 255, 255, 0.2)', 
-                  color: 'white', 
-                  border: '2px solid rgba(255, 255, 255, 0.3)', 
-                  backdropFilter: 'blur(10px)', 
-                  fontWeight: 600, 
-                  padding: '0.75rem 2rem', 
-                  fontSize: '1.1rem', 
-                  borderRadius: '50px', 
-                  textDecoration: 'none', 
-                  display: 'inline-block', 
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                🔍 Search Community Flashcards
-              </a>
-            </div>
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 gap-6 mb-12 lg:grid-cols-3">
+          <div className="card hover-lift p-8 text-center reveal-up">
+            <div className="text-6xl mb-4">👥</div>
+            <h3 className="text-2xl font-bold mb-3">Community‑Driven</h3>
+            <p className="subtle">Discover and share flashcards with students worldwide. Learn from the community's collective knowledge.</p>
           </div>
-
-          {/* Authentication Section */}
-          {user ? (
-            <div className="auth-section" style={{
-              background: '#f8f9fa',
-              padding: '2rem',
-              borderRadius: '12px',
-              marginBottom: '2rem',
-              textAlign: 'center'
-            }}>
-              <h3 style={{color: '#333', marginBottom: '1rem'}}>🔐 Welcome, {user.displayName || user.email}!</h3>
-              <p style={{color: '#666', marginBottom: '1rem'}}>You're signed in and ready to create flashcards!</p>
-              <button 
-                onClick={handleSignOut}
-                style={{
-                  background: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <div className="auth-section" style={{
-              background: '#f8f9fa',
-              padding: '2rem',
-              borderRadius: '12px',
-              marginBottom: '2rem',
-              textAlign: 'center'
-            }}>
-              <h3 style={{color: '#333', marginBottom: '1rem'}}>🔐 Sign in to get started</h3>
-              <p style={{color: '#666', marginBottom: '1rem'}}>Join the Three-Sided community and start creating flashcards!</p>
-              <button 
-                onClick={handleSignIn}
-                style={{
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.75rem 2rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem'
-                }}
-              >
-                Sign in with Google
-              </button>
-            </div>
-          )}
-
-          {/* React Demo Section */}
-          <div className="section" style={{marginTop: '2rem', textAlign: 'center'}}>
-            <h2 className="section-title" style={{fontSize: '2rem', marginBottom: '1rem', color: '#333'}}>🚀 React Version - Full Featured!</h2>
-            <p style={{fontSize: '1.1rem', opacity: 0.9, marginBottom: '2rem', color: '#666'}}>
-              This React version now has working authentication, flashcard creation, and study mode!
-            </p>
-            
-            <div style={{background: '#f8f9fa', padding: '2rem', borderRadius: '12px', maxWidth: '400px', margin: '0 auto'}}>
-              <p>React Counter Demo:</p>
-              <button 
-                onClick={() => setCount(count + 1)}
-                style={{
-                  background: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '1.1rem'
-                }}
-              >
-                Count: {count}
-              </button>
-            </div>
+          <div className="card hover-lift p-8 text-center reveal-up reveal-delay-1">
+            <div className="text-6xl mb-4">🧠</div>
+            <h3 className="text-2xl font-bold mb-3">AI‑Powered Assistance</h3>
+            <p className="subtle">Get AI‑generated hints and proofs to help you create better flashcards faster.</p>
+          </div>
+          <div className="card hover-lift p-8 text-center reveal-up reveal-delay-2">
+            <div className="text-6xl mb-4">📐</div>
+            <h3 className="text-2xl font-bold mb-3">LaTeX Support</h3>
+            <p className="subtle">Beautiful mathematical notation with full LaTeX rendering. Use $...$ for inline and $$...$$ for blocks.</p>
           </div>
         </div>
+
+        {/* Onboarding - Modern Stepper */}
+        <div className="card hover-lift p-8 mb-12 reveal-up">
+          <h2 className="text-3xl font-bold text-gradient mb-2">🚀 Get Started</h2>
+          <p className="subtle mb-6">Complete these quick steps to start sharing flashcards.</p>
+          <div className="stepper">
+            <div className={`step ${user ? 'ok' : ''}`} onClick={() => handleChecklistClick('login')}>
+              <div className="step-icon">1</div>
+              <div className="step-body">
+                <div className="step-title">{user ? 'Signed in' : 'Sign in to your account'}</div>
+                <div className="step-sub">{user ? `Welcome, ${user.displayName || user.email}!` : 'Use Google sign-in to get started.'}</div>
+              </div>
+            </div>
+            <div className={`step ${onboardingStatus.hasProfile ? 'ok' : ''}`} onClick={user && !onboardingStatus.hasProfile ? () => handleChecklistClick('profile') : undefined}>
+              <div className="step-icon">2</div>
+              <div className="step-body">
+                <div className="step-title">{onboardingStatus.hasProfile ? 'Profile created' : 'Create your public profile'}</div>
+                <div className="step-sub">{onboardingStatus.hasProfile ? 'Your profile is ready.' : 'Set a display name and avatar.'}</div>
+              </div>
+            </div>
+            <div className={`step ${onboardingStatus.hasCards ? 'ok' : ''}`}>
+              <div className="step-icon">3</div>
+              <div className="step-body">
+                <div className="step-title">{onboardingStatus.hasCards ? 'First card published' : 'Publish your first card'}</div>
+                <div className="step-sub">{onboardingStatus.hasCards ? 'Nice work!' : 'Create a flashcard and share it publicly.'}</div>
+              </div>
+            </div>
+          </div>
+          {!onboardingStatus.hasCards && (
+            <div className="text-center mt-4">
+              <button onClick={() => setCurrentMode('create')} className="btn btn-primary">✏️ Create your first card</button>
+            </div>
+          )}
+        </div>
+
+        {/* Search CTA */}
+        <div className="card hover-lift p-12 mb-12 text-center reveal-up" style={{background:'linear-gradient(135deg, rgba(37,99,235,0.18), rgba(124,58,237,0.18))'}}>
+          <div className="text-6xl mb-4">🔍</div>
+          <h2 className="text-3xl font-bold mb-3">Looking for a specific flashcard?</h2>
+          <p className="subtle mb-6">Search our community flashcard database for exactly what you need. Find cards from thousands of STEM students worldwide.</p>
+          <button onClick={() => setCurrentMode('search')} className="btn btn-secondary">🔎 Search Community Flashcards</button>
+        </div>
+
+        {/* Minimal Footer */}
+        <footer className="reveal-up" style={{marginTop:'2rem'}}>
+          <div className="container" style={{padding:'2rem 0', borderTop:'1px solid rgba(255,255,255,0.08)'}}>
+            <div className="subtle" style={{display:'flex', flexWrap:'wrap', gap:'1rem', justifyContent:'space-between', alignItems:'center'}}>
+              <div>© {new Date().getFullYear()} Three‑Sided</div>
+              <div style={{display:'flex', gap:'1rem'}}>
+                <a className="subtle" href="mailto:amirbattye@gmail.com">Contact</a>
+                <a className="subtle" href="/latex_guide.html" target="_blank" rel="noreferrer">LaTeX Guide</a>
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   );
 
   return (
-    <div className="App" style={{fontFamily: 'Arial, sans-serif', lineHeight: '1.6'}}>
-      {/* Navigation */}
-      {currentMode !== 'home' && (
-        <div style={{
-          background: 'white',
-          padding: '1rem 2rem',
-          borderBottom: '1px solid #e9ecef',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <button
-            onClick={() => setCurrentMode('home')}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.2rem',
-              cursor: 'pointer',
-              color: '#007bff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            ← Back to Home
-          </button>
-          <h1 style={{margin: 0, color: '#333'}}>
-            {currentMode === 'create' ? '✏️ Create Flashcard' : '📚 Study Mode'}
-          </h1>
-          <div style={{width: '100px'}}></div> {/* Spacer for centering */}
+    <div className="min-h-screen">
+      {currentMode === 'home' ? <NavBar /> : (
+        <div className="navbar">
+          <div className="container py-3 flex items-center justify-between">
+            <button onClick={() => setCurrentMode('home')} className="btn btn-secondary">← Back to Home</button>
+            <h1 className="text-gradient text-xl font-bold">
+              {currentMode === 'create' && '✏️ Create Flashcard'}
+              {currentMode === 'study' && '📚 Study Mode'}
+              {currentMode === 'search' && '🔍 Search & Discovery'}
+              {currentMode === 'leaderboard' && '🏆 Leaderboard & Stats'}
+              {currentMode === 'dashboard' && '🎯 My Dashboard'}
+            </h1>
+            <div style={{width:'90px'}}></div>
+          </div>
         </div>
       )}
-
-      {/* Main Content */}
       {renderContent()}
+      {/* Modals */}
+      <TagSystem isVisible={showTagSystem} onClose={() => setShowTagSystem(false)} selectedTags={[]} onTagsChange={() => {}} />
+      <SpacedRepetition isVisible={showSpacedRepetition} onClose={() => setShowSpacedRepetition(false)} />
+      <LaTeXConverter isVisible={showLaTeXConverter} onClose={() => setShowLaTeXConverter(false)} />
+      <PremiumFeatures isVisible={showPremiumFeatures} onClose={() => setShowPremiumFeatures(false)} />
     </div>
   )
 }
 
 export default App
+

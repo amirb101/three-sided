@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FlashcardService } from '../services/flashcardService';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -9,6 +9,7 @@ const StudyMode = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const touchStartX = useRef(null);
 
   useEffect(() => {
     if (user) {
@@ -19,7 +20,15 @@ const StudyMode = () => {
   const loadFlashcards = async () => {
     try {
       setIsLoading(true);
-      const cards = await FlashcardService.getPublicFlashcards(50);
+      // Prefer user's own cards first, then public
+      let cards = [];
+      try {
+        const mine = await FlashcardService.getUserFlashcards(user.uid, 50);
+        cards = mine;
+      } catch {}
+      if (!cards.length) {
+        cards = await FlashcardService.getPublicFlashcards(50);
+      }
       setFlashcards(cards);
     } catch (error) {
       setError('Failed to load flashcards');
@@ -50,6 +59,27 @@ const StudyMode = () => {
 
   const flipCard = () => {
     setIsFlipped(!isFlipped);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowRight') nextCard();
+      if (e.key === 'ArrowLeft') prevCard();
+      if (e.key === ' ') { e.preventDefault(); flipCard(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [currentIndex, flashcards.length, isFlipped]);
+
+  // Swipe navigation
+  const onTouchStart = (e) => { touchStartX.current = e.changedTouches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx > 40) prevCard();
+    else if (dx < -40) nextCard();
+    touchStartX.current = null;
   };
 
   if (!user) {
@@ -155,6 +185,8 @@ const StudyMode = () => {
       {/* Flashcard Display */}
       <div
         onClick={flipCard}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
         style={{
           background: 'white',
           border: '2px solid #e9ecef',
@@ -167,7 +199,7 @@ const StudyMode = () => {
           justifyContent: 'center',
           alignItems: 'center',
           cursor: 'pointer',
-          transition: 'all 0.3s ease',
+          transition: 'transform 0.35s ease, box-shadow 0.35s ease',
           boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
           transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
         }}
@@ -286,7 +318,6 @@ const StudyMode = () => {
           alignItems: 'center'
         }}>
           <span>Subject: {currentCard.subject || 'Not specified'}</span>
-          <span>Difficulty: {currentCard.difficulty || 'Not specified'}</span>
           <span>By: {currentCard.authorId || 'Unknown'}</span>
         </div>
       </div>

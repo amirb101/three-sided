@@ -8,7 +8,8 @@ import {
   query,
   where,
   getDocs,
-  limit
+  limit,
+  orderBy
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -79,10 +80,20 @@ export class UserService {
       const flashcardsSnapshot = await getDocs(flashcardsQuery);
       const flashcardCount = flashcardsSnapshot.size;
 
+      // Simulate some achievements based on activity
+      const achievements = [];
+      if (flashcardCount > 0) achievements.push('first_card');
+      if (flashcardCount >= 10) achievements.push('ten_cards');
+      if (flashcardCount >= 100) achievements.push('hundred_cards');
+      if (profile.upvotes > 50) achievements.push('popular_creator');
+
       return {
         ...profile,
         flashcardCount,
-        // Add more stats as needed
+        achievements,
+        studySessions: Math.floor(Math.random() * 20) + 1, // Simulated for now
+        followers: Math.floor(Math.random() * 100), // Simulated for now
+        rating: (Math.random() * 2 + 3).toFixed(1) // Simulated 3-5 rating
       };
     } catch (error) {
       console.error('Error fetching user stats:', error);
@@ -113,6 +124,69 @@ export class UserService {
     } catch (error) {
       console.error('Error checking onboarding status:', error);
       throw error;
+    }
+  }
+
+  // Get top users for leaderboard
+  static async getTopUsers(resultLimit = 20, timeframe = 'allTime') {
+    try {
+      // Basic leaderboard by flashcardCount then upvotes
+      const q = query(
+        collection(db, 'users'),
+        orderBy('flashcardCount', 'desc'),
+        orderBy('upvotes', 'desc'),
+        limit(resultLimit)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    } catch (error) {
+      console.error('Error fetching top users:', error);
+      return [];
+    }
+  }
+
+  // Get study history for a user
+  static async getStudyHistory(userId) {
+    try {
+      // For now, we'll simulate study history
+      // In production, you'd have a separate study_sessions collection
+      const mockHistory = [
+        {
+          date: '2024-01-15',
+          duration: 45,
+          cardsStudied: 12,
+          accuracy: 85
+        },
+        {
+          date: '2024-01-14',
+          duration: 30,
+          cardsStudied: 8,
+          accuracy: 92
+        },
+        {
+          date: '2024-01-13',
+          duration: 60,
+          cardsStudied: 20,
+          accuracy: 78
+        },
+        {
+          date: '2024-01-12',
+          duration: 25,
+          cardsStudied: 6,
+          accuracy: 95
+        },
+        {
+          date: '2024-01-11',
+          duration: 40,
+          cardsStudied: 15,
+          accuracy: 88
+        }
+      ];
+
+      return mockHistory;
+    } catch (error) {
+      console.error('Error fetching study history:', error);
+      return [];
     }
   }
 }

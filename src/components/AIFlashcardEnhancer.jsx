@@ -1,435 +1,121 @@
 import { useState } from 'react';
-import { aiService } from '../services/aiService';
+import AIService from '../services/aiService';
 
 const AIFlashcardEnhancer = ({ question, answer, subject, onEnhancementComplete }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [enhancements, setEnhancements] = useState(null);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('hint');
+  const [activeTab, setActiveTab] = useState('hints');
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState({
+    hints: '',
+    proof: '',
+    suggestions: '',
+    relatedQuestions: ''
+  });
 
-  const generateEnhancement = async (type) => {
-    setIsLoading(true);
-    setError('');
-    setActiveTab(type);
-
+  const generateContent = async (type) => {
+    if (!question || !answer) return;
+    
+    setLoading(true);
     try {
-      let result;
+      let result = '';
+      
       switch (type) {
-        case 'hint':
-          result = await aiService.generateHint(question, answer, subject);
+        case 'hints':
+          result = await AIService.generateHint(question, answer);
           break;
         case 'proof':
-          result = await aiService.generateProof(question, answer, subject);
+          result = await AIService.generateProof(question, answer);
           break;
         case 'suggestions':
-          result = await aiService.suggestImprovements(question, answer, subject);
+          result = await AIService.generateSuggestions(question, answer);
           break;
-        case 'related':
-          result = await aiService.generateRelatedQuestions(question, answer, subject);
+        case 'relatedQuestions':
+          result = await AIService.generateRelatedQuestions(question, answer);
           break;
         default:
-          throw new Error('Invalid enhancement type');
+          break;
       }
-
-      setEnhancements(prev => ({
+      
+      setResults(prev => ({
         ...prev,
         [type]: result
       }));
-
+      
       if (onEnhancementComplete) {
         onEnhancementComplete(type, result);
       }
     } catch (error) {
       console.error(`Error generating ${type}:`, error);
-      
-      // Use fallback methods
-      let fallbackResult;
-      switch (type) {
-        case 'hint':
-          fallbackResult = aiService.generateFallbackHint(question, answer, subject);
-          break;
-        case 'proof':
-          fallbackResult = aiService.generateFallbackProof(question, answer, subject);
-          break;
-        case 'suggestions':
-          fallbackResult = aiService.generateFallbackSuggestions(question, answer, subject);
-          break;
-        case 'related':
-          fallbackResult = aiService.generateFallbackRelatedQuestions(question, answer, subject);
-          break;
-      }
-
-      setEnhancements(prev => ({
+      setResults(prev => ({
         ...prev,
-        [type]: fallbackResult
+        [type]: `Error generating ${type}. Please try again.`
       }));
-
-      setError(`AI service unavailable. Using fallback ${type}.`);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const generateAllEnhancements = async () => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const [hint, proof, suggestions, related] = await Promise.all([
-        aiService.generateHint(question, answer, subject).catch(() => aiService.generateFallbackHint(question, answer, subject)),
-        aiService.generateProof(question, answer, subject).catch(() => aiService.generateFallbackProof(question, answer, subject)),
-        aiService.suggestImprovements(question, answer, subject).catch(() => aiService.generateFallbackSuggestions(question, answer, subject)),
-        aiService.generateRelatedQuestions(question, answer, subject).catch(() => aiService.generateFallbackRelatedQuestions(question, answer, subject))
-      ]);
-
-      const allEnhancements = { hint, proof, suggestions, related };
-      setEnhancements(allEnhancements);
-
-      if (onEnhancementComplete) {
-        Object.entries(allEnhancements).forEach(([type, result]) => {
-          onEnhancementComplete(type, result);
-        });
-      }
-    } catch (error) {
-      console.error('Error generating all enhancements:', error);
-      setError('Failed to generate enhancements. Please try individual options.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-      // Could add a toast notification here
-      console.log('Copied to clipboard');
-    });
-  };
+  const tabs = [
+    { id: 'hints', label: 'Hints', icon: '💡' },
+    { id: 'proof', label: 'Proof', icon: '📝' },
+    { id: 'suggestions', label: 'Suggestions', icon: '💡' },
+    { id: 'relatedQuestions', label: 'Related Questions', icon: '❓' }
+  ];
 
   return (
-    <div style={{
-      background: 'white',
-      padding: '2rem',
-      borderRadius: '12px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-      maxWidth: '800px',
-      margin: '0 auto'
-    }}>
-      <div style={{
-        textAlign: 'center',
-        marginBottom: '2rem'
-      }}>
-        <h2 style={{color: '#333', marginBottom: '1rem'}}>🤖 AI Flashcard Enhancer</h2>
-        <p style={{color: '#666', marginBottom: '1.5rem'}}>
-          Use AI to enhance your flashcard with hints, proofs, and suggestions
-        </p>
-        
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
+    <div className="card p-6">
+      <h3 className="text-xl font-bold text-neutral-800 mb-4">🤖 AI Enhancement</h3>
+      
+      {/* Tab Navigation */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {tabs.map(tab => (
           <button
-            onClick={() => generateEnhancement('hint')}
-            disabled={isLoading}
-            style={{
-              background: '#28a745',
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.9rem'
-            }}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+              activeTab === tab.id
+                ? 'bg-primary-100 text-primary-800 border-2 border-primary-300'
+                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border-2 border-transparent'
+            }`}
           >
-            💡 Generate Hint
+            {tab.icon} {tab.label}
           </button>
-          
-          <button
-            onClick={() => generateEnhancement('proof')}
-            disabled={isLoading}
-            style={{
-              background: '#007bff',
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.9rem'
-            }}
-          >
-            📝 Generate Proof
-          </button>
-          
-          <button
-            onClick={() => generateEnhancement('suggestions')}
-            disabled={isLoading}
-            style={{
-              background: '#ffc107',
-              color: '#333',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.9rem'
-            }}
-          >
-            💡 Get Suggestions
-          </button>
-          
-          <button
-            onClick={() => generateEnhancement('related')}
-            disabled={isLoading}
-            style={{
-              background: '#6f42c1',
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.9rem'
-            }}
-          >
-            🔗 Related Questions
-          </button>
-          
-          <button
-            onClick={generateAllEnhancements}
-            disabled={isLoading}
-            style={{
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '6px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '0.9rem'
-            }}
-          >
-            🚀 Generate All
-          </button>
-        </div>
+        ))}
       </div>
 
-      {error && (
-        <div style={{
-          background: '#f8d7da',
-          color: '#721c24',
-          padding: '1rem',
-          borderRadius: '6px',
-          marginBottom: '1rem',
-          textAlign: 'center'
-        }}>
-          {error}
-        </div>
-      )}
+      {/* Content Area */}
+      <div className="space-y-4">
+        {/* Generate Button */}
+        <button
+          onClick={() => generateContent(activeTab)}
+          disabled={loading || !question || !answer}
+          className="btn btn-primary w-full"
+        >
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Generating {activeTab}...
+            </div>
+          ) : (
+            `Generate ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`
+          )}
+        </button>
 
-      {isLoading && (
-        <div style={{
-          textAlign: 'center',
-          padding: '2rem',
-          color: '#666'
-        }}>
-          <div style={{fontSize: '2rem', marginBottom: '1rem'}}>🤖</div>
-          <p>AI is thinking...</p>
-        </div>
-      )}
-
-      {enhancements && !isLoading && (
-        <div style={{marginTop: '2rem'}}>
-          {/* Tab Navigation */}
-          <div style={{
-            display: 'flex',
-            borderBottom: '1px solid #e9ecef',
-            marginBottom: '1.5rem'
-          }}>
-            {Object.keys(enhancements).map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveTab(type)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: '1rem 1.5rem',
-                  cursor: 'pointer',
-                  borderBottom: activeTab === type ? '2px solid #007bff' : 'none',
-                  color: activeTab === type ? '#007bff' : '#666',
-                  fontWeight: activeTab === type ? '600' : '400'
-                }}
-              >
-                {type === 'hint' && '💡 Hint'}
-                {type === 'proof' && '📝 Proof'}
-                {type === 'suggestions' && '💡 Suggestions'}
-                {type === 'related' && '🔗 Related Questions'}
-              </button>
-            ))}
+        {/* Results Display */}
+        {results[activeTab] && (
+          <div className="bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+            <h4 className="font-semibold text-neutral-800 mb-2">
+              {tabs.find(tab => tab.id === activeTab)?.label}
+            </h4>
+            <div className="text-neutral-700 whitespace-pre-wrap">
+              {results[activeTab]}
+            </div>
           </div>
+        )}
 
-          {/* Tab Content */}
-          <div style={{minHeight: '200px'}}>
-            {activeTab === 'hint' && enhancements.hint && (
-              <div>
-                <h3 style={{color: '#333', marginBottom: '1rem'}}>AI-Generated Hint</h3>
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  position: 'relative'
-                }}>
-                  <p style={{color: '#333', lineHeight: '1.6', margin: 0}}>
-                    {enhancements.hint}
-                  </p>
-                  <button
-                    onClick={() => copyToClipboard(enhancements.hint)}
-                    style={{
-                      position: 'absolute',
-                      top: '0.5rem',
-                      right: '0.5rem',
-                      background: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'proof' && enhancements.proof && (
-              <div>
-                <h3 style={{color: '#333', marginBottom: '1rem'}}>AI-Generated Proof</h3>
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  position: 'relative'
-                }}>
-                  <p style={{color: '#333', lineHeight: '1.6', margin: 0}}>
-                    {enhancements.proof}
-                  </p>
-                  <button
-                    onClick={() => copyToClipboard(enhancements.proof)}
-                    style={{
-                      position: 'absolute',
-                      top: '0.5rem',
-                      right: '0.5rem',
-                      background: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'suggestions' && enhancements.suggestions && (
-              <div>
-                <h3 style={{color: '#333', marginBottom: '1rem'}}>AI-Generated Suggestions</h3>
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  position: 'relative'
-                }}>
-                  {Array.isArray(enhancements.suggestions) ? (
-                    <ul style={{color: '#333', lineHeight: '1.6', margin: 0, paddingLeft: '1.5rem'}}>
-                      {enhancements.suggestions.map((suggestion, index) => (
-                        <li key={index} style={{marginBottom: '0.5rem'}}>{suggestion}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p style={{color: '#333', lineHeight: '1.6', margin: 0}}>
-                      {enhancements.suggestions}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => copyToClipboard(Array.isArray(enhancements.suggestions) ? enhancements.suggestions.join('\n') : enhancements.suggestions)}
-                    style={{
-                      position: 'absolute',
-                      top: '0.5rem',
-                      right: '0.5rem',
-                      background: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'related' && enhancements.related && (
-              <div>
-                <h3 style={{color: '#333', marginBottom: '1rem'}}>AI-Generated Related Questions</h3>
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  position: 'relative'
-                }}>
-                  {Array.isArray(enhancements.related) ? (
-                    <ol style={{color: '#333', lineHeight: '1.6', margin: 0, paddingLeft: '1.5rem'}}>
-                      {enhancements.related.map((question, index) => (
-                        <li key={index} style={{marginBottom: '0.5rem'}}>{question}</li>
-                      ))}
-                    </ol>
-                  ) : (
-                    <p style={{color: '#333', lineHeight: '1.6', margin: 0}}>
-                      {enhancements.related}
-                    </p>
-                  )}
-                  <button
-                    onClick={() => copyToClipboard(Array.isArray(enhancements.related) ? enhancements.related.join('\n') : enhancements.related)}
-                    style={{
-                      position: 'absolute',
-                      top: '0.5rem',
-                      right: '0.5rem',
-                      background: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Instructions */}
+        <div className="text-sm text-neutral-600 bg-blue-50 p-3 rounded-lg">
+          <strong>💡 Tip:</strong> Use AI enhancement to improve your flashcards with better hints, proofs, and suggestions.
         </div>
-      )}
-
-      <div style={{
-        marginTop: '2rem',
-        padding: '1rem',
-        background: '#f8f9fa',
-        borderRadius: '8px',
-        fontSize: '0.9rem',
-        color: '#666',
-        textAlign: 'center'
-      }}>
-        <p style={{margin: 0}}>
-          💡 <strong>Tip:</strong> Use these AI enhancements to make your flashcards more effective for learning!
-        </p>
       </div>
     </div>
   );
