@@ -3,8 +3,12 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* Import Tailwind CSS */
+/* CSS linter: Tailwind directives are processed by PostCSS during build */
+/* postcss-disable-next-line */
 @tailwind base;
+/* postcss-disable-next-line */
 @tailwind components;
+/* postcss-disable-next-line */
 @tailwind utilities;
 
 /* Base Reset and Variables */

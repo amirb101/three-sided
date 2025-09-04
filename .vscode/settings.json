@@ -1,5 +1,16 @@
 {
-    "files.associations": {
-        "*.rules": "cpp"
-    }
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "css.customData": [
+    ".vscode/tailwind.json"
+  ],
+  "postcss.validate": false,
+  "tailwindCSS.includeLanguages": {
+    "plaintext": "html"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    "class[Name]*\\s*[:=]\\s*[\"']([^\"']*)[\"']",
+    "className\\s*[:=]\\s*[\"']([^\"']*)[\"']"
+  ]
 }
