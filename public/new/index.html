@@ -5,8 +5,26 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Three-Sided - React Version</title>
-    <script type="module" crossorigin src="/new/assets/index.DW3IC6QB.js"></script>
-    <link rel="stylesheet" crossorigin href="/new/assets/index.nMqoNGML.css">
+    
+    <!-- MathJax Configuration -->
+    <script>
+      window.MathJax = {
+        tex: { 
+          inlineMath: [['\\(', '\\)'], ['$', '$']], 
+          displayMath: [['\\[', '\\]'], ['$$', '$$']]
+        },
+        svg: { fontCache: 'global' },
+        startup: {
+          ready: () => {
+            MathJax.startup.defaultReady();
+            window.MathJaxReady = true;
+          }
+        }
+      };
+    </script>
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="module" crossorigin src="/new/assets/index.DJyO91OC.js"></script>
+    <link rel="stylesheet" crossorigin href="/new/assets/index.CSzG7gc-.css">
   </head>
   <body>
     <div id="root"></div>

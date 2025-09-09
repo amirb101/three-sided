@@ -232,3 +232,49 @@
       margin: 1rem 0;
       border-left: 4px solid #0066cc;
     }
+
+    /* Enhanced SEO page styles */
+    .share-btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
+    }
+
+    .share-btn:hover {
+      background: #5a67d8;
+      color: white;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tag {
+      background: #e2e8f0;
+      color: #2d3748;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      text-decoration: none;
+    }
+
+    .tag:hover {
+      background: #cbd5e0;
+    }
+
+    .card-meta {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 1rem;
+    }
+
+    .card-meta span {
+      margin-right: 0.5rem;
+    }
