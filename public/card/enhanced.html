@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Basic SEO -->
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{DESCRIPTION}}">
+  <link rel="canonical" href="{{CANONICAL_URL}}">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="{{CANONICAL_URL}}">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:image" content="{{OG_IMAGE_URL}}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{IMAGE_ALT}}">
+  <meta property="og:site_name" content="Three-Sided Flashcards">
+  <meta property="article:author" content="{{AUTHOR}}">
+  <meta property="article:published_time" content="{{PUBLISHED_TIME}}">
+  <meta property="article:section" content="Education">
+  <meta property="article:tag" content="{{TAGS}}">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="{{CANONICAL_URL}}">
+  <meta name="twitter:title" content="{{TITLE}}">
+  <meta name="twitter:description" content="{{DESCRIPTION}}">
+  <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
+  <meta name="twitter:image:alt" content="{{IMAGE_ALT}}">
+  <meta name="twitter:site" content="@ThreeSidedApp">
+  <meta name="twitter:creator" content="@ThreeSidedApp">
+  
+  <!-- Schema.org structured data for Google -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "{{TITLE}}",
+    "description": "{{DESCRIPTION}}",
+    "image": {
+      "@type": "ImageObject",
+      "url": "{{OG_IMAGE_URL}}",
+      "width": 1200,
+      "height": 630,
+      "caption": "{{IMAGE_ALT}}"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "{{AUTHOR}}",
+      "url": "{{AUTHOR_URL}}"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Three-Sided Flashcards",
+      "url": "https://three-sided.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://three-sided.com/icon-192x192.png"
+      }
+    },
+    "datePublished": "{{PUBLISHED_TIME}}",
+    "dateModified": "{{MODIFIED_TIME}}",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "{{CANONICAL_URL}}"
+    },
+    "keywords": "{{KEYWORDS}}",
+    "articleSection": "Education",
+    "educationalLevel": "University",
+    "learningResourceType": "Flashcard",
+    "about": {
+      "@type": "Thing",
+      "name": "Mathematics Education"
+    }
+  }
+  </script>
+  
+  <!-- Additional meta tags for better indexing -->
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#667eea">
+  <meta name="msapplication-TileColor" content="#667eea">
+  
+  <!-- Educational content specific meta -->
+  <meta name="education-level" content="university">
+  <meta name="subject" content="mathematics">
+  <meta name="content-type" content="flashcard">
+  <meta name="difficulty" content="{{DIFFICULTY}}">
+  
+  <!-- Firebase and MathJax -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles/card.css">
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="{{OG_IMAGE_URL}}" as="image">
+</head>
+<body>
+  <!-- Rich snippet breadcrumbs -->
+  <nav aria-label="Breadcrumb" style="padding: 1rem;">
+    <ol itemscope itemtype="https://schema.org/BreadcrumbList" style="display: flex; gap: 0.5rem; list-style: none; margin: 0; padding: 0;">
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="https://three-sided.com">
+          <span itemprop="name">Home</span>
+        </a>
+        <meta itemprop="position" content="1" />
+      </li>
+      <li> → </li>
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="https://three-sided.com/search.html">
+          <span itemprop="name">Flashcards</span>
+        </a>
+        <meta itemprop="position" content="2" />
+      </li>
+      <li> → </li>
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span itemprop="name">{{CARD_TITLE}}</span>
+        <meta itemprop="position" content="3" />
+      </li>
+    </ol>
+  </nav>
+
+  <main>
+    <article itemscope itemtype="https://schema.org/Article">
+      <div class="container">
+        <div class="flashcard">
+          <header class="card-header">
+            <h1 itemprop="headline" class="card-title">{{CARD_TITLE}}</h1>
+            <p class="card-subtitle">Review and import this flashcard to your collection</p>
+            
+            <!-- Article metadata -->
+            <div class="card-meta" style="margin-top: 1rem; font-size: 0.9em; color: #666;">
+              <span>By <span itemprop="author">{{AUTHOR}}</span></span>
+              <span>•</span>
+              <time itemprop="datePublished" datetime="{{PUBLISHED_TIME}}">{{PUBLISHED_DATE}}</time>
+              <span>•</span>
+              <span>{{VIEW_COUNT}} views</span>
+              <span>•</span>
+              <span>{{LIKE_COUNT}} likes</span>
+            </div>
+            
+            <!-- Tags -->
+            {{#if TAGS}}
+            <div class="tags" style="margin-top: 1rem;">
+              {{#each TAGS}}
+              <span itemprop="keywords" class="tag">{{this}}</span>
+              {{/each}}
+            </div>
+            {{/if}}
+          </header>
+
+          <div class="section">
+            <div itemprop="text" class="section-content" id="statement">{{STATEMENT}}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">Hint</div>
+            <div class="section-content" id="hints">{{HINTS}}</div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">Proof</div>
+            <div class="section-content" id="proof">{{PROOF}}</div>
+          </div>
+
+          <button class="import-button" onclick="saveCard()" id="importBtn">
+            Import to My Account
+          </button>
+          
+          <!-- Social sharing -->
+          <div class="sharing" style="margin-top: 2rem; text-align: center;">
+            <h3>Share this flashcard:</h3>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+              <a href="https://twitter.com/intent/tweet?url={{CANONICAL_URL}}&text={{SHARE_TEXT}}" 
+                 target="_blank" rel="noopener" class="share-btn">
+                📱 Twitter
+              </a>
+              <a href="https://www.facebook.com/sharer/sharer.php?u={{CANONICAL_URL}}" 
+                 target="_blank" rel="noopener" class="share-btn">
+                📘 Facebook
+              </a>
+              <a href="https://www.linkedin.com/sharing/share-offsite/?url={{CANONICAL_URL}}" 
+                 target="_blank" rel="noopener" class="share-btn">
+                💼 LinkedIn
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Related content for better SEO -->
+  <aside style="margin-top: 3rem; padding: 2rem; background: #f8f9fa;">
+    <h2>Related Flashcards</h2>
+    <div id="related-cards">
+      <!-- Will be populated by JavaScript -->
+    </div>
+  </aside>
+
+  <script src="/scripts/main/firebaseConfig.js"></script>
+  <script>
+    // Enhanced card functionality with analytics tracking
+    const { auth, db } = initializeFirebase();
+    let currentUser = null;
+    let cardData = null;
+    let cardId = null;
+
+    auth.onAuthStateChanged(user => currentUser = user);
+
+    // Track page view for analytics
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'page_view', {
+        page_title: document.title,
+        page_location: window.location.href,
+        content_group1: 'Flashcard'
+      });
+    }
+
+    // Enhanced notification system
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.classList.add('show'), 100);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+
+    async function loadCard() {
+      const path = window.location.pathname;
+      const slug = path.split('/card/')[1];
+      if (!slug) {
+        showNotification("Missing card slug.", 'error');
+        return;
+      }
+
+      try {
+        const docRef = db.collection("publicCards").doc(slug);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          showNotification("Card not found.", 'error');
+          return;
+        }
+
+        cardData = doc.data();
+        cardId = doc.id;
+
+        // Track view
+        await docRef.update({
+          viewCount: firebase.firestore.FieldValue.increment(1)
+        });
+
+        // Render MathJax
+        MathJax.typesetPromise();
+        
+        // Load related cards
+        loadRelatedCards(cardData.tags || []);
+
+      } catch (error) {
+        showNotification("Error loading card.", 'error');
+        console.error("Error loading card:", error);
+      }
+    }
+
+    async function loadRelatedCards(tags) {
+      if (!tags.length) return;
+      
+      try {
+        // Find cards with similar tags
+        const relatedQuery = db.collection("publicCards")
+          .where("tags", "array-contains-any", tags.slice(0, 3))
+          .limit(3);
+        
+        const snapshot = await relatedQuery.get();
+        const relatedContainer = document.getElementById('related-cards');
+        
+        if (snapshot.empty) {
+          relatedContainer.innerHTML = '<p>No related cards found.</p>';
+          return;
+        }
+        
+        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">';
+        
+        snapshot.docs.forEach(doc => {
+          if (doc.id !== cardId) { // Don't show current card
+            const data = doc.data();
+            html += `
+              <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px;">
+                <h4><a href="/card/${doc.id}" style="text-decoration: none; color: #667eea;">${data.statement?.substring(0, 80)}...</a></h4>
+                <p style="font-size: 0.9em; color: #666;">by ${data.authorSlug || 'Anonymous'}</p>
+                <p style="font-size: 0.8em;">${data.viewCount || 0} views • ${data.likeCount || 0} likes</p>
+              </div>
+            `;
+          }
+        });
+        
+        html += '</div>';
+        relatedContainer.innerHTML = html;
+        
+      } catch (error) {
+        console.error('Error loading related cards:', error);
+      }
+    }
+
+    async function saveCard() {
+      if (!currentUser) {
+        window.location.href = "/index.html";
+        return;
+      }
+      if (!cardData) {
+        showNotification("Card not loaded.", 'error');
+        return;
+      }
+
+      const importBtn = document.getElementById('importBtn');
+      const originalText = importBtn.textContent;
+      
+      // Show loading state
+      importBtn.disabled = true;
+      importBtn.innerHTML = '<span class="loading-spinner"></span>Importing...';
+
+      try {
+        await db.collection("flashcards").add({
+          userId: currentUser.uid,
+          statement: cardData.statement,
+          hints: cardData.hints,
+          proof: cardData.proof,
+          tags: cardData.tags || [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update import count
+        await db.collection("publicCards").doc(cardId).update({
+          importCount: firebase.firestore.FieldValue.increment(1)
+        });
+
+        showNotification("Flashcard saved to your account!");
+        importBtn.textContent = "✓ Imported";
+        
+        // Track conversion
+        if (typeof gtag !== 'undefined') {
+          gtag('event', 'conversion', {
+            send_to: 'AW-CONVERSION_ID/CONVERSION_LABEL', // Replace with actual conversion tracking
+            value: 1.0,
+            currency: 'USD'
+          });
+        }
+
+      } catch (error) {
+        console.error("Error saving card:", error);
+        showNotification("Error saving card.", 'error');
+        importBtn.disabled = false;
+        importBtn.textContent = originalText;
+      }
+    }
+
+    // Load card when page loads
+    document.addEventListener('DOMContentLoaded', loadCard);
+  </script>
+  
+  <!-- Google Analytics (replace with your tracking ID) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'GA_TRACKING_ID');
+  </script>
+</body>
+</html>
