@@ -4,92 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- Basic SEO -->
-  <title>{{TITLE}}</title>
-  <meta name="description" content="{{DESCRIPTION}}">
-  <link rel="canonical" href="{{CANONICAL_URL}}">
+  <!-- Cache busting for updated template v2 - 2025-09-09 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="template-version" content="enhanced-final-20250909">
   
-  <!-- Open Graph / Facebook -->
+  <!-- Basic SEO - will be updated by JavaScript -->
+  <title>Three-Sided Flashcard</title>
+  <meta name="description" content="Interactive mathematical flashcard on Three-Sided">
+  <link rel="canonical" href="https://three-sided.com/">
+  
+  <!-- Open Graph / Facebook - will be updated by JavaScript -->
   <meta property="og:type" content="article">
-  <meta property="og:url" content="{{CANONICAL_URL}}">
-  <meta property="og:title" content="{{TITLE}}">
-  <meta property="og:description" content="{{DESCRIPTION}}">
-  <meta property="og:image" content="{{OG_IMAGE_URL}}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="{{IMAGE_ALT}}">
   <meta property="og:site_name" content="Three-Sided Flashcards">
-  <meta property="article:author" content="{{AUTHOR}}">
-  <meta property="article:published_time" content="{{PUBLISHED_TIME}}">
   <meta property="article:section" content="Education">
-  <meta property="article:tag" content="{{TAGS}}">
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="{{CANONICAL_URL}}">
-  <meta name="twitter:title" content="{{TITLE}}">
-  <meta name="twitter:description" content="{{DESCRIPTION}}">
-  <meta name="twitter:image" content="{{OG_IMAGE_URL}}">
-  <meta name="twitter:image:alt" content="{{IMAGE_ALT}}">
   <meta name="twitter:site" content="@ThreeSidedApp">
   <meta name="twitter:creator" content="@ThreeSidedApp">
-  
-  <!-- Schema.org structured data for Google -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": "{{TITLE}}",
-    "description": "{{DESCRIPTION}}",
-    "image": {
-      "@type": "ImageObject",
-      "url": "{{OG_IMAGE_URL}}",
-      "width": 1200,
-      "height": 630,
-      "caption": "{{IMAGE_ALT}}"
-    },
-    "author": {
-      "@type": "Person",
-      "name": "{{AUTHOR}}",
-      "url": "{{AUTHOR_URL}}"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Three-Sided Flashcards",
-      "url": "https://three-sided.com",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://three-sided.com/icon-192x192.png"
-      }
-    },
-    "datePublished": "{{PUBLISHED_TIME}}",
-    "dateModified": "{{MODIFIED_TIME}}",
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": "{{CANONICAL_URL}}"
-    },
-    "keywords": "{{KEYWORDS}}",
-    "articleSection": "Education",
-    "educationalLevel": "University",
-    "learningResourceType": "Flashcard",
-    "about": {
-      "@type": "Thing",
-      "name": "Mathematics Education"
-    }
-  }
-  </script>
-  
-  <!-- Additional meta tags for better indexing -->
-  <meta name="robots" content="index, follow, max-image-preview:large">
-  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-  <meta name="theme-color" content="#667eea">
-  <meta name="msapplication-TileColor" content="#667eea">
   
   <!-- Educational content specific meta -->
   <meta name="education-level" content="university">
   <meta name="subject" content="mathematics">
   <meta name="content-type" content="flashcard">
-  <meta name="difficulty" content="{{DIFFICULTY}}">
   
   <!-- Firebase and MathJax -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -106,8 +45,10 @@
   <!-- Styles -->
   <link rel="stylesheet" href="/styles/card.css">
   
-  <!-- Preload critical resources -->
-  <link rel="preload" href="{{OG_IMAGE_URL}}" as="image">
+  <!-- robots meta -->
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#667eea">
 </head>
 <body>
   <!-- Rich snippet breadcrumbs -->
@@ -128,7 +69,7 @@
       </li>
       <li> → </li>
       <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
-        <span itemprop="name">{{CARD_TITLE}}</span>
+        <span itemprop="name" id="breadcrumb-title">Flashcard</span>
         <meta itemprop="position" content="3" />
       </li>
     </ol>
@@ -139,42 +80,39 @@
       <div class="container">
         <div class="flashcard">
           <header class="card-header">
-            <h1 itemprop="headline" class="card-title">{{CARD_TITLE}}</h1>
+            <h1 itemprop="headline" class="card-title" id="main-title">Flashcard Preview</h1>
             <p class="card-subtitle">Review and import this flashcard to your collection</p>
             
             <!-- Article metadata -->
             <div class="card-meta" style="margin-top: 1rem; font-size: 0.9em; color: #666;">
-              <span>By <span itemprop="author">{{AUTHOR}}</span></span>
+              <span>By <span itemprop="author" id="author-name">Anonymous</span></span>
               <span>•</span>
-              <time itemprop="datePublished" datetime="{{PUBLISHED_TIME}}">{{PUBLISHED_DATE}}</time>
+              <time itemprop="datePublished" id="publish-date">Today</time>
               <span>•</span>
-              <span>{{VIEW_COUNT}} views</span>
+              <span id="view-count">0 views</span>
               <span>•</span>
-              <span>{{LIKE_COUNT}} likes</span>
+              <span id="like-count">0 likes</span>
             </div>
             
             <!-- Tags -->
-            {{#if TAGS}}
-            <div class="tags" style="margin-top: 1rem;">
-              {{#each TAGS}}
-              <span itemprop="keywords" class="tag">{{this}}</span>
-              {{/each}}
+            <div class="tags" style="margin-top: 1rem;" id="tags-container">
+              <!-- Tags will be populated by JavaScript -->
             </div>
-            {{/if}}
           </header>
 
           <div class="section">
-            <div itemprop="text" class="section-content" id="statement">{{STATEMENT}}</div>
+            <div class="section-label">Statement</div>
+            <div itemprop="text" class="section-content" id="statement">Loading...</div>
           </div>
 
           <div class="section">
             <div class="section-label">Hint</div>
-            <div class="section-content" id="hints">{{HINTS}}</div>
+            <div class="section-content" id="hints">Loading...</div>
           </div>
 
           <div class="section">
             <div class="section-label">Proof</div>
-            <div class="section-content" id="proof">{{PROOF}}</div>
+            <div class="section-content" id="proof">Loading...</div>
           </div>
 
           <button class="import-button" onclick="saveCard()" id="importBtn">
@@ -185,16 +123,13 @@
           <div class="sharing" style="margin-top: 2rem; text-align: center;">
             <h3>Share this flashcard:</h3>
             <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
-              <a href="https://twitter.com/intent/tweet?url={{CANONICAL_URL}}&text={{SHARE_TEXT}}" 
-                 target="_blank" rel="noopener" class="share-btn">
+              <a href="#" id="twitter-share" target="_blank" rel="noopener" class="share-btn">
                 📱 Twitter
               </a>
-              <a href="https://www.facebook.com/sharer/sharer.php?u={{CANONICAL_URL}}" 
-                 target="_blank" rel="noopener" class="share-btn">
+              <a href="#" id="facebook-share" target="_blank" rel="noopener" class="share-btn">
                 📘 Facebook
               </a>
-              <a href="https://www.linkedin.com/sharing/share-offsite/?url={{CANONICAL_URL}}" 
-                 target="_blank" rel="noopener" class="share-btn">
+              <a href="#" id="linkedin-share" target="_blank" rel="noopener" class="share-btn">
                 💼 LinkedIn
               </a>
             </div>
@@ -204,32 +139,59 @@
     </article>
   </main>
 
-  <!-- Related content for better SEO -->
-  <aside style="margin-top: 3rem; padding: 2rem; background: #f8f9fa;">
-    <h2>Related Flashcards</h2>
-    <div id="related-cards">
-      <!-- Will be populated by JavaScript -->
-    </div>
-  </aside>
+  <!-- Schema.org structured data will be injected by JavaScript -->
+  <script id="structured-data" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Three-Sided Flashcard",
+    "description": "Interactive mathematical flashcard on Three-Sided",
+    "image": {
+      "@type": "ImageObject",
+      "url": "https://three-sided.com/icon-512x512.png",
+      "width": 512,
+      "height": 512,
+      "caption": "Three-Sided Flashcard"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Three-Sided Team",
+      "url": "https://three-sided.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Three-Sided Flashcards",
+      "url": "https://three-sided.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://three-sided.com/icon-192x192.png"
+      }
+    },
+    "datePublished": "2025-09-09T20:00:00Z",
+    "dateModified": "2025-09-09T20:00:00Z",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://three-sided.com/card/"
+    },
+    "articleSection": "Education",
+    "educationalLevel": "University",
+    "learningResourceType": "Flashcard",
+    "about": {
+      "@type": "Thing",
+      "name": "Mathematics Education"
+    }
+  }
+  </script>
 
   <script src="/scripts/main/firebaseConfig.js"></script>
   <script>
-    // Enhanced card functionality with analytics tracking
+    // Enhanced card functionality with SEO updates
     const { auth, db } = initializeFirebase();
     let currentUser = null;
     let cardData = null;
     let cardId = null;
 
     auth.onAuthStateChanged(user => currentUser = user);
-
-    // Track page view for analytics
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'page_view', {
-        page_title: document.title,
-        page_location: window.location.href,
-        content_group1: 'Flashcard'
-      });
-    }
 
     // Enhanced notification system
     function showNotification(message, type = 'success') {
@@ -243,6 +205,98 @@
         notification.classList.remove('show');
         setTimeout(() => document.body.removeChild(notification), 300);
       }, 3000);
+    }
+
+    // Update SEO meta tags dynamically
+    function updateSEOTags(cardData, slug) {
+      const cleanStatement = (cardData.statement || 'Mathematical Problem')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\$[^$]*\$/g, '')
+        .substring(0, 160);
+      
+      const title = `${cleanStatement} - Three-Sided Flashcard`;
+      const description = `Learn: ${cleanStatement}. Created by ${cardData.authorSlug || 'Anonymous'}. ${cardData.viewCount || 0} views, ${cardData.likeCount || 0} likes.`;
+      const canonicalUrl = `https://three-sided.com/card/${encodeURIComponent(slug)}`;
+      const imageUrl = `https://generatecardimage-3c6nsplesa-uc.a.run.app?slug=${encodeURIComponent(slug)}`;
+      
+      // Update basic meta tags
+      document.title = title;
+      document.querySelector('meta[name="description"]').content = description;
+      document.querySelector('link[rel="canonical"]').href = canonicalUrl;
+      
+      // Update Open Graph tags
+      updateOrCreateMeta('property', 'og:title', title);
+      updateOrCreateMeta('property', 'og:description', description);
+      updateOrCreateMeta('property', 'og:url', canonicalUrl);
+      updateOrCreateMeta('property', 'og:image', imageUrl);
+      updateOrCreateMeta('property', 'og:image:width', '1200');
+      updateOrCreateMeta('property', 'og:image:height', '630');
+      updateOrCreateMeta('property', 'og:image:alt', `Three-Sided Flashcard: ${cleanStatement}`);
+      
+      // Update Twitter Card tags
+      updateOrCreateMeta('name', 'twitter:title', title);
+      updateOrCreateMeta('name', 'twitter:description', description);
+      updateOrCreateMeta('name', 'twitter:image', imageUrl);
+      updateOrCreateMeta('name', 'twitter:image:alt', `Three-Sided Flashcard: ${cleanStatement}`);
+      
+      // Update structured data
+      updateStructuredData(cardData, slug, cleanStatement, canonicalUrl, imageUrl);
+    }
+
+    function updateOrCreateMeta(attr, value, content) {
+      let meta = document.querySelector(`meta[${attr}="${value}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attr, value);
+        document.head.appendChild(meta);
+      }
+      meta.content = content;
+    }
+
+    function updateStructuredData(cardData, slug, cleanStatement, canonicalUrl, imageUrl) {
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": cleanStatement,
+        "description": `Learn: ${cleanStatement}`,
+        "image": {
+          "@type": "ImageObject",
+          "url": imageUrl,
+          "width": 1200,
+          "height": 630,
+          "caption": `Three-Sided Flashcard: ${cleanStatement}`
+        },
+        "author": {
+          "@type": "Person",
+          "name": cardData.authorSlug || "Anonymous",
+          "url": cardData.authorSlug ? `https://three-sided.com/profile/${cardData.authorSlug}` : "https://three-sided.com"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Three-Sided Flashcards",
+          "url": "https://three-sided.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://three-sided.com/icon-192x192.png"
+          }
+        },
+        "datePublished": cardData.createdAt ? cardData.createdAt.toDate().toISOString() : new Date().toISOString(),
+        "dateModified": cardData.updatedAt ? cardData.updatedAt.toDate().toISOString() : (cardData.createdAt ? cardData.createdAt.toDate().toISOString() : new Date().toISOString()),
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": canonicalUrl
+        },
+        "keywords": Array.isArray(cardData.tags) ? cardData.tags.join(', ') : '',
+        "articleSection": "Education",
+        "educationalLevel": "University",
+        "learningResourceType": "Flashcard",
+        "about": {
+          "@type": "Thing",
+          "name": "Mathematics Education"
+        }
+      };
+      
+      document.getElementById('structured-data').textContent = JSON.stringify(structuredData);
     }
 
     async function loadCard() {
@@ -264,60 +318,88 @@
         cardData = doc.data();
         cardId = doc.id;
 
-        // Track view
-        await docRef.update({
-          viewCount: firebase.firestore.FieldValue.increment(1)
-        });
-
-        // Render MathJax
-        MathJax.typesetPromise();
+        // Update content
+        document.getElementById("statement").innerHTML = cardData.statement || 'No statement available';
+        document.getElementById("hints").innerHTML = cardData.hints || 'No hints available';
+        document.getElementById("proof").innerHTML = cardData.proof || 'No proof available';
         
-        // Load related cards
-        loadRelatedCards(cardData.tags || []);
+        // Update UI elements - clear any existing MathJax first
+        const mainTitle = document.getElementById("main-title");
+        const breadcrumbTitle = document.getElementById("breadcrumb-title");
+        
+        // Clear existing MathJax containers before updating content
+        if (mainTitle) {
+          let titleText = cardData.statement || 'Flashcard';
+          // If truncating, try to avoid cutting LaTeX formulas in half
+          if (titleText.length > 80) {
+            let truncated = titleText.substring(0, 80);
+            // If we're in the middle of a LaTeX formula, back up to before it
+            if (truncated.includes('$') && (truncated.match(/\$/g) || []).length % 2 === 1) {
+              let lastDollar = truncated.lastIndexOf('$');
+              truncated = truncated.substring(0, lastDollar);
+            }
+            titleText = truncated + '...';
+          }
+          mainTitle.innerHTML = titleText;
+        }
+        if (breadcrumbTitle) {
+          breadcrumbTitle.innerHTML = 'Flashcard: ' + (cardData.statement ? 
+            cardData.statement.substring(0, 30) + (cardData.statement.length > 30 ? '...' : '') : 
+            'Mathematical Problem');
+        }
+        document.getElementById("author-name").textContent = cardData.authorSlug || 'Anonymous';
+        document.getElementById("publish-date").textContent = cardData.createdAt ? 
+          cardData.createdAt.toDate().toLocaleDateString() : 
+          'Unknown date';
+        document.getElementById("view-count").textContent = `${cardData.viewCount || 0} views`;
+        document.getElementById("like-count").textContent = `${cardData.likeCount || 0} likes`;
+        
+        // Update tags
+        const tagsContainer = document.getElementById("tags-container");
+        if (cardData.tags && cardData.tags.length > 0) {
+          tagsContainer.innerHTML = cardData.tags.map(tag => 
+            `<span itemprop="keywords" class="tag" style="background: rgba(102, 126, 234, 0.1); color: #667eea; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-right: 0.5rem;">#${tag}</span>`
+          ).join('');
+        }
+        
+        // Update social sharing links
+        const shareText = encodeURIComponent(`Check out this flashcard: ${cardData.statement || 'Mathematical Problem'}`);
+        const shareUrl = encodeURIComponent(`https://three-sided.com/card/${slug}`);
+        document.getElementById("twitter-share").href = `https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`;
+        document.getElementById("facebook-share").href = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+        document.getElementById("linkedin-share").href = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+
+        // Update SEO meta tags
+        updateSEOTags(cardData, slug);
+
+        // Render MathJax - process everything at once after content is updated
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          console.log('About to process MathJax. Title content:', mainTitle ? mainTitle.innerHTML : 'no main title');
+          console.log('Breadcrumb content:', breadcrumbTitle ? breadcrumbTitle.innerHTML : 'no breadcrumb');
+          
+          // Process all content including updated titles
+          MathJax.typesetPromise().then(() => {
+            console.log('MathJax processing complete');
+            console.log('Title after MathJax:', mainTitle ? mainTitle.innerHTML : 'no main title');
+            console.log('Breadcrumb after MathJax:', breadcrumbTitle ? breadcrumbTitle.innerHTML : 'no breadcrumb');
+          }).catch(err => {
+            console.log('MathJax rendering error:', err);
+          });
+        }
+
+        // Track view (silently - don't let errors break the page)
+        try {
+          await docRef.update({
+            viewCount: firebase.firestore.FieldValue.increment(1)
+          });
+        } catch (viewError) {
+          // Silently ignore view tracking errors (e.g., blocked by ad blockers)
+          console.log('View tracking blocked or failed (likely ad blocker)', viewError);
+        }
 
       } catch (error) {
         showNotification("Error loading card.", 'error');
         console.error("Error loading card:", error);
-      }
-    }
-
-    async function loadRelatedCards(tags) {
-      if (!tags.length) return;
-      
-      try {
-        // Find cards with similar tags
-        const relatedQuery = db.collection("publicCards")
-          .where("tags", "array-contains-any", tags.slice(0, 3))
-          .limit(3);
-        
-        const snapshot = await relatedQuery.get();
-        const relatedContainer = document.getElementById('related-cards');
-        
-        if (snapshot.empty) {
-          relatedContainer.innerHTML = '<p>No related cards found.</p>';
-          return;
-        }
-        
-        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">';
-        
-        snapshot.docs.forEach(doc => {
-          if (doc.id !== cardId) { // Don't show current card
-            const data = doc.data();
-            html += `
-              <div style="border: 1px solid #ddd; padding: 1rem; border-radius: 8px;">
-                <h4><a href="/card/${doc.id}" style="text-decoration: none; color: #667eea;">${data.statement?.substring(0, 80)}...</a></h4>
-                <p style="font-size: 0.9em; color: #666;">by ${data.authorSlug || 'Anonymous'}</p>
-                <p style="font-size: 0.8em;">${data.viewCount || 0} views • ${data.likeCount || 0} likes</p>
-              </div>
-            `;
-          }
-        });
-        
-        html += '</div>';
-        relatedContainer.innerHTML = html;
-        
-      } catch (error) {
-        console.error('Error loading related cards:', error);
       }
     }
 
@@ -355,15 +437,6 @@
 
         showNotification("Flashcard saved to your account!");
         importBtn.textContent = "✓ Imported";
-        
-        // Track conversion
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'conversion', {
-            send_to: 'AW-CONVERSION_ID/CONVERSION_LABEL', // Replace with actual conversion tracking
-            value: 1.0,
-            currency: 'USD'
-          });
-        }
 
       } catch (error) {
         console.error("Error saving card:", error);
@@ -377,13 +450,61 @@
     document.addEventListener('DOMContentLoaded', loadCard);
   </script>
   
-  <!-- Google Analytics (replace with your tracking ID) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'GA_TRACKING_ID');
-  </script>
+  <!-- Notification styles -->
+  <style>
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem;
+      border-radius: 4px;
+      color: white;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+    }
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .notification.success {
+      background-color: #2ecc71;
+    }
+    .notification.error {
+      background-color: #e74c3c;
+    }
+    .share-btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .share-btn:hover {
+      background: #5a52e8;
+    }
+    
+    /* Ensure MathJax containers in titles are visible */
+    #main-title .mjx-container,
+    #breadcrumb-title .mjx-container {
+      display: inline !important;
+      visibility: visible !important;
+    }
+    
+    #main-title .mjx-math,
+    #breadcrumb-title .mjx-math {
+      display: inline !important;
+      visibility: visible !important;
+    }
+    
+    /* Force MathJax to be visible in title elements */
+    .card-title .mjx-container {
+      display: inline !important;
+      opacity: 1 !important;
+    }
+  </style>
 </body>
 </html>
