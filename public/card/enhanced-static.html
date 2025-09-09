@@ -305,10 +305,10 @@
         document.getElementById("proof").innerHTML = cardData.proof || 'No proof available';
         
         // Update UI elements
-        document.getElementById("main-title").textContent = cardData.statement ? 
+        document.getElementById("main-title").innerHTML = cardData.statement ? 
           cardData.statement.substring(0, 80) + (cardData.statement.length > 80 ? '...' : '') : 
           'Flashcard';
-        document.getElementById("breadcrumb-title").textContent = 'Flashcard: ' + (cardData.statement ? 
+        document.getElementById("breadcrumb-title").innerHTML = 'Flashcard: ' + (cardData.statement ? 
           cardData.statement.substring(0, 30) + (cardData.statement.length > 30 ? '...' : '') : 
           'Mathematical Problem');
         document.getElementById("author-name").textContent = cardData.authorSlug || 'Anonymous';
@@ -341,10 +341,15 @@
           MathJax.typesetPromise();
         }
 
-        // Track view
-        await docRef.update({
-          viewCount: firebase.firestore.FieldValue.increment(1)
-        });
+        // Track view (silently - don't let errors break the page)
+        try {
+          await docRef.update({
+            viewCount: firebase.firestore.FieldValue.increment(1)
+          });
+        } catch (viewError) {
+          // Silently ignore view tracking errors (e.g., blocked by ad blockers)
+          console.log('View tracking blocked or failed (likely ad blocker)', viewError);
+        }
 
       } catch (error) {
         showNotification("Error loading card.", 'error');
