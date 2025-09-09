@@ -200,8 +200,8 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
                   onClick={() => addExistingTag(tag)}
                   className={`tag-btn transition-all duration-200 ${isSelected ? 'selected' : ''}`}
                   style={{
-                    backgroundColor: isSelected ? 'var(--claude-accent)' : '#e2e8f0',
-                    color: isSelected ? 'white' : '#4a5568',
+                    backgroundColor: isSelected ? 'var(--claude-accent)' : 'var(--claude-subtle)',
+                    color: isSelected ? 'white' : 'var(--claude-primary-text)',
                     border: 'none',
                     padding: '0.25rem 0.75rem',
                     borderRadius: '20px',
@@ -212,14 +212,14 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
                   }}
                   onMouseEnter={(e) => {
                     if (!isSelected) {
-                      e.target.style.backgroundColor = '#cbd5e0';
-                      e.target.style.color = '#2d3748';
+                      e.target.style.backgroundColor = 'var(--claude-border)';
+                      e.target.style.color = 'var(--claude-heading)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isSelected) {
-                      e.target.style.backgroundColor = '#e2e8f0';
-                      e.target.style.color = '#4a5568';
+                      e.target.style.backgroundColor = 'var(--claude-subtle)';
+                      e.target.style.color = 'var(--claude-primary-text)';
                     }
                   }}
                   title={isSelected ? 'Already selected' : `Add "${tag}" tag`}
@@ -237,10 +237,13 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="claude-card max-w-2xl w-full mx-4 p-6 max-h-[80vh] overflow-hidden">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Select Tags</h3>
+              <h3 className="text-xl font-bold" style={{color: 'var(--claude-heading)'}}>Select Tags</h3>
               <button
                 onClick={() => setShowPopup(false)}
-                className="text-gray-400 hover:text-white transition-colors text-2xl"
+                className="claude-text-muted hover:claude-text-secondary transition-colors text-2xl"
+                style={{color: 'var(--claude-text-muted)'}}
+                onMouseEnter={(e) => e.target.style.color = 'var(--claude-text-secondary)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--claude-text-muted)'}
               >
                 ×
               </button>
@@ -266,11 +269,11 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
                     }}
                     className={`p-3 rounded-lg border text-left transition-all duration-200 ${
                       isSelected
-                        ? 'border-purple-500 bg-purple-500/20 text-purple-300'
+                        ? 'border-purple-500 bg-purple-500/20'
                         : 'border-gray-600 hover:border-purple-500 hover:bg-purple-500/10'
                     }`}
                   >
-                    <div className="font-medium text-white">#{tag}</div>
+                    <div className="font-medium" style={{color: isSelected ? 'var(--claude-accent)' : 'var(--claude-primary-text)'}}>#{tag}</div>
                     <div className="text-sm claude-text-secondary">
                       {isSelected ? '✓ Selected' : 'Click to add'}
                     </div>

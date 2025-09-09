@@ -117,7 +117,7 @@ const DeckSelector = ({
             <div className="flex items-center gap-3">
               <span className="text-2xl">{selectedDeck.icon || '📚'}</span>
               <div>
-                <div className="text-white font-medium">{selectedDeck.name}</div>
+                <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{selectedDeck.name}</div>
                 <div className="text-sm claude-text-secondary">
                   {selectedDeck.cardCount || 0} cards • {selectedDeck.subject || 'General'}
                 </div>
@@ -134,7 +134,10 @@ const DeckSelector = ({
                   e.stopPropagation();
                   clearSelection();
                 }}
-                className="text-gray-400 hover:text-white transition-colors p-1"
+                className="transition-colors p-1"
+                style={{color: 'var(--claude-text-muted)'}}
+                onMouseEnter={(e) => e.target.style.color = 'var(--claude-primary-text)'}
+                onMouseLeave={(e) => e.target.style.color = 'var(--claude-text-muted)'}
                 title="Clear selection"
               >
                 ×
@@ -188,7 +191,7 @@ const DeckSelector = ({
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{defaultDeck.icon || '📚'}</span>
                       <div>
-                        <div className="text-white font-medium">{defaultDeck.name}</div>
+                        <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{defaultDeck.name}</div>
                         <div className="text-sm claude-text-secondary">
                           {defaultDeck.cardCount || 0} cards • All your flashcards
                         </div>
@@ -217,7 +220,7 @@ const DeckSelector = ({
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{deck.icon || '📚'}</span>
                         <div>
-                          <div className="text-white font-medium">{deck.name}</div>
+                          <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{deck.name}</div>
                           <div className="text-sm claude-text-secondary">
                             {deck.cardCount || 0} cards • {deck.subject || 'General'}
                           </div>

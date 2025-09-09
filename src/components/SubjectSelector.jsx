@@ -169,7 +169,7 @@ const SubjectSelector = ({ value, onChange, className = "", placeholder = "Selec
                         <div className="flex items-center gap-3">
                           <span className="text-purple-400">📖</span>
                           <div>
-                            <div className="text-white font-medium">{subject}</div>
+                            <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{subject}</div>
                             <div className="text-sm claude-text-secondary">From your cards</div>
                           </div>
                         </div>
@@ -197,7 +197,7 @@ const SubjectSelector = ({ value, onChange, className = "", placeholder = "Selec
                     <div className="flex items-center gap-3">
                       <span className="text-blue-400">📚</span>
                       <div>
-                        <div className="text-white font-medium">{subject}</div>
+                        <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{subject}</div>
                         <div className="text-sm claude-text-secondary">Popular choice</div>
                       </div>
                     </div>
@@ -230,7 +230,7 @@ const SubjectSelector = ({ value, onChange, className = "", placeholder = "Selec
                   <div className="flex items-center gap-3">
                     <span className="text-green-400">✨</span>
                     <div>
-                      <div className="text-white font-medium">Create "{value}"</div>
+                      <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>Create "{value}"</div>
                       <div className="text-sm claude-text-secondary">New custom subject</div>
                     </div>
                   </div>
