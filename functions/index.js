@@ -4,10 +4,6 @@ const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 
-// Import additional functions
-const { generateCardImage } = require('./generateCardImage');
-const { generateCardPage } = require('./generateCardPage');
-
 // Simple HTTP request using Node.js built-ins
 const https = require('https');
 const zlib = require('zlib');
@@ -2578,5 +2574,7 @@ exports.updateSitemap = onCall({}, async (request) => {
 });
 
 // Export additional functions
+const { generateCardImage } = require('./generateCardImage');
+const { generateCardPage } = require('./generateCardPage');
 exports.generateCardImage = generateCardImage;
 exports.generateCardPage = generateCardPage;

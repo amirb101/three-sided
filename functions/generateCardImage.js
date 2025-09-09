@@ -2,10 +2,7 @@ const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const puppeteer = require('puppeteer');
 
-// Initialize admin if not already done
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
+// Use existing admin instance (initialized in index.js)
 const db = admin.firestore();
 
 /**
