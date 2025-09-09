@@ -80,6 +80,7 @@
       <div class="container">
         <div class="flashcard">
           <header class="card-header">
+            <h1 itemprop="headline" class="card-title" id="main-title">Flashcard Preview</h1>
             <p class="card-subtitle">Review and import this flashcard to your collection</p>
             
             <!-- Article metadata -->
@@ -147,9 +148,9 @@
     "description": "Interactive mathematical flashcard on Three-Sided",
     "image": {
       "@type": "ImageObject",
-      "url": "https://three-sided.com/icon-512x512.png",
-      "width": 512,
-      "height": 512,
+      "url": "https://us-central1-three-sided-flashcard-app.cloudfunctions.net/generateCardImage?slug=default",
+      "width": 1200,
+      "height": 630,
       "caption": "Three-Sided Flashcard"
     },
     "author": {
@@ -323,7 +324,23 @@
         document.getElementById("proof").innerHTML = cardData.proof || 'No proof available';
         
         // Update UI elements
+        const mainTitle = document.getElementById("main-title");
         const breadcrumbTitle = document.getElementById("breadcrumb-title");
+        
+        if (mainTitle) {
+          let titleText = cardData.statement || 'Flashcard';
+          // If truncating, try to avoid cutting LaTeX formulas in half
+          if (titleText.length > 80) {
+            let truncated = titleText.substring(0, 80);
+            // If we're in the middle of a LaTeX formula, back up to before it
+            if (truncated.includes('$') && (truncated.match(/\$/g) || []).length % 2 === 1) {
+              let lastDollar = truncated.lastIndexOf('$');
+              truncated = truncated.substring(0, lastDollar);
+            }
+            titleText = truncated + '...';
+          }
+          mainTitle.innerHTML = titleText;
+        }
         
         if (breadcrumbTitle) {
           breadcrumbTitle.innerHTML = 'Flashcard: ' + (cardData.statement ? 
@@ -462,15 +479,23 @@
       background: #5a52e8;
     }
     
-    /* Ensure MathJax containers in breadcrumb are visible */
+    /* Ensure MathJax containers in titles are visible */
+    #main-title .mjx-container,
     #breadcrumb-title .mjx-container {
       display: inline !important;
       visibility: visible !important;
     }
     
+    #main-title .mjx-math,
     #breadcrumb-title .mjx-math {
       display: inline !important;
       visibility: visible !important;
+    }
+    
+    /* Force MathJax to be visible in title elements */
+    .card-title .mjx-container {
+      display: inline !important;
+      opacity: 1 !important;
     }
   </style>
 </body>
