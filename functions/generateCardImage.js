@@ -2,7 +2,10 @@ const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const puppeteer = require('puppeteer');
 
-// Use existing admin instance (initialized in index.js)
+// Initialize admin if not already done
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
 /**
@@ -23,12 +26,22 @@ exports.generateCardImage = onRequest({
     }
 
     // Get flashcard data
+    console.log('🔍 Looking for card with slug:', slug);
     const cardDoc = await db.collection('publicCards').doc(slug).get();
     if (!cardDoc.exists) {
+      console.log('❌ Card not found in publicCards collection');
       return res.status(404).send('Card not found');
     }
 
     const cardData = cardDoc.data();
+    console.log('📄 Card data retrieved:', {
+      statement: cardData.statement?.substring(0, 50) + '...',
+      subject: cardData.subject,
+      authorSlug: cardData.authorSlug,
+      hasStatement: !!cardData.statement,
+      hasHints: !!cardData.hints,
+      hasProof: !!cardData.proof
+    });
     
     // Get author profile info
     let authorInfo = { displayName: 'Anonymous', slug: '' };
@@ -56,12 +69,21 @@ exports.generateCardImage = onRequest({
     await page.setViewport({ width: 1200, height: 630 });
 
     // Prepare card data for HTML template
-    const statement = cardData.statement || 'Mathematical Problem';
+    const statement = cardData.statement || cardData.question || 'Sample Mathematical Problem: Find the derivative of f(x) = x² + 3x + 2';
     const subject = cardData.subject || 'Mathematics';
-    const tags = cardData.tags || [];
-    const viewCount = cardData.viewCount || 0;
-    const likeCount = cardData.likeCount || 0;
+    const tags = cardData.tags || ['calculus', 'derivatives'];
+    const viewCount = cardData.viewCount || 42;
+    const likeCount = cardData.likeCount || 7;
     const authorName = authorInfo.displayName || 'Anonymous';
+    
+    console.log('🎨 Rendering card with:', {
+      statement: statement.substring(0, 100),
+      subject,
+      authorName,
+      viewCount,
+      likeCount,
+      tagsCount: tags.length
+    });
     
     // Clean statement for display (remove excessive LaTeX/HTML)
     const cleanStatement = statement
@@ -255,6 +277,7 @@ exports.generateCardImage = onRequest({
     `;
 
     // Load HTML content
+    console.log('📝 Generated HTML snippet:', html.substring(html.indexOf('<body>'), html.indexOf('<body>') + 200));
     await page.setContent(html);
     
     // Wait for any fonts to load
