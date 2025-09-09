@@ -253,7 +253,7 @@ const UserDashboard = () => {
               </div>
               <span className="claude-text-muted text-sm">Total</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{userFlashcards.length}</div>
+            <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-heading)'}}>{userFlashcards.length}</div>
             <div className="claude-text-secondary text-sm">Flashcards Created</div>
           </div>
 
@@ -264,7 +264,7 @@ const UserDashboard = () => {
               </div>
               <span className="claude-text-muted text-sm">Imported</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{importedCards.length}</div>
+            <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-heading)'}}>{importedCards.length}</div>
             <div className="claude-text-secondary text-sm">Imported</div>
           </div>
 
@@ -275,7 +275,7 @@ const UserDashboard = () => {
               </div>
               <span className="claude-text-muted text-sm">Streak</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-1">{userProfile?.loginStreak || 0}</div>
+            <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-heading)'}}>{userProfile?.loginStreak || 0}</div>
             <div className="claude-text-secondary text-sm">Day Streak</div>
           </div>
         </div>
@@ -332,12 +332,12 @@ const UserDashboard = () => {
           <div role="tabpanel" id="overview-panel" aria-labelledby="overview-tab" className="space-y-8">
             {/* Recent Activity */}
             <div className="claude-card rounded-3xl p-8">
-              <h2 className="text-2xl font-bold text-white mb-6">📈 Recent Activity</h2>
+              <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>📈 Recent Activity</h2>
               <div className="space-y-4">
                 {userFlashcards.slice(0, 5).map((card) => (
                   <div key={card.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl">
                     <div>
-                      <h3 className="text-white font-medium">{card.question?.slice(0, 60)}...</h3>
+                      <h3 className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{card.question?.slice(0, 60)}...</h3>
                       <p className="claude-text-muted text-sm">Created {new Date(card.createdAt?.toDate?.() || card.createdAt).toLocaleDateString()}</p>
                     </div>
                     <span className="text-blue-400 text-sm">{card.subject || 'General'}</span>
@@ -355,7 +355,7 @@ const UserDashboard = () => {
 
             {/* Quick Stats */}
             <div className="claude-card rounded-3xl p-8">
-              <h2 className="text-2xl font-bold text-white mb-6">📊 Quick Stats</h2>
+              <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>📊 Quick Stats</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-400 mb-1">{userFlashcards.length}</div>
@@ -463,11 +463,11 @@ const UserDashboard = () => {
         {activeTab === 'cards' && (
           <div role="tabpanel" id="cards-panel" aria-labelledby="cards-tab" className="claude-card rounded-3xl p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">📚 My Cards ({userFlashcards.length})</h2>
+              <h2 className="text-2xl font-bold" style={{color: 'var(--claude-heading)'}}>📚 My Cards ({userFlashcards.length})</h2>
               <button
                 onClick={refresh}
                 disabled={refreshing}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 text-white rounded-lg transition-all duration-200"
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-60 rounded-lg transition-all duration-200" style={{color: 'white'}}
               >
                 {refreshing ? 'Refreshing…' : 'Refresh'}
               </button>
@@ -482,14 +482,14 @@ const UserDashboard = () => {
                   <a 
                     href="#" 
                     onClick={(e) => { e.preventDefault(); window.location.href = '/#create'; }}
-                    className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl transition-all duration-200"
+                    className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-xl transition-all duration-200" style={{color: 'white'}}
                   >
                     Create a Flashcard
                   </a>
                   <button
                     onClick={refresh}
                     disabled={refreshing}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-60 text-white font-semibold rounded-xl transition-all duration-200"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-60 font-semibold rounded-xl transition-all duration-200" style={{color: 'white'}}
                   >
                     {refreshing ? 'Refreshing…' : 'Try Loading Again'}
                   </button>
@@ -519,7 +519,7 @@ const UserDashboard = () => {
                       </div>
                     </div>
                     
-                    <h3 className="font-semibold text-white mb-3 group-hover:text-blue-300 transition-colors">
+                    <h3 className="font-semibold mb-3 group-hover:text-blue-300 transition-colors" style={{color: 'var(--claude-primary-text)'}}>
                       {preview(card.question, 80)}
                     </h3>
                     
@@ -561,7 +561,7 @@ const UserDashboard = () => {
         {activeTab === 'public' && (
           <div role="tabpanel" id="public-panel" aria-labelledby="public-tab" className="claude-card rounded-3xl p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">📢 Your Public Cards</h2>
+              <h2 className="text-2xl font-bold" style={{color: 'var(--claude-heading)'}}>📢 Your Public Cards</h2>
               <button
                 onClick={() => setPublicManagerOpen(true)}
                 className="claude-button-primary"
@@ -572,7 +572,7 @@ const UserDashboard = () => {
             
             <div className="text-center py-16">
               <div className="text-6xl mb-4">📢</div>
-              <h3 className="text-xl font-semibold text-white mb-2">Public Flashcard Management</h3>
+              <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>Public Flashcard Management</h3>
               <p className="claude-text-muted mb-6">
                 View, edit, and manage all your public flashcards in one place. 
                 Control what the world sees and track engagement.
@@ -589,7 +589,7 @@ const UserDashboard = () => {
 
         {activeTab === 'imported' && (
           <div role="tabpanel" id="imported-panel" aria-labelledby="imported-tab" className="claude-card rounded-3xl p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">📥 Imported Cards ({importedCards.length})</h2>
+            <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>📥 Imported Cards ({importedCards.length})</h2>
             
             {importedCards.length === 0 ? (
               <div className="text-center py-16">
@@ -606,7 +606,7 @@ const UserDashboard = () => {
                       <span className="text-blue-400">📥</span>
                     </div>
                     
-                    <h3 className="font-semibold text-white mb-3 group-hover:text-purple-300 transition-colors">
+                    <h3 className="font-semibold mb-3 group-hover:text-purple-300 transition-colors" style={{color: 'var(--claude-primary-text)'}}>
                       {card.question?.length > 80 ? card.question.slice(0, 80) + '...' : card.question}
                     </h3>
                     
@@ -735,10 +735,13 @@ const UserDashboard = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="claude-card max-w-md w-full mx-4 p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Move Card to Deck</h3>
+              <h3 className="text-xl font-bold" style={{color: 'var(--claude-heading)'}}>Move Card to Deck</h3>
               <button
                 onClick={() => setShowDeckSelector(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="transition-colors" 
+                style={{color: 'var(--claude-text-muted)'}} 
+                onMouseEnter={(e) => e.target.style.color = 'var(--claude-primary-text)'} 
+                onMouseLeave={(e) => e.target.style.color = 'var(--claude-text-muted)'}
               >
                 ×
               </button>
@@ -746,7 +749,7 @@ const UserDashboard = () => {
             
             <div className="mb-4">
               <p className="claude-text-secondary mb-2">Moving card:</p>
-              <p className="text-white font-medium truncate">
+              <p className="font-medium truncate" style={{color: 'var(--claude-primary-text)'}}>
                 {deckMoveCard.statement || deckMoveCard.question || 'Untitled Card'}
               </p>
             </div>
@@ -761,7 +764,7 @@ const UserDashboard = () => {
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{deck.icon || '📚'}</span>
                     <div>
-                      <div className="text-white font-medium">{deck.name}</div>
+                      <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{deck.name}</div>
                       <div className="text-sm claude-text-secondary">
                         {deck.cardCount || 0} cards • {deck.subject || 'General'}
                       </div>
