@@ -1,6 +1,6 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 // Initialize admin if not already done
 if (!admin.apps.length) {
@@ -60,7 +60,13 @@ exports.generateCardImage = onRequest({
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu'
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
       ]
     });
 
