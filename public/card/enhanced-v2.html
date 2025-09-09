@@ -337,24 +337,25 @@
         // Update SEO meta tags
         updateSEOTags(cardData, slug);
 
-        // Render MathJax - target specific elements including titles
+        // Render MathJax - use callback approach for titles
         if (window.MathJax && window.MathJax.typesetPromise) {
-          // First render the main content areas
-          MathJax.typesetPromise();
-          
-          // Then specifically render the title elements that were just updated
-          setTimeout(() => {
+          // First render all content
+          MathJax.typesetPromise().then(() => {
+            // After main content is rendered, specifically process titles
             const titleElements = [
               document.getElementById("main-title"),
               document.getElementById("breadcrumb-title")
-            ].filter(el => el); // Remove any null elements
+            ].filter(el => el);
             
-            if (titleElements.length > 0 && window.MathJax && window.MathJax.typesetPromise) {
-              MathJax.typesetPromise(titleElements).catch(err => {
-                console.log('MathJax title rendering error (non-critical):', err);
-              });
+            if (titleElements.length > 0) {
+              console.log('Processing title elements for MathJax:', titleElements.map(el => el.innerHTML));
+              return MathJax.typesetPromise(titleElements);
             }
-          }, 100);
+          }).then(() => {
+            console.log('MathJax title processing complete');
+          }).catch(err => {
+            console.log('MathJax rendering error:', err);
+          });
         }
 
         // Track view (silently - don't let errors break the page)
