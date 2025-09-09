@@ -16,7 +16,8 @@ const db = admin.firestore();
 exports.generateCardImage = onRequest({
   timeoutSeconds: 30,
   memory: '1GiB',
-  cpu: 1
+  cpu: 1,
+  invoker: 'public'
 }, async (req, res) => {
   try {
     const slug = req.query.slug;

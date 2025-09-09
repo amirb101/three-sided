@@ -63,7 +63,7 @@
     "rewrites": [
       {
         "source": "/card/**",
-        "function": "generateCardPage"
+        "destination": "/card/enhanced.html"
       },
       {
         "source": "/profile/**",

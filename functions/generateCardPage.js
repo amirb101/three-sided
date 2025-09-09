@@ -3,14 +3,19 @@ const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
 
-// Use existing admin instance (initialized in index.js)
+// Initialize admin if not already done
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 const db = admin.firestore();
 
 /**
  * Generates server-side rendered card pages with proper SEO meta tags
  * This enables Google Images indexing similar to Reddit
  */
-exports.generateCardPage = onRequest(async (req, res) => {
+exports.generateCardPage = onRequest({
+  invoker: 'public'
+}, async (req, res) => {
   try {
     // Extract slug from URL path: /card/[slug]
     const urlPath = req.url || req.path || '';
