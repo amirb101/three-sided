@@ -1,14 +1,19 @@
 rules_version = '2';
+// Updated: 2024-01-08 - Added deck collections support
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow reading friend lists publicly, only owner can write
+    // Allow reading friend lists publicly, owner or friend can write
     match /userFriends/{userId} {
       allow read: if true;
 
       match /friends/{friendId} {
         allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        // Allow user to manage their own friends OR friends to add each other mutually
+        allow write: if request.auth != null && (
+          request.auth.uid == userId || 
+          request.auth.uid == friendId
+        );
       }
     }
 
@@ -44,6 +49,18 @@ service cloud.firestore {
 
     // 🔐 Flashcards (private)
     match /flashcards/{docId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+      
+      allow list: if request.auth != null;
+    }
+
+    // 🔐 Cards collection (alternative private cards storage)
+    match /cards/{docId} {
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       
       allow read, update, delete: if request.auth != null && (
@@ -90,6 +107,48 @@ service cloud.firestore {
         && request.auth.uid == resource.data.userId
     }
 
+    // 🔐 Decks (private deck management)
+    match /decks/{deckId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      allow read, update, delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+      
+      allow list: if request.auth != null;
+    }
+
+    // 🔐 Deck-Card associations (junction table)
+    match /deckCards/{docId} {
+      allow create: if request.auth != null;
+      
+      allow read, update, delete: if request.auth != null;
+      
+      allow list: if request.auth != null;
+    }
+
+    // 🔓 Public decks (for discovery and browsing)
+    match /publicDecks/{deckId} {
+      allow read: if true;
+
+      allow create: if request.auth != null;
+
+      allow update: if request.auth != null && (
+        // Allow deck owner to update their own decks (except stats)
+        (request.auth.uid == resource.data.userId && 
+         !(("likeCount" in request.resource.data) || ("importCount" in request.resource.data)))
+        ||
+        // Allow anyone to update stats (for liking and import tracking)
+        (("likeCount" in request.resource.data) || ("importCount" in request.resource.data))
+      );
+      
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+    }
+
     // 🔐 User metadata
     match /users/{uid} {
       allow read: if request.auth != null;
@@ -122,6 +181,90 @@ service cloud.firestore {
 
     match /adminSettings/{docId} {
       allow read, write: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    // 📊 Learning Analytics Collections
+    match /studySessions/{sessionId} {
+      allow create, read, update: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == request.resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+      allow list: if request.auth != null;
+    }
+
+    match /learningProgress/{progressId} {
+      allow create, read, update: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == request.resource.data.userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+      allow list: if request.auth != null;
+    }
+
+    match /userAnalytics/{userId} {
+      allow create, read, update: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.email == "three.dash.sided@gmail.com"
+      );
+      allow list: if request.auth != null;
+    }
+
+    match /dailyStats/{date} {
+      allow create, read, update: if request.auth != null;
+      allow list: if request.auth != null;
+    }
+
+    // 🚀 Website Analytics Collections
+    match /websiteSessions/{sessionId} {
+      allow create, read, update: if true; // Allow anonymous tracking
+      allow list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /pageViews/{viewId} {
+      allow create: if true; // Allow anonymous page view tracking
+      allow read, list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /interactions/{interactionId} {
+      allow create: if true; // Allow anonymous interaction tracking
+      allow read, list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /userFlows/{flowId} {
+      allow create: if true; // Allow anonymous user flow tracking
+      allow read, list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /featureUsage/{usageId} {
+      allow create: if true; // Allow anonymous feature usage tracking
+      allow read, list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /conversions/{conversionId} {
+      allow create: if true; // Allow anonymous conversion tracking
+      allow read, list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    // 🔐 Admin & Security Logs
+    match /adminLogs/{logId} {
+      allow create, read: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+      allow list: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+    }
+
+    match /securityLogs/{logId} {
+      allow create, read: if request.auth != null && 
+        request.auth.token.email == "three.dash.sided@gmail.com";
+      allow list: if request.auth != null && 
         request.auth.token.email == "three.dash.sided@gmail.com";
     }
   }

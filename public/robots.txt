@@ -1,3 +1,20 @@
+# Three-Sided Flashcards - robots.txt
+
 User-agent: *
 Allow: /
-Sitemap: https://three-sided.com/sitemap.xml 
+Allow: /new/
+
+# Sitemap location
+Sitemap: https://three-sided-flashcard-app.web.app/sitemap.xml
+
+# Disallow sensitive paths
+Disallow: /admin/
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /sw.js
+
+# Allow common crawlers to access manifest
+Allow: /manifest.webmanifest
+
+# Crawl delay (be respectful)
+Crawl-delay: 1
