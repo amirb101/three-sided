@@ -1,5 +1,56 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FlashcardService } from '../services/flashcardService'
+import { useMathJax } from '../hooks/useMathJax'
+
+// SM-2 Algorithm Constants
+const MIN_EF = 1.3;
+
+/**
+ * SM-2 Spaced Repetition Algorithm
+ * @param {Object} card - Current card with SRS data
+ * @param {number} quality - Quality rating (1-5)
+ * @param {number} nowMs - Current timestamp
+ * @returns {Object} Updated card with new SRS values
+ */
+function sm2Update(card, quality, nowMs) {
+  const was = {
+    repetition: card.repetition ?? 0,
+    interval: card.interval ?? 0, // in days
+    easeFactor: card.easeFactor ?? 2.5,
+  };
+
+  let { repetition, interval, easeFactor } = was;
+
+  if (quality < 3) {
+    // Lapse: reset repetition
+    repetition = 0;
+    interval = 1; // review tomorrow
+  } else {
+    // Correct recall
+    if (repetition === 0) interval = 1;
+    else if (repetition === 1) interval = 6;
+    else interval = Math.round(interval * easeFactor);
+    repetition += 1;
+
+    // EF update per SM-2 (bounded)
+    const delta = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02);
+    easeFactor = Math.max(MIN_EF, parseFloat((easeFactor + delta).toFixed(2)));
+  }
+
+  const nextReview = new Date(nowMs + interval * 24 * 60 * 60 * 1000);
+
+  const next = {
+    ...card,
+    repetition,
+    interval,
+    easeFactor,
+    reviewCount: (card.reviewCount ?? 0) + 1,
+    lastReviewed: new Date(nowMs),
+    nextReview,
+  };
+
+  return { next };
+}
 
 const SpacedRepetition = ({ onClose, isVisible = false }) => {
   const [cards, setCards] = useState([])
@@ -13,94 +64,136 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
     learning: 0,
     reviewing: 0
   })
+  const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true;
     if (isVisible) {
-      loadCards()
+      loadCards();
     }
+    return () => {
+      mountedRef.current = false;
+    };
+  }, [isVisible])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (!isVisible) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') return onClose?.();
+      if (!cards.length) return;
+      if (!showAnswer && (e.key === ' ' || e.key === 'Enter')) {
+        e.preventDefault(); 
+        setShowAnswer(true); 
+        return;
+      }
+      if (showAnswer && '12345'.includes(e.key)) {
+        e.preventDefault(); 
+        handleAnswer(parseInt(e.key, 10));
+      }
+      if (e.key.toLowerCase() === 'r') resetSession();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isVisible, cards.length, showAnswer]);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (!isVisible) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { 
+      document.body.style.overflow = prev; 
+    };
   }, [isVisible])
 
   const loadCards = async () => {
     try {
-      setLoading(true)
-      // In a real app, you'd fetch cards with spaced repetition data
-      const allCards = await FlashcardService.getPublicFlashcards(50)
+      setLoading(true);
+      const all = await FlashcardService.getPublicFlashcards(50);
       
-      // Simulate spaced repetition data
-      const cardsWithSR = allCards.map((card, index) => ({
-        ...card,
-        id: card.id || `card-${index}`,
-        interval: Math.floor(Math.random() * 7) + 1, // Days until next review
-        easeFactor: 2.5 + (Math.random() * 0.5), // Ease factor (2.5-3.0)
-        reviewCount: Math.floor(Math.random() * 10),
-        nextReview: new Date(Date.now() + (Math.random() * 7 * 24 * 60 * 60 * 1000)),
-        difficulty: Math.floor(Math.random() * 5) + 1, // 1-5 scale
-        lastReviewed: new Date(Date.now() - (Math.random() * 7 * 24 * 60 * 60 * 1000))
-      }))
+      if (!mountedRef.current) return;
 
-      // Sort by due date (earliest first)
-      const sortedCards = cardsWithSR.sort((a, b) => a.nextReview - b.nextReview)
-      
-      setCards(sortedCards)
-      updateStats(sortedCards)
-    } catch (error) {
-      console.error('Error loading cards:', error)
-      setCards([])
+      const now = Date.now();
+      const seeded = all.map((c, i) => ({
+        ...c,
+        id: c.id || `card-${i}`,
+        repetition: c.repetition ?? 0,
+        interval: c.interval ?? 0,
+        easeFactor: c.easeFactor ?? 2.5,
+        reviewCount: c.reviewCount ?? 0,
+        // schedule new cards as "due now"
+        nextReview: c.nextReview ? new Date(c.nextReview) : new Date(now),
+        difficulty: c.difficulty ?? 3,
+        lastReviewed: c.lastReviewed ? new Date(c.lastReviewed) : null,
+        question: c.statement ?? c.question ?? '',
+        answer: c.proof ?? c.answer ?? '',
+        hints: Array.isArray(c.hints) ? c.hints : (c.hints ? [c.hints] : []),
+      }));
+
+      // Today's queue: due first, then the rest
+      const sorted = seeded.sort((a, b) => a.nextReview - b.nextReview);
+
+      if (!mountedRef.current) return;
+      setCards(sorted);
+      updateStats(sorted);
+    } catch (e) {
+      console.error('Error loading cards:', e);
+      if (mountedRef.current) {
+        setCards([]);
+      }
     } finally {
-      setLoading(false)
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   }
 
-  const updateStats = (cardsList) => {
-    const now = new Date()
+  const updateStats = (list) => {
+    const now = Date.now();
+    const total = list.length;
+    const due = list.filter(c => (c.nextReview?.getTime?.() ?? c.nextReview) <= now).length;
+    const reviewCount = (c) => c.reviewCount ?? 0;
     const stats = {
-      total: cardsList.length,
-      due: cardsList.filter(card => card.nextReview <= now).length,
-      new: cardsList.filter(card => card.reviewCount === 0).length,
-      learning: cardsList.filter(card => card.reviewCount > 0 && card.reviewCount < 5).length,
-      reviewing: cardsList.filter(card => card.reviewCount >= 5).length
-    }
-    setStats(stats)
+      total,
+      due,
+      new: list.filter(c => reviewCount(c) === 0).length,
+      learning: list.filter(c => reviewCount(c) > 0 && reviewCount(c) < 5).length,
+      reviewing: list.filter(c => reviewCount(c) >= 5).length,
+    };
+    setStats(stats);
   }
 
   const handleAnswer = (quality) => {
-    if (currentCardIndex >= cards.length) return
+    const now = Date.now();
+    setCards(prev => {
+      if (!prev.length) return prev;
 
-    const card = cards[currentCardIndex]
-    const newCards = [...cards]
-    
-    // Update card based on answer quality
-    if (quality >= 3) {
-      // Good answer - increase interval
-      card.interval = Math.floor(card.interval * card.easeFactor)
-      card.easeFactor = Math.max(1.3, card.easeFactor + 0.1)
-    } else if (quality === 2) {
-      // Hard answer - slight increase
-      card.interval = Math.max(1, Math.floor(card.interval * 1.1))
-    } else {
-      // Again - reset to learning
-      card.interval = 1
-      card.easeFactor = Math.max(1.3, card.easeFactor - 0.2)
-    }
+      const current = prev[currentCardIndex];
+      if (!current) return prev;
 
-    card.reviewCount++
-    card.lastReviewed = new Date()
-    card.nextReview = new Date(Date.now() + (card.interval * 24 * 60 * 60 * 1000))
+      // SM-2 update with proper algorithm
+      const { next } = sm2Update(current, quality, now);
 
-    // Re-sort cards
-    newCards.sort((a, b) => a.nextReview - b.nextReview)
-    setCards(newCards)
-    updateStats(newCards)
+      // Replace the one card immutably
+      const updated = [...prev];
+      updated[currentCardIndex] = next;
 
-    // Move to next card
-    if (currentCardIndex < newCards.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1)
-      setShowAnswer(false)
-    } else {
-      // Finished all cards
-      setCurrentCardIndex(0)
-      setShowAnswer(false)
-    }
+      // Sort a NEW array by nextReview
+      const reSorted = [...updated].sort((a, b) => a.nextReview - b.nextReview);
+
+      // Update stats separately
+      updateStats(reSorted);
+
+      return reSorted;
+    });
+
+    // Advance index safely after list changes
+    setCurrentCardIndex((i) => {
+      const nextIdx = Math.min(i + 1, cards.length - 1);
+      return nextIdx;
+    });
+    setShowAnswer(false);
   }
 
   const resetSession = () => {
@@ -109,6 +202,10 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
   }
 
   const getCurrentCard = () => cards[currentCardIndex] || null
+  const currentCard = getCurrentCard()
+
+  // MathJax rendering when card changes
+  useMathJax([currentCard, showAnswer])
 
   const getQualityLabels = () => [
     { value: 1, label: 'Again', color: 'bg-danger-500 hover:bg-danger-600' },
@@ -122,14 +219,22 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="sr-title"
+        className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+        tabIndex={-1}
+      >
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4 text-white">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">🎯 Spaced Repetition</h2>
+            <h2 id="sr-title" className="text-2xl font-bold">🎯 Spaced Repetition</h2>
             <button
               onClick={onClose}
               className="text-white/80 hover:text-white text-2xl transition-colors"
+              aria-label="Close spaced repetition"
+              title="Close (Esc)"
             >
               ✕
             </button>
@@ -241,6 +346,7 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
                     <button
                       onClick={() => setShowAnswer(true)}
                       className="btn btn-primary text-lg px-8 py-4"
+                      title="Show Answer (Space or Enter)"
                     >
                       Show Answer
                     </button>
@@ -253,8 +359,10 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
                             key={value}
                             onClick={() => handleAnswer(value)}
                             className={`btn text-white px-6 py-3 ${color}`}
+                            title={`${label} (${value})`}
+                            aria-label={`Rate as ${label} (Press ${value})`}
                           >
-                            {label}
+                            {value}. {label}
                           </button>
                         ))}
                       </div>
@@ -263,17 +371,30 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
                 </div>
               </div>
 
+              {/* Keyboard Shortcuts Help */}
+              <div className="text-center mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-semibold text-gray-700 mb-2">⌨️ Keyboard Shortcuts</h4>
+                <div className="text-xs text-gray-600 grid grid-cols-2 gap-2">
+                  <div><kbd className="px-1 py-0.5 bg-white border rounded text-xs">Space</kbd> Show Answer</div>
+                  <div><kbd className="px-1 py-0.5 bg-white border rounded text-xs">1-5</kbd> Rate Quality</div>
+                  <div><kbd className="px-1 py-0.5 bg-white border rounded text-xs">R</kbd> Reset Session</div>
+                  <div><kbd className="px-1 py-0.5 bg-white border rounded text-xs">Esc</kbd> Close</div>
+                </div>
+              </div>
+
               {/* Session Controls */}
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-4 mt-6">
                 <button
                   onClick={resetSession}
                   className="btn btn-secondary"
+                  title="Reset Session (R)"
                 >
                   🔄 Reset Session
                 </button>
                 <button
                   onClick={onClose}
                   className="btn btn-primary"
+                  title="Finish Session (Esc)"
                 >
                   Finish Session
                 </button>

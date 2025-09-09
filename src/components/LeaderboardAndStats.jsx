@@ -1,507 +1,341 @@
 import { useState, useEffect } from 'react';
-import { UserService } from '../services/userService';
-import { FlashcardService } from '../services/flashcardService';
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
+import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+
+// Simple in-memory cache for leaderboard data
+const leaderboardCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const LeaderboardAndStats = () => {
   const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState([]);
-  const [userStats, setUserStats] = useState(null);
+  const [communityStats, setCommunityStats] = useState({
+    totalUsers: 0,
+    totalCards: 0,
+    totalViews: 0
+  });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('leaderboard');
-  const [timeframe, setTimeframe] = useState('allTime');
+  const [activeTab, setActiveTab] = useState('creators');
+  const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
     loadLeaderboard();
-    if (user) {
-      loadUserStats();
-    }
-  }, [user, timeframe]);
+    loadCommunityStats();
+  }, [activeTab]);
 
-  const loadLeaderboard = async () => {
+  const loadLeaderboard = async (forceRefresh = false) => {
     try {
       setIsLoading(true);
-      const topUsers = await UserService.getTopUsers(20, timeframe);
-      setLeaderboard(topUsers);
+      
+      // Use the working backend API
+      let sortParam = 'upvotes';
+      if (activeTab === 'creators') {
+        sortParam = 'flashcards';
+      } else if (activeTab === 'streak') {
+        sortParam = 'streak';
+      }
+      
+      const cacheKey = `leaderboard_${sortParam}`;
+      
+      // Check cache first (unless forcing refresh)
+      if (!forceRefresh) {
+        const cachedData = leaderboardCache.get(cacheKey);
+        if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+          console.log('📋 Using cached leaderboard data for:', sortParam);
+          setLeaderboard(cachedData.data);
+          setFromCache(true);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      console.log('🏆 Loading leaderboard using backend API for:', sortParam);
+      
+      const response = await fetch(
+        `https://us-central1-three-sided-flashcard-app.cloudfunctions.net/getLeaderboard?sort=${encodeURIComponent(sortParam)}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('📊 Leaderboard data loaded:', data);
+      
+      if (!data.leaderboard || !Array.isArray(data.leaderboard)) {
+        throw new Error('Invalid leaderboard data format');
+      }
+      
+      // Cache the data
+      leaderboardCache.set(cacheKey, {
+        data: data.leaderboard,
+        timestamp: Date.now()
+      });
+      
+      setLeaderboard(data.leaderboard);
+      setFromCache(false);
+      console.log('✅ Leaderboard loaded:', data.leaderboard.length, 'entries');
+      
     } catch (error) {
-      console.error('Error loading leaderboard:', error);
+      console.error('💥 Error loading leaderboard:', error);
       setLeaderboard([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadUserStats = async () => {
-    if (!user) return;
-    
+  const loadCommunityStats = async () => {
     try {
-      const stats = await UserService.getUserStats(user.uid);
-      setUserStats(stats);
+      // Count total users with profiles
+      const usersQuery = query(collection(db, 'profiles'));
+      const usersSnapshot = await getDocs(usersQuery);
+      
+      // Count total public cards
+      const cardsQuery = query(collection(db, 'publicCards'));
+      const cardsSnapshot = await getDocs(cardsQuery);
+      
+      // Calculate total views from cards
+      let totalViews = 0;
+      cardsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        totalViews += data.viewCount || 0;
+      });
+      
+      setCommunityStats({
+        totalUsers: usersSnapshot.size,
+        totalCards: cardsSnapshot.size,
+        totalViews
+      });
     } catch (error) {
-      console.error('Error loading user stats:', error);
+      console.error('Error loading community stats:', error);
     }
   };
 
-  const getTimeframeLabel = (tf) => {
-    switch (tf) {
-      case 'week': return 'This Week';
-      case 'month': return 'This Month';
-      case 'year': return 'This Year';
-      default: return 'All Time';
-    }
+  const getUserInitials = (displayName) => {
+    if (!displayName) return '?';
+    return displayName.split(' ').map(name => name.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
-  const getRankIcon = (rank) => {
-    switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return `#${rank}`;
+  const getRankIcon = (index) => {
+    switch (index) {
+      case 0: return '🥇';
+      case 1: return '🥈';
+      case 2: return '🥉';
+      default: return `#${index + 1}`;
     }
   };
-
-  const getAchievementIcon = (achievement) => {
-    switch (achievement) {
-      case 'first_card': return '🎯';
-      case 'ten_cards': return '📚';
-      case 'hundred_cards': return '🏆';
-      case 'popular_creator': return '⭐';
-      case 'study_master': return '🧠';
-      case 'community_contributor': return '👥';
-      default: return '🏅';
-    }
-  };
-
-  const getAchievementName = (achievement) => {
-    switch (achievement) {
-      case 'first_card': return 'First Steps';
-      case 'ten_cards': return 'Dedicated Learner';
-      case 'hundred_cards': return 'Knowledge Master';
-      case 'popular_creator': return 'Popular Creator';
-      case 'study_master': return 'Study Master';
-      case 'community_contributor': return 'Community Hero';
-      default: return 'Achievement Unlocked';
-    }
-  };
-
-  if (!user) {
-    return (
-      <div style={{
-        background: '#f8f9fa',
-        padding: '2rem',
-        borderRadius: '12px',
-        textAlign: 'center'
-      }}>
-        <h3 style={{color: '#333', marginBottom: '1rem'}}>🔐 Sign in to View Leaderboard</h3>
-        <p style={{color: '#666'}}>You need to be signed in to see the leaderboard and your statistics.</p>
-      </div>
-    );
-  }
 
   return (
-    <div style={{
-      background: 'white',
-      padding: '2rem',
-      borderRadius: '12px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-      maxWidth: '1200px',
-      margin: '0 auto'
-    }}>
-      <div style={{textAlign: 'center', marginBottom: '2rem'}}>
-        <h2 style={{color: '#333', marginBottom: '1rem'}}>🏆 Leaderboard & Statistics</h2>
-        <p style={{color: '#666'}}>
-          See how you rank among the Three-Sided community and track your progress
-        </p>
-      </div>
+    <div className="min-h-screen pt-20" style={{backgroundColor: 'var(--claude-background)'}}>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold mb-4" style={{color: 'var(--claude-heading)'}}>
+            🏆 Community Leaderboard
+          </h1>
+          <p className="claude-text-secondary text-lg">Celebrating our top contributors and creators</p>
+        </div>
 
-      {/* Timeframe Selector */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        marginBottom: '2rem',
-        flexWrap: 'wrap'
-      }}>
-        {['allTime', 'year', 'month', 'week'].map((tf) => (
-          <button
-            key={tf}
-            onClick={() => setTimeframe(tf)}
-            style={{
-              background: timeframe === tf ? '#007bff' : '#e9ecef',
-              color: timeframe === tf ? 'white' : '#333',
-              border: 'none',
-              padding: '0.5rem 1rem',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              transition: 'all 0.2s'
-            }}
-          >
-            {getTimeframeLabel(tf)}
-          </button>
-        ))}
-      </div>
+        {/* Community Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="claude-card p-6 text-center">
+            <div className="text-3xl mb-2">👥</div>
+            <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-accent-blue)'}}>{communityStats.totalUsers.toLocaleString()}</div>
+            <div className="claude-text-secondary">Community Members</div>
+          </div>
+          
+          <div className="claude-card p-6 text-center">
+            <div className="text-3xl mb-2">📚</div>
+            <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-accent)'}}>{communityStats.totalCards.toLocaleString()}</div>
+            <div className="claude-text-secondary">Total Flashcards</div>
+          </div>
+          
+          <div className="claude-card p-6 text-center">
+            <div className="text-3xl mb-2">👁️</div>
+            <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-success)'}}>{communityStats.totalViews.toLocaleString()}</div>
+            <div className="claude-text-secondary">Total Views</div>
+          </div>
+        </div>
 
-      {/* Tab Navigation */}
-      <div style={{
-        display: 'flex',
-        borderBottom: '1px solid #e9ecef',
-        marginBottom: '2rem'
-      }}>
-        <button
-          onClick={() => setActiveTab('leaderboard')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '1rem 2rem',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'leaderboard' ? '2px solid #007bff' : 'none',
-            color: activeTab === 'leaderboard' ? '#007bff' : '#666',
-            fontWeight: activeTab === 'leaderboard' ? '600' : '400'
-          }}
-        >
-          🏆 Leaderboard
-        </button>
-        <button
-          onClick={() => setActiveTab('stats')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '1rem 2rem',
-            cursor: 'pointer',
-            borderBottom: activeTab === 'stats' ? '2px solid #007bff' : 'none',
-            color: activeTab === 'stats' ? '#007bff' : '#666',
-            fontWeight: activeTab === 'stats' ? '600' : '400'
-          }}
-        >
-          📊 My Statistics
-        </button>
-      </div>
+        {/* Tabs */}
+        <div className="claude-card p-2 mb-8">
+          <div className="flex">
+            {[
+              { id: 'popular', label: 'Most Upvoted', icon: '🔥' },
+              { id: 'creators', label: 'Top Creators', icon: '👑' },
+              { id: 'streak', label: 'Login Streak', icon: '⚡' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200"
+                style={{
+                  backgroundColor: activeTab === tab.id ? 'var(--claude-accent)' : 'transparent',
+                  color: activeTab === tab.id ? 'white' : 'var(--claude-secondary-text)'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.backgroundColor = 'var(--claude-surface-hover)';
+                    e.target.style.color = 'var(--claude-primary-text)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.color = 'var(--claude-secondary-text)';
+                  }
+                }}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Tab Content */}
-      <div style={{minHeight: '400px'}}>
-        {activeTab === 'leaderboard' && (
-          <div>
-            <h3 style={{color: '#333', marginBottom: '1.5rem'}}>
-              🏆 Top Contributors - {getTimeframeLabel(timeframe)}
-            </h3>
-            
-            {isLoading ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '2rem',
-                color: '#666'
-              }}>
-                <div style={{fontSize: '2rem', marginBottom: '1rem'}}>⏳</div>
-                <p>Loading leaderboard...</p>
-              </div>
-            ) : leaderboard.length === 0 ? (
-              <div style={{
-                textAlign: 'center',
-                padding: '2rem',
-                color: '#666'
-              }}>
-                <div style={{fontSize: '2rem', marginBottom: '1rem'}}>📊</div>
-                <p>No data available for this timeframe.</p>
-              </div>
-            ) : (
-              <div style={{
-                display: 'grid',
-                gap: '1rem'
-              }}>
-                {leaderboard.map((userData, index) => (
-                  <div
-                    key={userData.uid}
+        {/* Leaderboard */}
+        <div className="claude-card p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold" style={{color: 'var(--claude-heading)'}}>
+              {activeTab === 'creators' ? '👑 Top Creators' : activeTab === 'popular' ? '🔥 Most Upvoted' : '⚡ Login Streak Champions'}
+            </h2>
+            <div className="flex items-center gap-3">
+              {fromCache && (
+                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                  📋 Cached
+                </span>
+              )}
+              <button
+                onClick={() => loadLeaderboard(true)}
+                className="claude-button-primary"
+                title="Force refresh from server (bypasses cache)"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              {Array.from({length: 10}).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 rounded-xl animate-pulse" style={{backgroundColor: 'var(--claude-subtle)'}}>
+                  <div className="w-12 h-12 rounded-full" style={{backgroundColor: 'var(--claude-border)'}}></div>
+                  <div className="flex-1">
+                    <div className="h-4 rounded mb-2" style={{backgroundColor: 'var(--claude-border)'}}></div>
+                    <div className="h-3 rounded w-1/2" style={{backgroundColor: 'var(--claude-border)'}}></div>
+                  </div>
+                  <div className="w-16 h-8 rounded" style={{backgroundColor: 'var(--claude-border)'}}></div>
+                </div>
+              ))}
+            </div>
+          ) : leaderboard.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4">🏆</div>
+              <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>No users found</h3>
+              <p className="claude-text-muted">Be the first to create some flashcards!</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {leaderboard.map((user, index) => (
+                <div key={user.slug || user.id} className="flex items-center gap-4 p-4 rounded-xl transition-all duration-300 hover:scale-105" style={{
+                  backgroundColor: index < 3 
+                    ? 'rgba(255, 215, 0, 0.1)' 
+                    : 'var(--claude-subtle)',
+                  border: `1px solid ${index < 3 ? 'rgba(255, 215, 0, 0.3)' : 'var(--claude-border)'}`,
+                }}>
+                  
+                  {/* Rank */}
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg"
                     style={{
-                      background: index < 3 ? '#fff3cd' : '#f8f9fa',
-                      border: index < 3 ? '2px solid #ffc107' : '1px solid #e9ecef',
-                      padding: '1.5rem',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem'
+                      background: index < 3 
+                        ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' 
+                        : 'var(--claude-muted)',
+                      color: index < 3 ? 'white' : 'var(--claude-background)'
                     }}
                   >
-                    <div style={{
-                      fontSize: '1.5rem',
-                      fontWeight: 'bold',
-                      minWidth: '50px',
-                      textAlign: 'center'
-                    }}>
-                      {getRankIcon(index + 1)}
+                    {getRankIcon(index)}
+                  </div>
+
+                  {/* Avatar */}
+                  <div 
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
+                    style={{background: 'var(--claude-accent)'}}
+                  >
+                    {getUserInitials(user.displayName)}
+                  </div>
+
+                  {/* User Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold" style={{color: 'var(--claude-heading)'}}>{user.displayName || 'Anonymous'}</h3>
+                      {user.slug && (
+                        <a 
+                          href={`/profile/${user.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm transition-colors hover:underline"
+                          style={{color: 'var(--claude-accent)'}}
+                        >
+                          @{user.slug}
+                        </a>
+                      )}
                     </div>
-                    
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      flex: 1
-                    }}>
-                      <img
-                        src={userData.photoURL || 'https://via.placeholder.com/40x40'}
-                        alt={userData.displayName || 'User'}
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                      <div>
-                        <div style={{
-                          fontWeight: '600',
-                          color: '#333',
-                          fontSize: '1.1rem'
-                        }}>
-                          {userData.displayName || 'Anonymous User'}
-                        </div>
-                        <div style={{
-                          color: '#666',
-                          fontSize: '0.9rem'
-                        }}>
-                          {userData.email}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div style={{
-                      textAlign: 'right',
-                      minWidth: '120px'
-                    }}>
-                      <div style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 'bold',
-                        color: '#007bff'
-                      }}>
-                        {userData.flashcardCount || 0}
-                      </div>
-                      <div style={{
-                        fontSize: '0.8rem',
-                        color: '#666'
-                      }}>
-                        flashcards
-                      </div>
-                    </div>
-                    
-                    <div style={{
-                      textAlign: 'right',
-                      minWidth: '100px'
-                    }}>
-                      <div style={{
-                        fontSize: '1.2rem',
-                        fontWeight: 'bold',
-                        color: '#28a745'
-                      }}>
-                        {userData.studySessions || 0}
-                      </div>
-                      <div style={{
-                        fontSize: '0.8rem',
-                        color: '#666'
-                      }}>
-                        sessions
-                      </div>
+                    <div className="claude-text-muted text-sm">
+                      {activeTab === 'creators' 
+                        ? `${user.flashcardCount || 0} flashcards created`
+                        : activeTab === 'popular'
+                        ? `${user.upvotesReceived || 0} upvotes received`
+                        : `${user.loginStreak || 0} day login streak`
+                      }
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
-        {activeTab === 'stats' && (
-          <div>
-            <h3 style={{color: '#333', marginBottom: '1.5rem'}}>📊 Your Statistics</h3>
-            
-            {userStats ? (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                gap: '1.5rem'
-              }}>
-                {/* Basic Stats */}
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>📚</div>
-                  <div style={{
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: '#007bff',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {userStats.flashcardCount || 0}
-                  </div>
-                  <div style={{color: '#666'}}>Flashcards Created</div>
-                </div>
-
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>🧠</div>
-                  <div style={{
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: '#28a745',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {userStats.studySessions || 0}
-                  </div>
-                  <div style={{color: '#666'}}>Study Sessions</div>
-                </div>
-
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>👥</div>
-                  <div style={{
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: '#ffc107',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {userStats.followers || 0}
-                  </div>
-                  <div style={{color: '#666'}}>Followers</div>
-                </div>
-
-                <div style={{
-                  background: '#f8f9fa',
-                  padding: '1.5rem',
-                  borderRadius: '8px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>⭐</div>
-                  <div style={{
-                    fontSize: '2rem',
-                    fontWeight: 'bold',
-                    color: '#6f42c1',
-                    marginBottom: '0.5rem'
-                  }}>
-                    {userStats.rating || 'N/A'}
-                  </div>
-                  <div style={{color: '#666'}}>Average Rating</div>
-                </div>
-              </div>
-            ) : (
-              <div style={{
-                textAlign: 'center',
-                padding: '2rem',
-                color: '#666'
-              }}>
-                <div style={{fontSize: '2rem', marginBottom: '1rem'}}>📊</div>
-                <p>Loading your statistics...</p>
-              </div>
-            )}
-
-            {/* Achievements */}
-            {userStats && userStats.achievements && userStats.achievements.length > 0 && (
-              <div style={{marginTop: '2rem'}}>
-                <h4 style={{color: '#333', marginBottom: '1rem'}}>🏅 Your Achievements</h4>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1rem'
-                }}>
-                  {userStats.achievements.map((achievement, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        background: '#fff3cd',
-                        border: '1px solid #ffc107',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        textAlign: 'center'
-                      }}
+                  {/* Stats */}
+                  <div className="text-right">
+                    <div 
+                      className="text-2xl font-bold"
+                      style={{color: index < 3 ? '#B8860B' : 'var(--claude-accent-blue)'}}
                     >
-                      <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>
-                        {getAchievementIcon(achievement)}
-                      </div>
-                      <div style={{
-                        fontWeight: '600',
-                        color: '#333',
-                        marginBottom: '0.5rem'
-                      }}>
-                        {getAchievementName(achievement)}
-                      </div>
-                      <div style={{
-                        fontSize: '0.9rem',
-                        color: '#666'
-                      }}>
-                        Achievement unlocked!
-                      </div>
+                      {activeTab === 'creators' 
+                        ? (user.flashcardCount || 0) 
+                        : activeTab === 'popular'
+                        ? (user.upvotesReceived || 0)
+                        : (user.loginStreak || 0)
+                      }
                     </div>
-                  ))}
+                    <div className="claude-text-muted text-sm">
+                      {activeTab === 'creators' ? 'cards' : activeTab === 'popular' ? 'upvotes' : 'day streak'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Current User Position */}
+        {user && (
+          <div className="mt-8 bg-slate-800/30 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Your Position</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                  {getUserInitials(user.displayName)}
+                </div>
+                <div>
+                  <div className="font-medium text-white">{user.displayName}</div>
+                  <div className="text-slate-400 text-sm">That's you!</div>
                 </div>
               </div>
-            )}
-
-            {/* Progress Bars */}
-            {userStats && (
-              <div style={{marginTop: '2rem'}}>
-                <h4 style={{color: '#333', marginBottom: '1rem'}}>📈 Progress Towards Next Goals</h4>
-                
-                <div style={{marginBottom: '1rem'}}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.5rem'
-                  }}>
-                    <span style={{color: '#333'}}>Next Milestone: 10 Flashcards</span>
-                    <span style={{color: '#666'}}>
-                      {userStats.flashcardCount || 0}/10
-                    </span>
-                  </div>
-                  <div style={{
-                    background: '#e9ecef',
-                    height: '8px',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      background: '#007bff',
-                      height: '100%',
-                      width: `${Math.min(((userStats.flashcardCount || 0) / 10) * 100, 100)}%`,
-                      transition: 'width 0.3s ease'
-                    }}></div>
-                  </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-blue-400">
+                  #{leaderboard.findIndex(u => u.id === user.uid) + 1 || 'Unranked'}
                 </div>
-
-                <div style={{marginBottom: '1rem'}}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    marginBottom: '0.5rem'
-                  }}>
-                    <span style={{color: '#333'}}>Study Goal: 5 Sessions</span>
-                    <span style={{color: '#666'}}>
-                      {userStats.studySessions || 0}/5
-                    </span>
-                  </div>
-                  <div style={{
-                    background: '#e9ecef',
-                    height: '8px',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      background: '#28a745',
-                      height: '100%',
-                      width: `${Math.min(((userStats.studySessions || 0) / 5) * 100, 100)}%`,
-                      transition: 'width 0.3s ease'
-                    }}></div>
-                  </div>
-                </div>
+                <div className="text-slate-400 text-sm">Position</div>
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>

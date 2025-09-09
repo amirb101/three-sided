@@ -12,19 +12,15 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ProfileService } from './profileService';
+import { DeckService } from './deckService';
 
 export class UserService {
-  // Get user profile
+  // Get user profile (uses ProfileService for compatibility with old system)
   static async getUserProfile(userId) {
     try {
-      const docRef = doc(db, 'users', userId);
-      const docSnap = await getDoc(docRef);
-      
-      if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() };
-      } else {
-        return null;
-      }
+      // Use ProfileService which follows the old system's schema
+      return await ProfileService.getProfileByUserId(userId);
     } catch (error) {
       console.error('Error fetching user profile:', error);
       throw error;
@@ -72,20 +68,25 @@ export class UserService {
       const profile = await this.getUserProfile(userId);
       if (!profile) return null;
 
-      // Get user's flashcards count
-      const flashcardsQuery = query(
-        collection(db, 'flashcards'),
-        where('authorId', '==', userId)
+      // Get user's flashcards count from multiple collections
+      const flashcardsQueries = [
+        query(collection(db, 'cards'), where('userId', '==', userId)),
+        query(collection(db, 'flashcards'), where('userId', '==', userId)),
+        query(collection(db, 'publicCards'), where('userId', '==', userId))
+      ];
+      
+      const [cardsSnap, flashcardsSnap, publicCardsSnap] = await Promise.all(
+        flashcardsQueries.map(q => getDocs(q))
       );
-      const flashcardsSnapshot = await getDocs(flashcardsQuery);
-      const flashcardCount = flashcardsSnapshot.size;
+      
+      const flashcardCount = cardsSnap.size + flashcardsSnap.size + publicCardsSnap.size;
 
       // Simulate some achievements based on activity
       const achievements = [];
       if (flashcardCount > 0) achievements.push('first_card');
       if (flashcardCount >= 10) achievements.push('ten_cards');
       if (flashcardCount >= 100) achievements.push('hundred_cards');
-      if (profile.upvotes > 50) achievements.push('popular_creator');
+      if (profile.upvotesReceived > 50) achievements.push('popular_creator');
 
       return {
         ...profile,
@@ -187,6 +188,133 @@ export class UserService {
     } catch (error) {
       console.error('Error fetching study history:', error);
       return [];
+    }
+  }
+
+  // ==========================================
+  // DECK MIGRATION FUNCTIONS
+  // ==========================================
+
+  /**
+   * Check if user needs deck migration
+   */
+  static async needsDeckMigration(userId) {
+    try {
+      // Check if user has any decks
+      const userDecks = await DeckService.getUserDecks(userId);
+      
+      if (userDecks.length > 0) {
+        return false; // Already has decks, no migration needed
+      }
+
+      // Check if user has any cards that need migration
+      const userCardsQuery = query(
+        collection(db, 'cards'),
+        where('userId', '==', userId),
+        limit(1)
+      );
+      const userCardsSnap = await getDocs(userCardsQuery);
+
+      const legacyCardsQuery = query(
+        collection(db, 'flashcards'),
+        where('userId', '==', userId),
+        limit(1)
+      );
+      const legacyCardsSnap = await getDocs(legacyCardsQuery);
+
+      return !userCardsSnap.empty || !legacyCardsSnap.empty;
+    } catch (error) {
+      console.error('Error checking deck migration status:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Migrate user to deck system
+   */
+  static async migrateUserToDecks(userId) {
+    try {
+      console.log(`🚀 Starting deck migration for user: ${userId}`);
+
+      // Check if migration is needed
+      const needsMigration = await this.needsDeckMigration(userId);
+      if (!needsMigration) {
+        console.log('✅ User already migrated or has no cards');
+        return { success: true, message: 'No migration needed' };
+      }
+
+      // Perform the migration
+      const migrationResult = await DeckService.migrateCardsToDefaultDeck(userId);
+      
+      // Store migration status (create user doc if doesn't exist)
+      const userRef = doc(db, 'users', userId);
+      await setDoc(userRef, {
+        deckMigrationCompleted: true,
+        deckMigrationDate: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      console.log(`✅ Deck migration completed for user: ${userId}`);
+      console.log(`📊 Migration stats:`, migrationResult);
+
+      return {
+        success: true,
+        message: `Successfully migrated ${migrationResult.migratedCount} cards`,
+        migrationResult
+      };
+    } catch (error) {
+      console.error('Error migrating user to decks:', error);
+      
+      // Log migration failure
+      try {
+        const userRef = doc(db, 'users', userId);
+        await setDoc(userRef, {
+          deckMigrationFailed: true,
+          deckMigrationError: error.message,
+          deckMigrationAttemptDate: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (logError) {
+        console.error('Failed to log migration error:', logError);
+      }
+
+      return {
+        success: false,
+        message: `Migration failed: ${error.message}`,
+        error
+      };
+    }
+  }
+
+  /**
+   * Auto-migrate user on login/app load
+   */
+  static async autoMigrateUserDecks(userId) {
+    try {
+      // Check user's migration status
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const userData = userDoc.exists() ? userDoc.data() : {};
+
+      // Skip if already migrated
+      if (userData.deckMigrationCompleted) {
+        return { success: true, message: 'Already migrated' };
+      }
+
+      // Skip if failed recently (within 24 hours)
+      if (userData.deckMigrationFailed && userData.deckMigrationAttemptDate) {
+        const attemptDate = userData.deckMigrationAttemptDate.toMillis();
+        const hoursSinceAttempt = (Date.now() - attemptDate) / (1000 * 60 * 60);
+        
+        if (hoursSinceAttempt < 24) {
+          return { success: false, message: 'Migration failed recently, will retry later' };
+        }
+      }
+
+      // Perform auto-migration
+      return await this.migrateUserToDecks(userId);
+    } catch (error) {
+      console.error('Error in auto-migration:', error);
+      return { success: false, message: 'Auto-migration failed', error };
     }
   }
 }
