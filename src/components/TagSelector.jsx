@@ -16,6 +16,29 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
     setSelectedTags(currentTags);
   }, [value]);
 
+  // Get filtered tags based on what user is typing
+  const getFilteredTags = () => {
+    if (!value) return existingTags;
+    
+    // Get the current input (last tag being typed)
+    const tags = value.split(',').map(t => t.trim());
+    const lastTag = tags[tags.length - 1].toLowerCase();
+    
+    if (!lastTag) return existingTags;
+    
+    // Filter existing tags that match what's being typed
+    return existingTags.filter(tag => 
+      tag.toLowerCase().includes(lastTag) && !selectedTags.includes(tag)
+    ).sort((a, b) => {
+      // Prioritize exact matches and starts-with matches
+      const aStarts = a.toLowerCase().startsWith(lastTag);
+      const bStarts = b.toLowerCase().startsWith(lastTag);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      return a.localeCompare(b);
+    });
+  };
+
   // Load existing tags when component mounts
   useEffect(() => {
     loadExistingTags();
@@ -104,6 +127,17 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
     onChange(e.target.value);
   };
 
+  // Handle keyboard shortcuts
+  const handleKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      const filteredTags = getFilteredTags();
+      if (filteredTags.length > 0) {
+        e.preventDefault();
+        addExistingTag(filteredTags[0]); // Add first filtered tag
+      }
+    }
+  };
+
   // Toggle tag selection popup
   const togglePopup = () => {
     setShowPopup(!showPopup);
@@ -117,6 +151,7 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
           ref={textareaRef}
           value={value}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className={`claude-input w-full resize-none ${className}`}
           rows="2"
@@ -155,7 +190,7 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
       <div className="existing-tags-section">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm claude-text-secondary">
-            Click to add existing tags:
+            {value ? `Filtered tags (${getFilteredTags().length}):` : 'Click to add existing tags:'}
           </div>
           {existingTags.length > 6 && (
             <button
@@ -191,8 +226,12 @@ const TagSelector = ({ value, onChange, className = "", placeholder = "Type tags
             <div className="claude-text-muted italic">
               No existing tags found. Create your first card to see tags here!
             </div>
+          ) : getFilteredTags().length === 0 && value ? (
+            <div className="claude-text-muted italic">
+              No tags match your search. Press Enter to add "{value.split(',').pop()?.trim()}" as a new tag.
+            </div>
           ) : (
-            existingTags.slice(0, showPopup ? existingTags.length : 12).map((tag) => {
+            getFilteredTags().slice(0, showPopup ? getFilteredTags().length : 12).map((tag) => {
               const isSelected = selectedTags.includes(tag);
               return (
                 <button
