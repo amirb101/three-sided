@@ -63,7 +63,7 @@
     "rewrites": [
       {
         "source": "/card/**",
-        "destination": "/card/enhanced-static.html"
+        "destination": "/card/enhanced-v2.html"
       },
       {
         "source": "/profile/**",
