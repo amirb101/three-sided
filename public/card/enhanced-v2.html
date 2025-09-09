@@ -311,9 +311,18 @@
         
         // Clear existing MathJax containers before updating content
         if (mainTitle) {
-          mainTitle.innerHTML = cardData.statement ? 
-            cardData.statement.substring(0, 80) + (cardData.statement.length > 80 ? '...' : '') : 
-            'Flashcard';
+          let titleText = cardData.statement || 'Flashcard';
+          // If truncating, try to avoid cutting LaTeX formulas in half
+          if (titleText.length > 80) {
+            let truncated = titleText.substring(0, 80);
+            // If we're in the middle of a LaTeX formula, back up to before it
+            if (truncated.includes('$') && (truncated.match(/\$/g) || []).length % 2 === 1) {
+              let lastDollar = truncated.lastIndexOf('$');
+              truncated = truncated.substring(0, lastDollar);
+            }
+            titleText = truncated + '...';
+          }
+          mainTitle.innerHTML = titleText;
         }
         if (breadcrumbTitle) {
           breadcrumbTitle.innerHTML = 'Flashcard: ' + (cardData.statement ? 
