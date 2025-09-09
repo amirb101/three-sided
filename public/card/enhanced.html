@@ -374,15 +374,7 @@
 
         // Render MathJax - process everything at once after content is updated
         if (window.MathJax && window.MathJax.typesetPromise) {
-          console.log('About to process MathJax. Title content:', mainTitle ? mainTitle.innerHTML : 'no main title');
-          console.log('Breadcrumb content:', breadcrumbTitle ? breadcrumbTitle.innerHTML : 'no breadcrumb');
-          
-          // Process all content including updated titles
-          MathJax.typesetPromise().then(() => {
-            console.log('MathJax processing complete');
-            console.log('Title after MathJax:', mainTitle ? mainTitle.innerHTML : 'no main title');
-            console.log('Breadcrumb after MathJax:', breadcrumbTitle ? breadcrumbTitle.innerHTML : 'no breadcrumb');
-          }).catch(err => {
+          MathJax.typesetPromise().catch(err => {
             console.log('MathJax rendering error:', err);
           });
         }
@@ -394,7 +386,7 @@
           });
         } catch (viewError) {
           // Silently ignore view tracking errors (e.g., blocked by ad blockers)
-          console.log('View tracking blocked or failed (likely ad blocker)', viewError);
+          // View tracking failed - this is normal with ad blockers
         }
 
       } catch (error) {
