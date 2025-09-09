@@ -4,6 +4,10 @@ const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 
+// Import additional functions
+const { generateCardImage } = require('./generateCardImage');
+const { generateCardPage } = require('./generateCardPage');
+
 // Simple HTTP request using Node.js built-ins
 const https = require('https');
 const zlib = require('zlib');
@@ -893,18 +897,52 @@ exports.deepseekAutofill = functions.onRequest(
       messages: [
         {
           role: "system",
-          content: `You're an expert mathematics assistant. Given a LaTeX-formatted theorem statement, return a JSON object with the following fields:
-- hints: a brief hint (string),
-- proof: a full LaTeX-formatted proof (string),
-- tags: a list of relevant topic tags (array of strings).
+          content: `ROLE: You are a professional mathematics tutor and LaTeX expert.
 
-ONLY return valid JSON. Do not include any preamble or explanation.
-eg.
+TASK: Generate educational content for a mathematical statement.
+
+INPUT FORMAT: You will receive a mathematical statement that may contain LaTeX notation.
+
+OUTPUT FORMAT: You MUST respond with ONLY a valid JSON object. No other text, explanations, or formatting.
+
+REQUIRED JSON STRUCTURE:
 {
-  "hints": "string",
-  "proof": "string",
-  "tags": ["tag1", "tag2", ...]
-}`
+  "hints": "<string>",
+  "proof": "<string>",
+  "tags": ["<string>", "<string>", ...]
+}
+
+FIELD SPECIFICATIONS:
+1. "hints": 
+   - Must be a string (not null, not array)
+   - 1-3 sentences maximum
+   - Provide guidance without giving away the answer
+   - Use LaTeX notation where appropriate: $...$ for inline, $$...$$ for display
+   - Example: "Start by applying the definition of a derivative as a limit. Consider using the product rule for $f(x) = x \\sin(x)$."
+
+2. "proof":
+   - Must be a string (not null, not array)
+   - Provide a complete, step-by-step mathematical proof
+   - Use proper LaTeX notation throughout
+   - Include line breaks using \\n for readability
+   - Structure: Given → Method → Steps → Conclusion
+   - Example format: "Given: ... \\n\\nMethod: We use... \\n\\nStep 1: ... \\n\\nStep 2: ... \\n\\nTherefore: ..."
+
+3. "tags":
+   - Must be an array of strings
+   - Include 3-6 relevant mathematical topic tags
+   - Use standard mathematical terminology
+   - Examples: ["calculus", "derivatives", "limits", "trigonometry"]
+   - No duplicates, lowercase preferred
+
+CONSTRAINTS:
+- Response must be valid JSON that can be parsed by JSON.parse()
+- No markdown formatting, no code blocks, no backticks
+- No explanatory text before or after the JSON
+- If you cannot process the input, return: {"hints": "Unable to process", "proof": "Unable to process", "tags": ["general"]}
+
+EXAMPLE OUTPUT:
+{"hints": "Use the fundamental theorem of calculus and consider the chain rule for composite functions.", "proof": "Given: $\\frac{d}{dx}\\int_0^x f(t)dt$ \\n\\nBy the Fundamental Theorem of Calculus: \\n\\nStep 1: $\\frac{d}{dx}\\int_0^x f(t)dt = f(x)$ \\n\\nStep 2: This follows directly from FTC Part 1 \\n\\nTherefore: $\\frac{d}{dx}\\int_0^x f(t)dt = f(x)$", "tags": ["calculus", "fundamental-theorem", "integration", "differentiation"]}`
         },
         {
           role: "user",
@@ -1051,7 +1089,72 @@ exports.convertToLatex = functions.onRequest(
           messages: [
             {
               role: "system",
-              content: "You are a LaTeX rendering assistant. Given a natural language math description, return only the equivalent LaTeX math code, wrapped in inline math delimiters like \\( ... \\)."
+              content: `ROLE: You are a professional LaTeX conversion expert.
+
+TASK: Convert natural language mathematical text into properly formatted LaTeX notation.
+
+INPUT FORMAT: You will receive natural language text describing mathematical concepts, equations, or expressions.
+
+OUTPUT FORMAT: Return ONLY the LaTeX-formatted version of the input. No explanations, no additional text.
+
+CONVERSION RULES:
+1. INLINE MATH: Use $...$ for inline mathematical expressions
+2. DISPLAY MATH: Use $$...$$ for standalone equations or complex expressions
+3. PRESERVE TEXT: Keep non-mathematical text as regular text
+4. COMMON CONVERSIONS:
+   - "squared" → "^2"
+   - "cubed" → "^3" 
+   - "to the power of n" → "^n"
+   - "square root of x" → "\\sqrt{x}"
+   - "nth root of x" → "\\sqrt[n]{x}"
+   - "infinity" → "\\infty"
+   - "integral" → "\\int"
+   - "sum from 1 to n" → "\\sum_{i=1}^{n}"
+   - "limit as x approaches a" → "\\lim_{x \\to a}"
+   - "derivative of f with respect to x" → "\\frac{df}{dx}"
+   - "partial derivative" → "\\frac{\\partial f}{\\partial x}"
+   - "greater than or equal" → "\\geq"
+   - "less than or equal" → "\\leq"
+   - "not equal" → "\\neq"
+   - "approximately equal" → "\\approx"
+   - "plus or minus" → "\\pm"
+   - "multiplication" → "\\cdot" or "\\times"
+   - "fraction a over b" → "\\frac{a}{b}"
+
+FUNCTION CONVERSIONS:
+- "sin", "cos", "tan" → "\\sin", "\\cos", "\\tan"
+- "log" → "\\log"
+- "ln" → "\\ln"
+- "exp" → "\\exp"
+
+GREEK LETTERS:
+- "alpha" → "\\alpha", "beta" → "\\beta", "gamma" → "\\gamma"
+- "delta" → "\\delta", "epsilon" → "\\epsilon", "theta" → "\\theta"
+- "lambda" → "\\lambda", "mu" → "\\mu", "pi" → "\\pi"
+- "sigma" → "\\sigma", "omega" → "\\omega"
+
+SPECIAL SYMBOLS:
+- "belongs to" → "\\in"
+- "subset" → "\\subset"
+- "union" → "\\cup"
+- "intersection" → "\\cap"
+- "empty set" → "\\emptyset"
+
+CONSTRAINTS:
+- Do not change text that is already in LaTeX format
+- Preserve sentence structure and punctuation
+- If input contains mixed text and math, format only the mathematical parts
+- Return the converted text exactly as it should appear
+
+EXAMPLES:
+Input: "The derivative of x squared with respect to x is 2x"
+Output: "The derivative of $x^2$ with respect to $x$ is $2x$"
+
+Input: "Find the limit as x approaches infinity of 1 over x"
+Output: "Find the $\\lim_{x \\to \\infty} \\frac{1}{x}$"
+
+Input: "The integral from 0 to pi of sin x dx equals 2"
+Output: "The $\\int_0^{\\pi} \\sin x \\, dx = 2$"`
             },
             {
               role: "user",
@@ -1220,7 +1323,40 @@ exports.autoTagOnly = functions.onRequest(
       messages: [
         {
           role: "system",
-          content: `You are a mathematical tagging assistant. Given a LaTeX-formatted math statement, return only a JSON array of topic tags as strings, e.g. ["Algebra", "Eigenvalues", "Diagonalisation"]. DO NOT include any explanations or non-JSON content.`
+          content: `ROLE: You are an expert mathematical topic classifier.
+
+TASK: Generate topic tags for a mathematical statement.
+
+INPUT FORMAT: You will receive a mathematical statement that may contain LaTeX notation.
+
+OUTPUT FORMAT: You MUST respond with ONLY a valid JSON array. No other text, explanations, or formatting.
+
+REQUIRED JSON STRUCTURE: ["tag1", "tag2", "tag3", ...]
+
+SPECIFICATIONS:
+- Response must be a JSON array of strings
+- Include 3-6 relevant mathematical topic tags
+- Use lowercase, hyphenated format (e.g., "linear-algebra", "differential-equations")
+- Choose from standard mathematical domains:
+  * "algebra", "calculus", "geometry", "trigonometry"
+  * "linear-algebra", "differential-equations", "complex-analysis"
+  * "topology", "number-theory", "probability", "statistics"
+  * "discrete-math", "graph-theory", "optimization"
+  * "real-analysis", "abstract-algebra", "functional-analysis"
+- Be specific when possible (e.g., prefer "eigenvalues" over just "algebra")
+- No duplicates, no empty strings
+- If uncertain, include "general-mathematics"
+
+CONSTRAINTS:
+- Response must be valid JSON that can be parsed by JSON.parse()
+- No explanatory text before or after the JSON array
+- No markdown formatting, no code blocks
+- If you cannot process the input, return: ["general-mathematics"]
+
+EXAMPLE OUTPUTS:
+["calculus", "derivatives", "limits"]
+["linear-algebra", "eigenvalues", "matrix-theory"]
+["differential-equations", "boundary-value-problems"]`
         },
         {
           role: "user",
@@ -1326,27 +1462,94 @@ exports.updateLoginStreak = onCall({}, async (request) => {
   const userData = userDoc.data() || {};
   const now = admin.firestore.Timestamp.now();
   const lastLogin = userData.lastLogin ? userData.lastLogin.toDate() : null;
+  const lastStreakUpdate = userData.lastStreakUpdate ? userData.lastStreakUpdate.toDate() : null;
   let streak = userData.loginStreak || 0;
 
-  if (lastLogin) {
-    const diff = (now.toDate() - lastLogin) / (1000 * 60 * 60 * 24);
-    if (diff < 1) {
-      // Already logged in today
-    } else if (diff < 2) {
-      streak += 1; // Next day
+  // Use UTC dates to avoid timezone issues
+  const nowUTC = new Date(now.toDate().toISOString().split('T')[0] + 'T00:00:00.000Z');
+  const lastLoginUTC = lastLogin ? new Date(lastLogin.toISOString().split('T')[0] + 'T00:00:00.000Z') : null;
+  const lastStreakUpdateUTC = lastStreakUpdate ? new Date(lastStreakUpdate.toISOString().split('T')[0] + 'T00:00:00.000Z') : null;
+
+  console.log('Login streak calculation:', {
+    uid,
+    nowUTC: nowUTC.toISOString(),
+    lastLoginUTC: lastLoginUTC?.toISOString(),
+    lastStreakUpdateUTC: lastStreakUpdateUTC?.toISOString(),
+    currentStreak: streak
+  });
+
+  if (!lastLogin) {
+    // First ever login
+    streak = 1;
+    console.log('First login, streak = 1');
+  } else if (!lastStreakUpdate || lastStreakUpdateUTC.getTime() !== nowUTC.getTime()) {
+    // Only update streak if we haven't already updated it today
+    const daysDiff = Math.floor((nowUTC.getTime() - lastLoginUTC.getTime()) / (1000 * 60 * 60 * 24));
+    
+    console.log('Days difference:', daysDiff);
+    
+    if (daysDiff === 0) {
+      // Same day - keep existing streak, no change
+      console.log('Same day login, keeping streak:', streak);
+    } else if (daysDiff === 1) {
+      // Consecutive day - increment streak
+      streak += 1;
+      console.log('Consecutive day, streak incremented to:', streak);
     } else {
-      streak = 1; // Missed a day
+      // Missed days - reset streak
+      streak = 1;
+      console.log('Missed days, streak reset to 1');
     }
   } else {
-    streak = 1; // First login
+    console.log('Already updated streak today, no change');
   }
 
   await userRef.set({
     lastLogin: now,
-    loginStreak: streak
+    loginStreak: streak,
+    lastStreakUpdate: now
   }, { merge: true });
 
+  console.log('Final streak saved:', streak);
   return { loginStreak: streak };
+});
+
+// Admin function to reset all login streaks (for testing)
+exports.resetAllLoginStreaks = onCall({}, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  // Check if user is admin
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists || userDoc.data().email !== 'three.dash.sided@gmail.com') {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  try {
+    const batch = db.batch();
+    const usersSnapshot = await db.collection('users').get();
+    
+    let count = 0;
+    usersSnapshot.docs.forEach(doc => {
+      batch.update(doc.ref, {
+        loginStreak: 0,
+        lastLogin: null,
+        lastStreakUpdate: null
+      });
+      count++;
+    });
+
+    await batch.commit();
+    console.log(`Reset login streaks for ${count} users`);
+    
+    return { 
+      success: true, 
+      message: `Reset login streaks for ${count} users` 
+    };
+  } catch (error) {
+    console.error('Error resetting login streaks:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to reset login streaks');
+  }
 });
 
 
@@ -1406,6 +1609,7 @@ exports.getLeaderboard = functions.onRequest({ cors: true }, async (req, res) =>
       const user = userDoc.exists ? userDoc.data() : {};
 
       leaderboard.push({
+        id: userId,
         displayName: profile.displayName || "Anonymous",
         slug,
         upvotesReceived: user.upvotesReceived || 0,
@@ -2372,3 +2576,7 @@ exports.updateSitemap = onCall({}, async (request) => {
     throw new functions.https.HttpsError('internal', 'Failed to update sitemap');
   }
 });
+
+// Export additional functions
+exports.generateCardImage = generateCardImage;
+exports.generateCardPage = generateCardPage;
