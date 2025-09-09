@@ -1,0 +1,10 @@
+Contact: mailto:amirbattye@gmail.com
+Expires: 2025-12-31T23:59:59.000Z
+Acknowledgments: https://three-sided-flashcard-app.web.app/security
+Preferred-Languages: en
+Canonical: https://three-sided-flashcard-app.web.app/.well-known/security.txt
+
+# Security Policy
+# Report security vulnerabilities responsibly
+# Please provide detailed information about the issue
+# Include steps to reproduce if possible
