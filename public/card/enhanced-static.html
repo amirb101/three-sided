@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Basic SEO - will be updated by JavaScript -->
+  <title>Three-Sided Flashcard</title>
+  <meta name="description" content="Interactive mathematical flashcard on Three-Sided">
+  <link rel="canonical" href="https://three-sided.com/">
+  
+  <!-- Open Graph / Facebook - will be updated by JavaScript -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Three-Sided Flashcards">
+  <meta property="article:section" content="Education">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@ThreeSidedApp">
+  <meta name="twitter:creator" content="@ThreeSidedApp">
+  
+  <!-- Educational content specific meta -->
+  <meta name="education-level" content="university">
+  <meta name="subject" content="mathematics">
+  <meta name="content-type" content="flashcard">
+  
+  <!-- Firebase and MathJax -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles/card.css">
+  
+  <!-- robots meta -->
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="theme-color" content="#667eea">
+</head>
+<body>
+  <!-- Rich snippet breadcrumbs -->
+  <nav aria-label="Breadcrumb" style="padding: 1rem;">
+    <ol itemscope itemtype="https://schema.org/BreadcrumbList" style="display: flex; gap: 0.5rem; list-style: none; margin: 0; padding: 0;">
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="https://three-sided.com">
+          <span itemprop="name">Home</span>
+        </a>
+        <meta itemprop="position" content="1" />
+      </li>
+      <li> → </li>
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="https://three-sided.com/search.html">
+          <span itemprop="name">Flashcards</span>
+        </a>
+        <meta itemprop="position" content="2" />
+      </li>
+      <li> → </li>
+      <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <span itemprop="name" id="breadcrumb-title">Flashcard</span>
+        <meta itemprop="position" content="3" />
+      </li>
+    </ol>
+  </nav>
+
+  <main>
+    <article itemscope itemtype="https://schema.org/Article">
+      <div class="container">
+        <div class="flashcard">
+          <header class="card-header">
+            <h1 itemprop="headline" class="card-title" id="main-title">Flashcard Preview</h1>
+            <p class="card-subtitle">Review and import this flashcard to your collection</p>
+            
+            <!-- Article metadata -->
+            <div class="card-meta" style="margin-top: 1rem; font-size: 0.9em; color: #666;">
+              <span>By <span itemprop="author" id="author-name">Anonymous</span></span>
+              <span>•</span>
+              <time itemprop="datePublished" id="publish-date">Today</time>
+              <span>•</span>
+              <span id="view-count">0 views</span>
+              <span>•</span>
+              <span id="like-count">0 likes</span>
+            </div>
+            
+            <!-- Tags -->
+            <div class="tags" style="margin-top: 1rem;" id="tags-container">
+              <!-- Tags will be populated by JavaScript -->
+            </div>
+          </header>
+
+          <div class="section">
+            <div class="section-label">Statement</div>
+            <div itemprop="text" class="section-content" id="statement">Loading...</div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">Hint</div>
+            <div class="section-content" id="hints">Loading...</div>
+          </div>
+
+          <div class="section">
+            <div class="section-label">Proof</div>
+            <div class="section-content" id="proof">Loading...</div>
+          </div>
+
+          <button class="import-button" onclick="saveCard()" id="importBtn">
+            Import to My Account
+          </button>
+          
+          <!-- Social sharing -->
+          <div class="sharing" style="margin-top: 2rem; text-align: center;">
+            <h3>Share this flashcard:</h3>
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+              <a href="#" id="twitter-share" target="_blank" rel="noopener" class="share-btn">
+                📱 Twitter
+              </a>
+              <a href="#" id="facebook-share" target="_blank" rel="noopener" class="share-btn">
+                📘 Facebook
+              </a>
+              <a href="#" id="linkedin-share" target="_blank" rel="noopener" class="share-btn">
+                💼 LinkedIn
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Schema.org structured data will be injected by JavaScript -->
+  <script id="structured-data" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Three-Sided Flashcard",
+    "description": "Interactive mathematical flashcard",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Three-Sided Flashcards",
+      "url": "https://three-sided.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://three-sided.com/icon-192x192.png"
+      }
+    },
+    "articleSection": "Education",
+    "educationalLevel": "University",
+    "learningResourceType": "Flashcard",
+    "about": {
+      "@type": "Thing",
+      "name": "Mathematics Education"
+    }
+  }
+  </script>
+
+  <script src="/scripts/main/firebaseConfig.js"></script>
+  <script>
+    // Enhanced card functionality with SEO updates
+    const { auth, db } = initializeFirebase();
+    let currentUser = null;
+    let cardData = null;
+    let cardId = null;
+
+    auth.onAuthStateChanged(user => currentUser = user);
+
+    // Enhanced notification system
+    function showNotification(message, type = 'success') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.classList.add('show'), 100);
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+
+    // Update SEO meta tags dynamically
+    function updateSEOTags(cardData, slug) {
+      const cleanStatement = (cardData.statement || 'Mathematical Problem')
+        .replace(/<[^>]*>/g, '')
+        .replace(/\$[^$]*\$/g, '')
+        .substring(0, 160);
+      
+      const title = `${cleanStatement} - Three-Sided Flashcard`;
+      const description = `Learn: ${cleanStatement}. Created by ${cardData.authorSlug || 'Anonymous'}. ${cardData.viewCount || 0} views, ${cardData.likeCount || 0} likes.`;
+      const canonicalUrl = `https://three-sided.com/card/${encodeURIComponent(slug)}`;
+      const imageUrl = `https://generatecardimage-3c6nsplesa-uc.a.run.app?slug=${encodeURIComponent(slug)}`;
+      
+      // Update basic meta tags
+      document.title = title;
+      document.querySelector('meta[name="description"]').content = description;
+      document.querySelector('link[rel="canonical"]').href = canonicalUrl;
+      
+      // Update Open Graph tags
+      updateOrCreateMeta('property', 'og:title', title);
+      updateOrCreateMeta('property', 'og:description', description);
+      updateOrCreateMeta('property', 'og:url', canonicalUrl);
+      updateOrCreateMeta('property', 'og:image', imageUrl);
+      updateOrCreateMeta('property', 'og:image:width', '1200');
+      updateOrCreateMeta('property', 'og:image:height', '630');
+      updateOrCreateMeta('property', 'og:image:alt', `Three-Sided Flashcard: ${cleanStatement}`);
+      
+      // Update Twitter Card tags
+      updateOrCreateMeta('name', 'twitter:title', title);
+      updateOrCreateMeta('name', 'twitter:description', description);
+      updateOrCreateMeta('name', 'twitter:image', imageUrl);
+      updateOrCreateMeta('name', 'twitter:image:alt', `Three-Sided Flashcard: ${cleanStatement}`);
+      
+      // Update structured data
+      updateStructuredData(cardData, slug, cleanStatement, canonicalUrl, imageUrl);
+    }
+
+    function updateOrCreateMeta(attr, value, content) {
+      let meta = document.querySelector(`meta[${attr}="${value}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(attr, value);
+        document.head.appendChild(meta);
+      }
+      meta.content = content;
+    }
+
+    function updateStructuredData(cardData, slug, cleanStatement, canonicalUrl, imageUrl) {
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": cleanStatement,
+        "description": `Learn: ${cleanStatement}`,
+        "image": {
+          "@type": "ImageObject",
+          "url": imageUrl,
+          "width": 1200,
+          "height": 630,
+          "caption": `Three-Sided Flashcard: ${cleanStatement}`
+        },
+        "author": {
+          "@type": "Person",
+          "name": cardData.authorSlug || "Anonymous",
+          "url": cardData.authorSlug ? `https://three-sided.com/profile/${cardData.authorSlug}` : "https://three-sided.com"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Three-Sided Flashcards",
+          "url": "https://three-sided.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://three-sided.com/icon-192x192.png"
+          }
+        },
+        "datePublished": cardData.createdAt ? cardData.createdAt.toDate().toISOString() : new Date().toISOString(),
+        "dateModified": cardData.updatedAt ? cardData.updatedAt.toDate().toISOString() : (cardData.createdAt ? cardData.createdAt.toDate().toISOString() : new Date().toISOString()),
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": canonicalUrl
+        },
+        "keywords": Array.isArray(cardData.tags) ? cardData.tags.join(', ') : '',
+        "articleSection": "Education",
+        "educationalLevel": "University",
+        "learningResourceType": "Flashcard",
+        "about": {
+          "@type": "Thing",
+          "name": "Mathematics Education"
+        }
+      };
+      
+      document.getElementById('structured-data').textContent = JSON.stringify(structuredData);
+    }
+
+    async function loadCard() {
+      const path = window.location.pathname;
+      const slug = path.split('/card/')[1];
+      if (!slug) {
+        showNotification("Missing card slug.", 'error');
+        return;
+      }
+
+      try {
+        const docRef = db.collection("publicCards").doc(slug);
+        const doc = await docRef.get();
+        if (!doc.exists) {
+          showNotification("Card not found.", 'error');
+          return;
+        }
+
+        cardData = doc.data();
+        cardId = doc.id;
+
+        // Update content
+        document.getElementById("statement").innerHTML = cardData.statement || 'No statement available';
+        document.getElementById("hints").innerHTML = cardData.hints || 'No hints available';
+        document.getElementById("proof").innerHTML = cardData.proof || 'No proof available';
+        
+        // Update UI elements
+        document.getElementById("main-title").textContent = cardData.statement ? 
+          cardData.statement.substring(0, 80) + (cardData.statement.length > 80 ? '...' : '') : 
+          'Flashcard';
+        document.getElementById("breadcrumb-title").textContent = 'Flashcard: ' + (cardData.statement ? 
+          cardData.statement.substring(0, 30) + (cardData.statement.length > 30 ? '...' : '') : 
+          'Mathematical Problem');
+        document.getElementById("author-name").textContent = cardData.authorSlug || 'Anonymous';
+        document.getElementById("publish-date").textContent = cardData.createdAt ? 
+          cardData.createdAt.toDate().toLocaleDateString() : 
+          'Unknown date';
+        document.getElementById("view-count").textContent = `${cardData.viewCount || 0} views`;
+        document.getElementById("like-count").textContent = `${cardData.likeCount || 0} likes`;
+        
+        // Update tags
+        const tagsContainer = document.getElementById("tags-container");
+        if (cardData.tags && cardData.tags.length > 0) {
+          tagsContainer.innerHTML = cardData.tags.map(tag => 
+            `<span itemprop="keywords" class="tag" style="background: rgba(102, 126, 234, 0.1); color: #667eea; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-right: 0.5rem;">#${tag}</span>`
+          ).join('');
+        }
+        
+        // Update social sharing links
+        const shareText = encodeURIComponent(`Check out this flashcard: ${cardData.statement || 'Mathematical Problem'}`);
+        const shareUrl = encodeURIComponent(`https://three-sided.com/card/${slug}`);
+        document.getElementById("twitter-share").href = `https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`;
+        document.getElementById("facebook-share").href = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+        document.getElementById("linkedin-share").href = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+
+        // Update SEO meta tags
+        updateSEOTags(cardData, slug);
+
+        // Render MathJax
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          MathJax.typesetPromise();
+        }
+
+        // Track view
+        await docRef.update({
+          viewCount: firebase.firestore.FieldValue.increment(1)
+        });
+
+      } catch (error) {
+        showNotification("Error loading card.", 'error');
+        console.error("Error loading card:", error);
+      }
+    }
+
+    async function saveCard() {
+      if (!currentUser) {
+        window.location.href = "/index.html";
+        return;
+      }
+      if (!cardData) {
+        showNotification("Card not loaded.", 'error');
+        return;
+      }
+
+      const importBtn = document.getElementById('importBtn');
+      const originalText = importBtn.textContent;
+      
+      // Show loading state
+      importBtn.disabled = true;
+      importBtn.innerHTML = '<span class="loading-spinner"></span>Importing...';
+
+      try {
+        await db.collection("flashcards").add({
+          userId: currentUser.uid,
+          statement: cardData.statement,
+          hints: cardData.hints,
+          proof: cardData.proof,
+          tags: cardData.tags || [],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Update import count
+        await db.collection("publicCards").doc(cardId).update({
+          importCount: firebase.firestore.FieldValue.increment(1)
+        });
+
+        showNotification("Flashcard saved to your account!");
+        importBtn.textContent = "✓ Imported";
+
+      } catch (error) {
+        console.error("Error saving card:", error);
+        showNotification("Error saving card.", 'error');
+        importBtn.disabled = false;
+        importBtn.textContent = originalText;
+      }
+    }
+
+    // Load card when page loads
+    document.addEventListener('DOMContentLoaded', loadCard);
+  </script>
+  
+  <!-- Notification styles -->
+  <style>
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem;
+      border-radius: 4px;
+      color: white;
+      z-index: 1000;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+    }
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .notification.success {
+      background-color: #2ecc71;
+    }
+    .notification.error {
+      background-color: #e74c3c;
+    }
+    .share-btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: #667eea;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .share-btn:hover {
+      background: #5a52e8;
+    }
+  </style>
+</body>
+</html>
