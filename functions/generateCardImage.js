@@ -1,12 +1,52 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const puppeteer = require('puppeteer-core');
+const fs = require('fs');
 
 // Initialize admin if not already done
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 const db = admin.firestore();
+
+/**
+ * Find Chrome binary path in different environments
+ * @returns {string|null} Path to Chrome binary or null if not found
+ */
+function findChromePath() {
+  const possiblePaths = [
+    // Cloud Functions Gen 2 paths
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
+    '/opt/google/chrome/chrome',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chrome',
+    // Local development paths
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/usr/bin/google-chrome-unstable',
+    // Alternative paths
+    '/snap/bin/chromium',
+    '/usr/local/bin/chrome'
+  ];
+  
+  console.log('🔍 Searching for Chrome binary...');
+  
+  for (const path of possiblePaths) {
+    try {
+      if (fs.existsSync(path)) {
+        console.log(`✅ Found Chrome at: ${path}`);
+        return path;
+      }
+    } catch (e) {
+      // Continue to next path
+      continue;
+    }
+  }
+  
+  console.log('❌ Chrome binary not found in any expected location');
+  return null;
+}
 
 /**
  * Generates dynamic card images for Google Images SEO
@@ -53,8 +93,11 @@ exports.generateCardImage = onRequest({
       }
     }
 
-    // Launch Puppeteer
-    const browser = await puppeteer.launch({
+    // Find Chrome binary path
+    const chromePath = findChromePath();
+    
+    // Launch Puppeteer with enhanced configuration
+    const launchOptions = {
       headless: true,
       args: [
         '--no-sandbox',
@@ -66,11 +109,90 @@ exports.generateCardImage = onRequest({
         '--single-process',
         '--disable-gpu',
         '--disable-web-security',
-        '--disable-features=VizDisplayCompositor'
+        '--disable-features=VizDisplayCompositor',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-default-apps',
+        '--disable-sync',
+        '--disable-translate',
+        '--hide-scrollbars',
+        '--mute-audio',
+        '--no-default-browser-check',
+        '--no-pings',
+        '--disable-logging',
+        '--disable-permissions-api',
+        '--disable-presentation-api',
+        '--disable-print-preview',
+        '--disable-speech-api',
+        '--disable-file-system',
+        '--disable-notifications',
+        '--disable-web-bluetooth',
+        '--disable-webgl',
+        '--disable-webgl2',
+        '--disable-3d-apis',
+        '--disable-accelerated-video-decode',
+        '--disable-accelerated-mjpeg-decode',
+        '--disable-gpu-compositing',
+        '--disable-gpu-rasterization',
+        '--disable-gpu-sandbox',
+        '--disable-software-rasterizer',
+        '--disable-threaded-compositing',
+        '--disable-threaded-scrolling',
+        '--disable-checker-imaging',
+        '--disable-new-content-rendering-timeout',
+        '--disable-background-networking',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-ipc-flooding-protection',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-domain-reliability',
+        '--disable-features=TranslateUI,BlinkGenPropertyTrees',
+        '--force-color-profile=srgb',
+        '--memory-pressure-off',
+        '--max_old_space_size=4096'
       ]
-    });
+    };
+    
+    // Add Chrome path if found, or use a fallback
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+      console.log(`🚀 Launching Puppeteer with Chrome at: ${chromePath}`);
+    } else {
+      // For puppeteer-core, we need to specify a channel or executablePath
+      // Try using the 'chrome' channel as fallback
+      launchOptions.channel = 'chrome';
+      console.log('⚠️ Chrome binary not found, using Chrome channel as fallback');
+    }
+    
+    let browser;
+    try {
+      browser = await puppeteer.launch(launchOptions);
+      console.log('✅ Puppeteer browser launched successfully');
+    } catch (launchError) {
+      console.error('❌ Failed to launch Puppeteer browser:', launchError.message);
+      console.error('Launch options used:', JSON.stringify(launchOptions, null, 2));
+      
+      // Try fallback without explicit Chrome path
+      if (chromePath) {
+        console.log('🔄 Attempting fallback launch without explicit Chrome path...');
+        delete launchOptions.executablePath;
+        try {
+          browser = await puppeteer.launch(launchOptions);
+          console.log('✅ Fallback Puppeteer launch successful');
+        } catch (fallbackError) {
+          console.error('❌ Fallback launch also failed:', fallbackError.message);
+          throw new Error(`Puppeteer launch failed: ${launchError.message}. Fallback also failed: ${fallbackError.message}`);
+        }
+      } else {
+        throw new Error(`Puppeteer launch failed: ${launchError.message}`);
+      }
+    }
 
     const page = await browser.newPage();
+    console.log('✅ New page created successfully');
     
     // Set viewport for optimal image size (1200x630 for Open Graph)
     await page.setViewport({ width: 1200, height: 630 });
