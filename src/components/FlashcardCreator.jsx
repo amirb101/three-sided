@@ -229,11 +229,25 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
       // Clear the saved draft since card was created successfully
       localStorage.removeItem(`flashcard_draft_${user.uid}`);
       
+      // Reset form fields except tags and subject for next card
+      setFormData(prev => ({
+        statement: '',
+        hints: '',
+        proof: '',
+        tags: prev.tags, // Keep tags
+        subject: prev.subject, // Keep subject
+        isPublic: prev.isPublic,
+        deckId: prev.deckId // Keep deck selection too
+      }));
+      
       setSuccess(true);
+      // Just call onCardCreated for refresh, but don't close
+      if (onCardCreated) onCardCreated();
+      
+      // Reset success state after showing message briefly
       setTimeout(() => {
-        if (onCardCreated) onCardCreated();
-        if (onClose) onClose();
-      }, 1500);
+        setSuccess(false);
+      }, 2000);
 
     } catch (error) {
       console.error('Error creating flashcard:', error);
@@ -244,17 +258,7 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen pt-20 flex items-center justify-center" style={{backgroundColor: 'var(--claude-background)'}}>
-        <div className="claude-card p-12 text-center max-w-lg">
-          <div className="text-6xl mb-4">✅</div>
-          <h3 className="text-2xl font-bold claude-success mb-4">Flashcard Created!</h3>
-          <p className="claude-text-secondary">Your flashcard has been saved successfully.</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove the full-screen success overlay
 
   return (
     <div className="min-h-screen pt-20" style={{backgroundColor: 'var(--claude-background)'}}>
@@ -266,8 +270,16 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
           </h1>
           <p className="claude-text-secondary text-lg">Build a three-sided flashcard with statement, hints, and proof</p>
           
+          {/* Success Message */}
+          {success && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm shadow-md">
+              <div className="text-lg">✅</div>
+              <span className="font-medium">Flashcard created successfully! Ready to create another?</span>
+            </div>
+          )}
+          
           {/* Draft Auto-Save Indicator */}
-          {user && (formData.statement.trim() || formData.hints.trim() || formData.proof.trim()) && (
+          {user && !success && (formData.statement.trim() || formData.hints.trim() || formData.proof.trim()) && (
             <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
               <span>Auto-saving draft...</span>

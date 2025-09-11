@@ -1,17 +1,51 @@
 function createPublicCardService(firebase, db) {
   return {
     async getPublicCardsBySlug(slug, sort = "upvotes") {
-      let query = db.collection("publicCards").where("authorSlug", "==", slug);
-      if (sort === "upvotes") {
-        query = query.orderBy("likeCount", "desc").orderBy("createdAt", "desc");
-      } else {
-        query = query.orderBy("createdAt", "desc").orderBy("likeCount", "desc");
+      // Get profile to find userId for backwards compatibility
+      const profileDoc = await db.collection("profiles").doc(slug).get();
+      if (!profileDoc.exists) {
+        throw new Error(`Profile not found for slug: ${slug}`);
       }
-      const cardsSnap = await query.get();
-      return cardsSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      const userId = profileDoc.data().userId;
+      
+      // Query by both authorSlug (old system) AND userId (new system compatibility)
+      const queries = [
+        // Cards with authorSlug matching the profile slug
+        db.collection("publicCards").where("authorSlug", "==", slug),
+        // Cards with userId matching the profile owner (for cards created without authorSlug)
+        db.collection("publicCards").where("userId", "==", userId)
+      ];
+      
+      // Execute both queries
+      const results = await Promise.all(queries.map(q => q.get()));
+      
+      // Combine results and deduplicate
+      const allCards = new Map();
+      results.forEach(snapshot => {
+        snapshot.docs.forEach(doc => {
+          allCards.set(doc.id, { id: doc.id, ...doc.data() });
+        });
+      });
+      
+      // Convert to array and sort
+      let cards = Array.from(allCards.values());
+      if (sort === "upvotes") {
+        cards.sort((a, b) => {
+          if (b.likeCount !== a.likeCount) {
+            return (b.likeCount || 0) - (a.likeCount || 0);
+          }
+          return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+        });
+      } else {
+        cards.sort((a, b) => {
+          if (b.createdAt?.toMillis() !== a.createdAt?.toMillis()) {
+            return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+          }
+          return (b.likeCount || 0) - (a.likeCount || 0);
+        });
+      }
+      
+      return cards;
     },
 
     async getPublicCard(cardId) {

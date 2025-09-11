@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AdminService } from '../services/adminService';
+import { AdminService } from '../services/adminService.js';
+import StackExchangeConverter from './admin/StackExchangeConverter';
+import BotManager from './admin/BotManager';
+
+// BotService is now imported separately to prevent tree-shaking issues
+
 
 const AdminDashboard = ({ onClose }) => {
   const { user } = useAuth();
@@ -24,6 +29,7 @@ const AdminDashboard = ({ onClose }) => {
       const hasAccess = await AdminService.verifyAdminAccess(user);
       
       if (!hasAccess) {
+        console.log('❌ No admin access, closing dashboard');
         // Not an admin - redirect or show error
         onClose && onClose();
         return;
@@ -36,7 +42,7 @@ const AdminDashboard = ({ onClose }) => {
       await loadSystemStats();
       
     } catch (error) {
-      console.error('Error checking admin access:', error);
+      console.error('❌ Error checking admin access:', error);
       onClose && onClose();
     } finally {
       setIsLoading(false);
@@ -213,21 +219,23 @@ const AdminDashboard = ({ onClose }) => {
             { id: 'overview', label: '📊 Overview', icon: '📊' },
             { id: 'users', label: '👥 Users', icon: '👥' },
             { id: 'content', label: '📝 Content', icon: '📝' },
-            { id: 'activity', label: '📋 Activity', icon: '📋' }
+            { id: 'activity', label: '📋 Activity', icon: '📋' },
+            { id: 'stackexchange', label: '🔄 StackExchange', icon: '🔄' },
+            { id: 'bots', label: '🤖 Bots', icon: '🤖' }
           ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'bg-red-500 text-white shadow-lg'
-                  : 'claude-text-secondary hover:bg-gray-100'
-              }`}
-            >
-              <span className="mr-2">{tab.icon}</span>
-              <span className="hidden sm:inline">{tab.label.replace(/^.+\s/, '')}</span>
-            </button>
-          ))}
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'bg-blue-500 text-white shadow-lg'
+                    : 'claude-text-secondary hover:bg-gray-100'
+                }`}
+              >
+                <span className="mr-2">{tab.icon}</span>
+                <span className="hidden sm:inline">{tab.label.replace(/^.+\s/, '')}</span>
+              </button>
+            ))}
         </div>
 
         {/* Tab Content */}
@@ -241,6 +249,20 @@ const AdminDashboard = ({ onClose }) => {
         
         {activeTab === 'content' && (
           <ContentTab publicCards={publicCards} onModerate={handleCardModeration} />
+        )}
+        
+        {activeTab === 'stackexchange' && (
+          <div className="admin-section">
+            <h3>🔄 StackExchange Integration</h3>
+            <StackExchangeConverter />
+          </div>
+        )}
+        
+        {activeTab === 'bots' && (
+          <div className="admin-section">
+            <h3>🤖 Bot Management</h3>
+            <BotManager />
+          </div>
         )}
         
         {activeTab === 'activity' && (

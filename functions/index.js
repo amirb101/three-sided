@@ -1630,6 +1630,180 @@ exports.getLeaderboard = functions.onRequest({ cors: true }, async (req, res) =>
   }
 });
 
+// Bot Management Functions
+exports.createBotAccount = onCall({
+  secrets: [deepseekSecret]
+}, async (request) => {
+  const { displayName, email, password, bio, avatar } = request.data || {};
+  const uid = request.auth?.uid;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+  }
+
+  // Check if user is authorized admin
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists || userDoc.data().email !== 'three.dash.sided@gmail.com') {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  try {
+    // Create Firebase Auth user
+    const userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName,
+      photoURL: avatar
+    });
+
+    // Create bot account document
+    const botData = {
+      id: userRecord.uid,
+      displayName,
+      email,
+      bio: bio || '',
+      avatar: avatar || '',
+      isActive: true,
+      postCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastActive: null
+    };
+
+    await db.collection('botAccounts').doc(userRecord.uid).set(botData);
+
+    return { success: true, botId: userRecord.uid };
+  } catch (error) {
+    console.error('Error creating bot account:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to create bot account');
+  }
+});
+
+exports.deleteBotAccount = onCall({
+  secrets: [deepseekSecret]
+}, async (request) => {
+  const { botId } = request.data || {};
+  const uid = request.auth?.uid;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+  }
+
+  // Check if user is authorized admin
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists || userDoc.data().email !== 'three.dash.sided@gmail.com') {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  try {
+    // Delete Firebase Auth user
+    await admin.auth().deleteUser(botId);
+    
+    // Delete bot account document
+    await db.collection('botAccounts').doc(botId).delete();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting bot account:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to delete bot account');
+  }
+});
+
+exports.updateBotStatus = onCall({
+  secrets: [deepseekSecret]
+}, async (request) => {
+  const { botId, isActive } = request.data || {};
+  const uid = request.auth?.uid;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+  }
+
+  // Check if user is authorized admin
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists || userDoc.data().email !== 'three.dash.sided@gmail.com') {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  try {
+    await db.collection('botAccounts').doc(botId).update({
+      isActive,
+      lastActive: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating bot status:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to update bot status');
+  }
+});
+
+exports.publishStackExchangeFlashcard = onCall({
+  secrets: [deepseekSecret]
+}, async (request) => {
+  const { conversion, botId } = request.data || {};
+  const uid = request.auth?.uid;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+  }
+
+  // Check if user is authorized admin
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists || userDoc.data().email !== 'three.dash.sided@gmail.com') {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  try {
+    // Get bot account
+    const botDoc = await db.collection('botAccounts').doc(botId).get();
+    if (!botDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Bot account not found');
+    }
+    
+    const bot = botDoc.data();
+    
+    // Generate slug
+    const slug = conversion.statement
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 50);
+    
+    // Create flashcard document
+    const flashcardData = {
+      statement: conversion.statement,
+      hints: conversion.hints,
+      proof: conversion.proof,
+      tags: conversion.tags || [],
+      authorId: botId,
+      authorSlug: bot.displayName.toLowerCase().replace(/\s+/g, '-'),
+      isBotPost: true,
+      botId: botId,
+      viewCount: 0,
+      likeCount: 1, // Bot likes its own post
+      importCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    const docRef = await db.collection('publicCards').add(flashcardData);
+    
+    // Update the document with the ID
+    await docRef.update({ id: docRef.id });
+    
+    // Update bot statistics
+    await db.collection('botAccounts').doc(botId).update({
+      postCount: admin.firestore.FieldValue.increment(1),
+      lastActive: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { success: true, flashcardId: docRef.id };
+  } catch (error) {
+    console.error('Error publishing flashcard:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to publish flashcard');
+  }
+});
+
 // Admin Functions
 exports.convertStackExchangePost = onCall({
   secrets: [deepseekSecret]
@@ -2272,18 +2446,95 @@ exports.deleteCard = onCall({}, async (request) => {
         await db.collection("cards").doc(cardId).delete();
         console.log(`Deleted card: ${cardId}`);
       }
+      
+      // Also try to delete from flashcards collection
+      const flashcardDoc = await db.collection("flashcards").doc(cardId).get();
+      if (flashcardDoc.exists) {
+        await db.collection("flashcards").doc(cardId).delete();
+        console.log(`Deleted flashcard: ${cardId}`);
+      }
     }
+    
+    // Delete all related likes
+    const likesSnapshot = await db.collection("cardLikes").where("cardId", "==", cardId || cardSlug).get();
+    const batch = db.batch();
+    likesSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+    console.log(`Deleted ${likesSnapshot.size} related likes`);
     
     return {
       success: true,
       message: 'Card deleted successfully',
       cardId,
-      cardSlug
+      cardSlug,
+      likesDeleted: likesSnapshot.size
     };
 
   } catch (error) {
     console.error('Error deleting card:', error);
     throw new functions.https.HttpsError('internal', 'Failed to delete card');
+  }
+});
+
+exports.findBrokenCards = onCall({}, async (request) => {
+  const uid = request.auth?.uid;
+  
+  if (!uid) {
+    throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+  }
+
+  // Check if user is authorized admin
+  const userDoc = await db.collection("users").doc(uid).get();
+  if (!userDoc.exists || userDoc.data().email !== 'three.dash.sided@gmail.com') {
+    throw new functions.https.HttpsError('permission-denied', 'Not authorized');
+  }
+
+  try {
+    console.log('🔍 Admin: Searching for broken cards...');
+    
+    // Get all public cards
+    const publicCardsSnapshot = await db.collection('publicCards').get();
+    
+    const brokenCards = [];
+    const allCards = [];
+    
+    publicCardsSnapshot.forEach(doc => {
+      const data = doc.data();
+      allCards.push({
+        id: doc.id,
+        slug: data.slug,
+        statement: data.statement?.substring(0, 100) || 'No statement'
+      });
+      
+      // Check for broken cards (no slug or slug is undefined/null)
+      if (!data.slug || data.slug === 'undefined' || data.slug === null || data.slug === '') {
+        brokenCards.push({
+          id: doc.id,
+          slug: data.slug || null,
+          statement: data.statement || 'No statement',
+          proof: data.proof || 'No proof',
+          authorId: data.authorId,
+          isBotPost: data.isBotPost || false,
+          viewCount: data.viewCount || 0,
+          likeCount: data.likeCount || 0,
+          createdAt: data.createdAt
+        });
+      }
+    });
+    
+    console.log(`📊 Found ${allCards.length} total cards, ${brokenCards.length} broken cards`);
+    
+    return {
+      success: true,
+      totalCards: allCards.length,
+      brokenCards: brokenCards
+    };
+
+  } catch (error) {
+    console.error('Error finding broken cards:', error);
+    throw new functions.https.HttpsError('internal', 'Failed to find broken cards');
   }
 });
 
@@ -2576,5 +2827,8 @@ exports.updateSitemap = onCall({}, async (request) => {
 // Export additional functions
 const { generateCardImage } = require('./generateCardImage');
 const { generateCardPage } = require('./generateCardPage');
+const { automatedStackExchangePipeline, triggerAutomation } = require('./automation');
 exports.generateCardImage = generateCardImage;
 exports.generateCardPage = generateCardPage;
+exports.automatedStackExchangePipeline = automatedStackExchangePipeline;
+exports.triggerAutomation = triggerAutomation;

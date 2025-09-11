@@ -20,7 +20,7 @@ import AnalyticsDashboard from './components/AnalyticsDashboard'
 import AdminAnalyticsDashboard from './components/AdminAnalyticsDashboard'
 import AdminDashboard from './components/AdminDashboard'
 import { WebsiteAnalyticsService } from './services/websiteAnalyticsService'
-import { AdminService } from './services/adminService'
+import { AdminService } from './services/adminService.js'
 import './index.css'
 
 function App() {
@@ -449,9 +449,9 @@ function App() {
                 {currentMode === 'admin-dashboard' && '🔧 Admin Dashboard'}
                 {currentMode === 'leaderboard' && '🏆 Leaderboard & Stats'}
                 {currentMode === 'dashboard' && '🎯 My Dashboard'}
-                {currentMode === 'social' && '👥 Social Hub'}
-                {currentMode === 'create-profile' && '👤 Create Profile'}
                 {viewingProfileSlug && '👤 Profile'}
+                {!viewingProfileSlug && currentMode === 'social' && '👥 Social Hub'}
+                {!viewingProfileSlug && currentMode === 'create-profile' && '👤 Create Profile'}
               </span>
             </div>
           )}

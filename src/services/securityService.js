@@ -326,7 +326,7 @@ export class SecurityService {
   /**
    * Session timeout management
    */
-  static INACTIVITY_TIMEOUT = 60 * 60 * 1000; // 60 minutes (1 hour)
+  static INACTIVITY_TIMEOUT = 2 * 60 * 60 * 1000; // 120 minutes (2 hours)
   static lastActivity = Date.now();
   static timeoutWarningShown = false;
 
@@ -338,13 +338,13 @@ export class SecurityService {
   static checkInactivity(onWarning, onTimeout) {
     const inactiveTime = Date.now() - this.lastActivity;
     
-    // Show warning at 50 minutes (83% of 60 minutes)
+    // Show warning at 100 minutes (83% of 120 minutes)
     if (inactiveTime > this.INACTIVITY_TIMEOUT * 0.83 && !this.timeoutWarningShown) {
       this.timeoutWarningShown = true;
       onWarning && onWarning();
     }
     
-    // Timeout at 60 minutes
+    // Timeout at 120 minutes
     if (inactiveTime > this.INACTIVITY_TIMEOUT) {
       onTimeout && onTimeout();
       return true;

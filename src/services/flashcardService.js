@@ -9,6 +9,7 @@ import {
   addDoc, 
   updateDoc, 
   doc,
+  setDoc,
   serverTimestamp,
   deleteDoc,
   arrayUnion,
@@ -123,15 +124,22 @@ export class FlashcardService {
 
       // If marked as public, also add to publicCards collection
       if (flashcardData.isPublic) {
-        // Check if user has a profile (required for public posting)
-        const { getDoc } = await import('firebase/firestore');
+        // Check for user profile in both old and new systems (backwards compatible)
+        let userSlug = null;
+        
+        // First, try the old system (userToSlug collection)
         const userSlugDoc = await getDoc(doc(db, 'userToSlug', userId));
-        
-        if (!userSlugDoc.exists()) {
-          throw new Error('You must create a profile before posting public cards. Please create your profile first.');
+        if (userSlugDoc.exists()) {
+          userSlug = userSlugDoc.data().slug;
+        } else {
+          // Fallback to new system (users collection)
+          const userDoc = await getDoc(doc(db, 'users', userId));
+          if (userDoc.exists() && userDoc.data().username) {
+            userSlug = userDoc.data().username;
+          } else {
+            throw new Error('You must create a profile before posting public cards. Please create your profile first.');
+          }
         }
-        
-        const userSlug = userSlugDoc.data().slug;
         
         // Generate unique slug like the old system
         const baseSlug = (flashcardData.question || flashcardData.statement)
@@ -143,7 +151,8 @@ export class FlashcardService {
         
         const uniqueSlug = await this.ensureUniqueCardSlug(baseSlug);
 
-        await addDoc(collection(db, 'publicCards'), {
+        // Use setDoc with slug as document ID (like old system)
+        await setDoc(doc(db, 'publicCards', uniqueSlug), {
           statement: flashcardData.question || flashcardData.statement,
           hints: flashcardData.hints || flashcardData.answer,
           proof: flashcardData.proof || flashcardData.answer,
@@ -151,6 +160,7 @@ export class FlashcardService {
           userId: userId,
           authorSlug: userSlug, // Use actual user profile slug
           slug: uniqueSlug,
+          id: uniqueSlug, // Also store as id field for consistency
           createdAt: serverTimestamp(),
           likeCount: 0,
           viewCount: 0,
@@ -204,16 +214,11 @@ export class FlashcardService {
     let tries = 0;
     
     while (tries < 5) {
-      // Check if slug exists in publicCards
-      const { query: firestoreQuery, where, limit: firestoreLimit, getDocs } = await import('firebase/firestore');
-      const q = firestoreQuery(
-        collection(db, 'publicCards'),
-        where('slug', '==', slug),
-        firestoreLimit(1)
-      );
-      const snapshot = await getDocs(q);
+      // Check if document with this slug ID exists (like old system)
+      const docRef = doc(db, 'publicCards', slug);
+      const docSnap = await getDoc(docRef);
       
-      if (snapshot.empty) {
+      if (!docSnap.exists()) {
         return slug; // Slug is unique
       }
       
