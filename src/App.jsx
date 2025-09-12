@@ -927,7 +927,7 @@ function App() {
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
-                    user ? 'bg-success-500 text-white' : 'bg-primary-500 text-white'
+                    user ? 'bg-success-500 text-white' : 'bg-primary-500'
                   }`}>
                     {user ? <SuccessIcon size={16} color="success" /> : '1'}
                   </div>
@@ -954,7 +954,7 @@ function App() {
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
-                    onboardingStatus.hasProfile ? 'bg-success-500 text-white' : 'bg-primary-500 text-white'
+                    onboardingStatus.hasProfile ? 'bg-success-500 text-white' : 'bg-primary-500'
                   }`}>
                     {onboardingStatus.hasProfile ? <SuccessIcon size={16} color="success" /> : '2'}
                   </div>
@@ -980,7 +980,7 @@ function App() {
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
-                    onboardingStatus.hasCards ? 'bg-success-500 text-white' : 'bg-primary-500 text-white'
+                    onboardingStatus.hasCards ? 'bg-success-500 text-white' : 'bg-primary-500'
                   }`}>
                     {onboardingStatus.hasCards ? <SuccessIcon size={16} color="success" /> : '3'}
                   </div>
