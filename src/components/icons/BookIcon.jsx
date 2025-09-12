@@ -18,6 +18,8 @@ const BookIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
+      case 'white':
+        return '#FFFFFF';
       case 'default':
       default:
         return '#606164';

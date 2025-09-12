@@ -18,6 +18,8 @@ const TargetIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
+      case 'white':
+        return '#FFFFFF';
       case 'default':
         return '#606164';
       default:

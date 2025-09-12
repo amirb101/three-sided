@@ -794,7 +794,7 @@ function App() {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
                     <div className="text-4xl mb-3">
-                      <EditIcon size={32} color="default" />
+                      <EditIcon size={32} color="white" />
                     </div>
                     <div className="font-bold text-lg mb-1">Create</div>
                     <div className="text-white/90 text-sm">New Flashcard</div>
@@ -813,7 +813,7 @@ function App() {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
                     <div className="text-4xl mb-3">
-                      <BookIcon size={32} color="default" />
+                      <BookIcon size={32} color="white" />
                     </div>
                     <div className="font-bold text-lg mb-1">Study</div>
                     <div className="text-white/90 text-sm">Practice Mode</div>
@@ -828,7 +828,7 @@ function App() {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
                     <div className="text-4xl mb-3">
-                      <SearchIcon size={32} color="default" />
+                      <SearchIcon size={32} color="white" />
                     </div>
                     <div className="font-bold text-lg mb-1">Search</div>
                     <div className="text-white/90 text-sm">& Discover</div>
@@ -843,7 +843,7 @@ function App() {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
                     <div className="text-4xl mb-3">
-                      <TargetIcon size={32} color="default" />
+                      <TargetIcon size={32} color="white" />
                     </div>
                     <div className="font-bold text-lg mb-1">Dashboard</div>
                     <div className="text-white/90 text-sm">My Progress</div>
@@ -858,7 +858,7 @@ function App() {
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
                     <div className="text-4xl mb-3">
-                      <CardsIcon size={32} color="default" />
+                      <CardsIcon size={32} color="white" />
                     </div>
                     <div className="font-bold text-lg mb-1">Decks</div>
                     <div className="text-white/90 text-sm">Organize Cards</div>
