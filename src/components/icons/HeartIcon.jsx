@@ -1,8 +1,8 @@
 import React from 'react';
 
-const SocialIcon = ({ 
-  size = 24, 
-  color = 'default',
+const HeartIcon = ({ 
+  size = 16, 
+  color = 'error',
   className = '',
   ...props 
 }) => {
@@ -18,11 +18,10 @@ const SocialIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
-      case 'white':
-        return '#FFFFFF';
       case 'default':
-      default:
         return '#606164';
+      default:
+        return '#FF6363';
     }
   };
 
@@ -44,13 +43,10 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default HeartIcon;

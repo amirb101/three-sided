@@ -30,7 +30,6 @@ import {
   SuccessIcon, 
   AIBotIcon, 
   MathIcon, 
-  LaunchIcon, 
   TargetIcon, 
   BookIcon, 
   LearningAnalyticsIcon,
@@ -377,8 +376,9 @@ function App() {
                 )}
               </div>
 
-              <button className="claude-button-secondary" onClick={() => setCurrentMode('social')}>
-                👥 Social
+              <button className="claude-button-secondary flex items-center gap-2" onClick={() => setCurrentMode('social')}>
+                <SocialIcon size={16} color="default" />
+                Social
               </button>
               <button className="claude-button-secondary flex items-center gap-2" onClick={() => setCurrentMode('leaderboard')}>
                 <TrophyIcon size={16} color="default" />
@@ -410,13 +410,14 @@ function App() {
                       </div>
                     </button>
                     <button 
-                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center gap-2"
                       onClick={() => {
                         handleProfileNavigation();
                         setShowUserDropdown(false);
                       }}
                     >
-                      👤 My Profile
+                      <UserIcon size={16} color="default" />
+                      My Profile
                     </button>
                     <div className="border-t border-gray-200 my-1"></div>
                     <button 
@@ -428,7 +429,7 @@ function App() {
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <DashboardIcon size={16} color="default" />
+                        <LearningAnalyticsIcon size={16} color="default" />
                         Learning Analytics
                       </div>
                     </button>
@@ -775,7 +776,6 @@ function App() {
             <div className="relative z-10">
               <div className="text-center mb-8">
                 <h2 className="text-4xl font-extrabold mb-3" style={{color: 'var(--claude-heading)'}}>
-                  <LaunchIcon size={24} color="primary" />
                   Quick Actions
                 </h2>
                 <p className="text-neutral-300 text-lg">Jump into your learning journey</p>
@@ -875,7 +875,7 @@ function App() {
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#D4A574] to-[#C19A6B] rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <SocialIcon size={32} color="default" />
+                <SocialIcon size={32} color="white" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>Community‑Driven</h3>
               <p className="claude-text-secondary leading-relaxed">Discover and share flashcards with students worldwide. Learn from the community's collective knowledge and contribute your own.</p>
@@ -886,7 +886,7 @@ function App() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#B8A082] to-[#A68B5B] rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <AIBotIcon size={32} color="default" />
+                <AIBotIcon size={32} color="white" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>AI‑Powered Assistance</h3>
               <p className="claude-text-secondary leading-relaxed">Get AI‑generated hints, proofs, and suggestions to help you create better flashcards faster and study more effectively.</p>
@@ -897,7 +897,7 @@ function App() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#9B8B73] to-[#8A7A63] rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <MathIcon size={32} color="default" />
+                <MathIcon size={32} color="white" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>LaTeX Support</h3>
               <p className="claude-text-secondary leading-relaxed">Beautiful mathematical notation with full LaTeX rendering. Use $...$ for inline math and $$...$$ for display blocks.</p>
@@ -911,7 +911,6 @@ function App() {
           <div className="relative z-10">
             <div className="text-center mb-8">
               <h2 className="text-4xl font-extrabold mb-3" style={{color: 'var(--heading)'}}>
-                <LaunchIcon size={32} color="primary" />
                 Get Started
               </h2>
               <p className="claude-text-secondary text-lg">Complete these quick steps to join our community</p>
@@ -1004,7 +1003,7 @@ function App() {
                   className="claude-button-primary px-8 py-4 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                   style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
                 >
-                  <EditIcon size={20} color="default" />
+                  <EditIcon size={20} color="white" />
                   Create Your First Card
                 </button>
               </div>
@@ -1023,7 +1022,6 @@ function App() {
             </div>
             
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{color: 'var(--heading)'}}>
-              <SearchIcon size={32} color="primary" />
               Looking for something specific?
             </h2>
             
@@ -1038,7 +1036,7 @@ function App() {
               style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}
             >
               <span className="relative z-10 flex items-center gap-3">
-                <SearchIcon size={20} color="default" />
+                <SearchIcon size={20} color="white" />
                 <span>Search Community Flashcards</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>

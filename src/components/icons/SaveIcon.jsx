@@ -1,7 +1,7 @@
 import React from 'react';
 
-const SocialIcon = ({ 
-  size = 24, 
+const SaveIcon = ({ 
+  size = 20, 
   color = 'default',
   className = '',
   ...props 
@@ -18,8 +18,6 @@ const SocialIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
-      case 'white':
-        return '#FFFFFF';
       case 'default':
       default:
         return '#606164';
@@ -44,13 +42,12 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <path d="M5 3h11l5 5v13H5V3z"/>
+        <rect x="7" y="3" width="7" height="5"/>
+        <rect x="9" y="13" width="6" height="6"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default SaveIcon;

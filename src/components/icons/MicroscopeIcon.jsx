@@ -1,7 +1,7 @@
 import React from 'react';
 
-const SocialIcon = ({ 
-  size = 24, 
+const MicroscopeIcon = ({ 
+  size = 20, 
   color = 'default',
   className = '',
   ...props 
@@ -18,8 +18,6 @@ const SocialIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
-      case 'white':
-        return '#FFFFFF';
       case 'default':
       default:
         return '#606164';
@@ -44,13 +42,14 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <rect x="5" y="19" width="14" height="2" rx="1"/>
+        <line x1="8" y1="19" x2="8" y2="13"/>
+        <line x1="8" y1="13" x2="14" y2="7"/>
+        <rect x="13" y="5" width="4" height="2" rx="1"/>
+        <line x1="9" y1="15" x2="13" y2="15"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default MicroscopeIcon;

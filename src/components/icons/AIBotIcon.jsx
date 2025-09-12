@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SocialIcon = ({ 
+const AIBotIcon = ({ 
   size = 24, 
   color = 'default',
   className = '',
@@ -44,13 +44,15 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <circle cx="12" cy="3" r="1"/>
+        <path d="M12 4v2"/>
+        <rect x="5" y="6" width="14" height="12" rx="3" ry="3"/>
+        <circle cx="9" cy="12" r="1.25"/>
+        <circle cx="15" cy="12" r="1.25"/>
+        <path d="M9 15h6"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default AIBotIcon;

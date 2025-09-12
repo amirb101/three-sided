@@ -15,7 +15,6 @@ import {
   SuccessIcon, 
   ProgressIcon, 
   TrophyIcon,
-  LaunchIcon,
   WarningIcon
 } from './icons';
 
@@ -467,7 +466,7 @@ const UserDashboard = () => {
                     className="claude-button-primary"
                     style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
                   >
-                    <EditIcon size={16} color="default" />
+                    <EditIcon size={16} color="white" />
                     Edit Profile
                   </button>
                   <a
@@ -496,7 +495,6 @@ const UserDashboard = () => {
                   className="claude-button-primary"
                   style={{background: 'linear-gradient(135deg, #B8A082 0%, #A68B5B 100%)'}}
                 >
-                  <LaunchIcon size={16} color="default" />
                   Create My Profile
                 </button>
               </div>

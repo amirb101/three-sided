@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SocialIcon = ({ 
+const UserIcon = ({ 
   size = 24, 
   color = 'default',
   className = '',
@@ -18,8 +18,6 @@ const SocialIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
-      case 'white':
-        return '#FFFFFF';
       case 'default':
       default:
         return '#606164';
@@ -44,13 +42,11 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <circle cx="12" cy="8" r="3"/>
+        <path d="M4 19c0-3.314 3.134-6 8-6s8 2.686 8 6"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default UserIcon;

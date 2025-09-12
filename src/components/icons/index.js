@@ -30,7 +30,6 @@ export { default as SupportIcon } from './SupportIcon';
 export { default as SaveIcon } from './SaveIcon';
 export { default as MapIcon } from './MapIcon';
 export { default as ClickIcon } from './ClickIcon';
-export { default as LaunchIcon } from './LaunchIcon';
 
 // Icon Components - Phase 3+ Extension (Comprehensive)
 export { default as FastIcon } from './FastIcon';

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SocialIcon = ({ 
+const MapIcon = ({ 
   size = 24, 
   color = 'default',
   className = '',
@@ -18,8 +18,6 @@ const SocialIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
-      case 'white':
-        return '#FFFFFF';
       case 'default':
       default:
         return '#606164';
@@ -44,13 +42,13 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z"/>
+        <path d="M9 4v14M15 6v14"/>
+        <path d="M16.5 10.5a2.5 2.5 0 1 0 5 0c0-1.38-1.12-2.5-2.5-2.5s-2.5 1.12-2.5 2.5z"/>
+        <path d="M19 13.5v0"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default MapIcon;

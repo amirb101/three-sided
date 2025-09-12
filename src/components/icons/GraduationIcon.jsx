@@ -1,7 +1,7 @@
 import React from 'react';
 
-const SocialIcon = ({ 
-  size = 24, 
+const GraduationIcon = ({ 
+  size = 20, 
   color = 'default',
   className = '',
   ...props 
@@ -18,8 +18,6 @@ const SocialIcon = ({
         return '#FFD554';
       case 'error':
         return '#FF6363';
-      case 'white':
-        return '#FFFFFF';
       case 'default':
       default:
         return '#606164';
@@ -44,13 +42,14 @@ const SocialIcon = ({
         strokeLinejoin="round"
         className="w-full h-full"
       >
-        <circle cx="9" cy="8" r="3"/>
-        <path d="M4 20v-1a5 5 0 0 1 10 0v1"/>
-        <circle cx="17" cy="10" r="3"/>
-        <path d="M12 20v-1a5 5 0 0 1 10 0v1"/>
+        <path d="M3 9l9-4 9 4-9 4-9-4z"/>
+        <path d="M12 13v3"/>
+        <path d="M7 12v2c0 1.66 3 3 5 3s5-1.34 5-3v-2"/>
+        <path d="M21 9v4"/>
+        <circle cx="21" cy="14" r="0.8"/>
       </svg>
     </div>
   );
 };
 
-export default SocialIcon;
+export default GraduationIcon;
