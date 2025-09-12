@@ -540,7 +540,7 @@ function App() {
                   onClick={handleSignIn}
                   style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
                 >
-                  ✨ Sign In
+                  Sign In
                 </button>
               </div>
             )}
