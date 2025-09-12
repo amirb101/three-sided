@@ -5,6 +5,19 @@ import { DeckService } from '../services/deckService';
 import { useAuth } from '../contexts/AuthContext';
 import PublicFlashcardManager from './PublicFlashcardManager';
 import { useMathJax } from '../hooks/useMathJax';
+import { 
+  DashboardIcon, 
+  UserIcon, 
+  CardsIcon, 
+  EditIcon, 
+  DeleteIcon, 
+  ViewIcon, 
+  SuccessIcon, 
+  ProgressIcon, 
+  TrophyIcon,
+  LaunchIcon,
+  WarningIcon
+} from './icons';
 
 // Helper functions
 const debug = (...args) => process.env.NODE_ENV !== 'production' && console.log(...args);
@@ -239,7 +252,8 @@ const UserDashboard = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold mb-4" style={{color: 'var(--claude-heading)'}}>
-            🎯 Your Dashboard
+            <DashboardIcon size={32} color="primary" />
+            Your Dashboard
           </h1>
           <p className="claude-text-secondary text-lg">Welcome back, {user?.displayName || 'Student'}!</p>
         </div>
@@ -249,7 +263,7 @@ const UserDashboard = () => {
           <div className="claude-card p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-500/20 rounded-xl">
-                <span className="text-2xl">📚</span>
+                <CardsIcon size={24} color="primary" />
               </div>
               <span className="claude-text-muted text-sm">Total</span>
             </div>
@@ -260,7 +274,7 @@ const UserDashboard = () => {
           <div className="claude-card rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-500/20 rounded-xl">
-                <span className="text-2xl">📥</span>
+                <ProgressIcon size={24} color="success" />
               </div>
               <span className="claude-text-muted text-sm">Imported</span>
             </div>
@@ -271,7 +285,7 @@ const UserDashboard = () => {
           <div className="claude-card rounded-2xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-500/20 rounded-xl">
-                <span className="text-2xl">🔥</span>
+                <TrophyIcon size={24} color="warning" />
               </div>
               <span className="claude-text-muted text-sm">Streak</span>
             </div>
@@ -287,18 +301,18 @@ const UserDashboard = () => {
           className="flex claude-card rounded-2xl p-2 mb-8"
         >
           {[
-            { id: 'overview', label: 'Overview', icon: '📊' },
-            { id: 'profile', label: 'My Profile', icon: '👤' },
-            { id: 'cards', label: 'My Cards', icon: '📚' },
-            { id: 'public', label: 'Public Cards', icon: '📢' },
-            { id: 'imported', label: 'Imported Cards', icon: '📥' }
+            { id: 'overview', label: 'Overview', icon: 'dashboard' },
+            { id: 'profile', label: 'My Profile', icon: 'user' },
+            { id: 'cards', label: 'My Cards', icon: 'cards' },
+            { id: 'public', label: 'Public Cards', icon: 'view' },
+            { id: 'imported', label: 'Imported Cards', icon: 'progress' }
           ].map((tab, idx) => {
             const tabs = [
-              { id: 'overview', label: 'Overview', icon: '📊' },
-              { id: 'profile', label: 'My Profile', icon: '👤' },
-              { id: 'cards', label: 'My Cards', icon: '📚' },
-              { id: 'public', label: 'Public Cards', icon: '📢' },
-              { id: 'imported', label: 'Imported Cards', icon: '📥' }
+              { id: 'overview', label: 'Overview', icon: 'dashboard' },
+              { id: 'profile', label: 'My Profile', icon: 'user' },
+              { id: 'cards', label: 'My Cards', icon: 'cards' },
+              { id: 'public', label: 'Public Cards', icon: 'view' },
+              { id: 'imported', label: 'Imported Cards', icon: 'progress' }
             ];
             const selected = activeTab === tab.id;
             return (
@@ -320,7 +334,19 @@ const UserDashboard = () => {
                     : 'claude-text-secondary hover:text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                <span>{tab.icon}</span>
+                {tab.icon === 'dashboard' ? (
+                  <DashboardIcon size={20} color={selected ? 'primary' : 'default'} />
+                ) : tab.icon === 'user' ? (
+                  <UserIcon size={20} color={selected ? 'primary' : 'default'} />
+                ) : tab.icon === 'cards' ? (
+                  <CardsIcon size={20} color={selected ? 'primary' : 'default'} />
+                ) : tab.icon === 'view' ? (
+                  <ViewIcon size={20} color={selected ? 'primary' : 'default'} />
+                ) : tab.icon === 'progress' ? (
+                  <ProgressIcon size={20} color={selected ? 'primary' : 'default'} />
+                ) : (
+                  <span>{tab.icon}</span>
+                )}
                 {tab.label}
               </button>
             );
@@ -332,7 +358,10 @@ const UserDashboard = () => {
           <div role="tabpanel" id="overview-panel" aria-labelledby="overview-tab" className="space-y-8">
             {/* Recent Activity */}
             <div className="claude-card rounded-3xl p-8">
-              <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>📈 Recent Activity</h2>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3" style={{color: 'var(--claude-heading)'}}>
+                <ProgressIcon size={24} color="success" />
+                Recent Activity
+              </h2>
               <div className="space-y-4">
                 {userFlashcards.slice(0, 5).map((card) => (
                   <div key={card.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-xl">
@@ -345,7 +374,9 @@ const UserDashboard = () => {
                 ))}
                 {userFlashcards.length === 0 && (
                   <div className="text-center py-8">
-                    <div className="text-4xl mb-4">📝</div>
+                    <div className="text-4xl mb-4">
+                      <EditIcon size={48} color="default" />
+                    </div>
                     <h3 className="text-xl font-semibold claude-text-secondary mb-2">No cards yet</h3>
                     <p className="claude-text-muted">Create your first flashcard to get started!</p>
                   </div>
@@ -355,7 +386,10 @@ const UserDashboard = () => {
 
             {/* Quick Stats */}
             <div className="claude-card rounded-3xl p-8">
-              <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>📊 Quick Stats</h2>
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-3" style={{color: 'var(--claude-heading)'}}>
+                <DashboardIcon size={24} color="default" />
+                Quick Stats
+              </h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-400 mb-1">{userFlashcards.length}</div>
@@ -380,7 +414,10 @@ const UserDashboard = () => {
 
         {activeTab === 'profile' && (
           <div role="tabpanel" id="profile-panel" aria-labelledby="profile-tab" className="claude-card rounded-3xl p-8">
-            <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>👤 My Profile</h2>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3" style={{color: 'var(--claude-heading)'}}>
+              <UserIcon size={24} color="default" />
+              My Profile
+            </h2>
             
             {userProfile ? (
               <div className="space-y-6">
@@ -428,8 +465,10 @@ const UserDashboard = () => {
                       console.log('Edit profile');
                     }}
                     className="claude-button-primary"
+                    style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
                   >
-                    ✏️ Edit Profile
+                    <EditIcon size={16} color="default" />
+                    Edit Profile
                   </button>
                   <a
                     href={`/profile/${userProfile.slug}`}
@@ -437,13 +476,16 @@ const UserDashboard = () => {
                     rel="noopener noreferrer"
                     className="claude-button-secondary"
                   >
-                    👁️ View Public Profile
+                    <ViewIcon size={16} color="default" />
+                    View Public Profile
                   </a>
                 </div>
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">👤</div>
+                <div className="mb-4">
+                  <UserIcon size={48} color="default" />
+                </div>
                 <h3 className="text-xl font-semibold claude-text-secondary mb-2">No profile yet</h3>
                 <p className="claude-text-muted mb-6">Create a profile to share your flashcards publicly and connect with other students.</p>
                 <button
@@ -452,8 +494,10 @@ const UserDashboard = () => {
                     console.log('Create profile');
                   }}
                   className="claude-button-primary"
+                  style={{background: 'linear-gradient(135deg, #B8A082 0%, #A68B5B 100%)'}}
                 >
-                  🚀 Create My Profile
+                  <LaunchIcon size={16} color="default" />
+                  Create My Profile
                 </button>
               </div>
             )}
@@ -463,7 +507,10 @@ const UserDashboard = () => {
         {activeTab === 'cards' && (
           <div role="tabpanel" id="cards-panel" aria-labelledby="cards-tab" className="claude-card rounded-3xl p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold" style={{color: 'var(--claude-heading)'}}>📚 My Cards ({userFlashcards.length})</h2>
+              <h2 className="text-2xl font-bold flex items-center gap-3" style={{color: 'var(--claude-heading)'}}>
+                <CardsIcon size={24} color="primary" />
+                My Cards ({userFlashcards.length})
+              </h2>
               <button
                 onClick={refresh}
                 disabled={refreshing}
@@ -475,7 +522,9 @@ const UserDashboard = () => {
             
             {userFlashcards.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">📝</div>
+                <div className="text-6xl mb-4">
+                  <EditIcon size={64} color="default" />
+                </div>
                 <h3 className="text-xl font-semibold claude-text-secondary mb-2">No cards found</h3>
                 <p className="claude-text-muted mb-6">It looks like you haven't created any flashcards yet, or there might be a connection issue.</p>
                 <div className="space-x-4">
@@ -514,7 +563,7 @@ const UserDashboard = () => {
                           className="text-red-400 hover:text-red-300"
                           title="Delete card"
                         >
-                          🗑️
+                          <DeleteIcon size={16} color="error" />
                         </button>
                       </div>
                     </div>
@@ -546,7 +595,8 @@ const UserDashboard = () => {
                             onClick={() => openCardInspector(card)}
                             className="text-blue-400 hover:text-blue-300 font-medium transition-colors cursor-pointer"
                           >
-                            🔍 Inspect
+                            <ViewIcon size={16} color="primary" />
+                            Inspect
                           </button>
                         )}
                       </div>
@@ -561,17 +611,23 @@ const UserDashboard = () => {
         {activeTab === 'public' && (
           <div role="tabpanel" id="public-panel" aria-labelledby="public-tab" className="claude-card rounded-3xl p-8">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold" style={{color: 'var(--claude-heading)'}}>📢 Your Public Cards</h2>
+              <h2 className="text-2xl font-bold flex items-center gap-3" style={{color: 'var(--claude-heading)'}}>
+                <ViewIcon size={24} color="primary" />
+                Your Public Cards
+              </h2>
               <button
                 onClick={() => setPublicManagerOpen(true)}
                 className="claude-button-primary"
+                style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}
               >
                 📋 Manage Public Cards
               </button>
             </div>
             
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">📢</div>
+              <div className="text-6xl mb-4">
+                <ViewIcon size={64} color="primary" />
+              </div>
               <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>Public Flashcard Management</h3>
               <p className="claude-text-muted mb-6">
                 View, edit, and manage all your public flashcards in one place. 
@@ -580,6 +636,7 @@ const UserDashboard = () => {
               <button
                 onClick={() => setPublicManagerOpen(true)}
                 className="claude-button-primary"
+                style={{background: 'linear-gradient(135deg, #7E6B5A 0%, #6D5A4A 100%)'}}
               >
                 Open Public Card Manager
               </button>
@@ -589,11 +646,16 @@ const UserDashboard = () => {
 
         {activeTab === 'imported' && (
           <div role="tabpanel" id="imported-panel" aria-labelledby="imported-tab" className="claude-card rounded-3xl p-8">
-            <h2 className="text-2xl font-bold mb-6" style={{color: 'var(--claude-heading)'}}>📥 Imported Cards ({importedCards.length})</h2>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-3" style={{color: 'var(--claude-heading)'}}>
+              <ProgressIcon size={24} color="success" />
+              Imported Cards ({importedCards.length})
+            </h2>
             
             {importedCards.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">📚</div>
+                <div className="text-6xl mb-4">
+                  <CardsIcon size={64} color="primary" />
+                </div>
                 <h3 className="text-xl font-semibold claude-text-secondary mb-2">No imported cards yet</h3>
                 <p className="claude-text-muted">Import useful cards from the public library!</p>
               </div>
@@ -603,7 +665,7 @@ const UserDashboard = () => {
                   <div key={card.id} className="group claude-card border hover:border-purple-500/50 rounded-2xl p-6 transition-all duration-300">
                     <div className="flex justify-between items-start mb-4">
                       <span className="text-sm text-purple-400 font-medium">{card.subject || 'General'}</span>
-                      <span className="text-blue-400">📥</span>
+                      <ProgressIcon size={16} color="success" />
                     </div>
                     
                     <h3 className="font-semibold mb-3 group-hover:text-purple-300 transition-colors" style={{color: 'var(--claude-primary-text)'}}>
@@ -713,6 +775,7 @@ const UserDashboard = () => {
                 <button
                   onClick={closeCardInspector}
                   className="claude-button-primary ml-auto"
+                  style={{background: 'linear-gradient(135deg, #6B5B4A 0%, #5A4A3A 100%)'}}
                 >
                   ✓ Close
                 </button>

@@ -533,7 +533,11 @@ function App() {
                     {authError}
                   </div>
                 )}
-                <button className="claude-button-primary transform hover:scale-105 transition-all duration-200" onClick={handleSignIn}>
+                <button 
+                  className="claude-button-primary transform hover:scale-105 transition-all duration-200" 
+                  onClick={handleSignIn}
+                  style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
+                >
                   ✨ Sign In
                 </button>
               </div>
@@ -713,8 +717,8 @@ function App() {
               onClick={() => setCurrentMode('search')} 
               className="claude-button-primary group relative min-w-[200px] transform hover:scale-105 transition-all duration-300"
               style={{
-                background: 'var(--claude-accent)',
-                boxShadow: '0 8px 32px rgba(99, 91, 255, 0.25)'
+                background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)',
+                boxShadow: '0 8px 32px rgba(155, 139, 115, 0.25)'
               }}
             >
               <span className="relative z-10 flex items-center gap-3">
