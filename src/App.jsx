@@ -752,7 +752,7 @@ function App() {
               <div className="claude-text-muted">Students</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold" style={{color: 'var(--heading)'}}>150+</div>
+              <div className="text-3xl font-bold" style={{color: 'var(--heading)'}}>250+</div>
               <div className="claude-text-muted">Public</div>
             </div>
           </div>
@@ -1023,7 +1023,7 @@ function App() {
             </h2>
             
             <p className="text-xl claude-text-secondary max-w-3xl mx-auto mb-8 leading-relaxed">
-              Search our community database of <span style={{color: 'var(--accent-primary)', fontWeight: '600'}}>10,000+ flashcards</span> from 
+              Search our community database of <span style={{color: 'var(--accent-primary)', fontWeight: '600'}}>250+ flashcards</span> from 
               <span style={{color: 'var(--accent-secondary)', fontWeight: '600'}}> students worldwide</span>. Find exactly what you need to ace your studies.
             </p>
             
