@@ -869,8 +869,8 @@ function App() {
           <div className="claude-card group relative overflow-hidden p-8 transition-all duration-500 hover:scale-105">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
-                👥
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#D4A574] to-[#C19A6B] rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+                <SocialIcon size={32} color="default" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>Community‑Driven</h3>
               <p className="claude-text-secondary leading-relaxed">Discover and share flashcards with students worldwide. Learn from the community's collective knowledge and contribute your own.</p>
@@ -880,7 +880,7 @@ function App() {
           <div className="claude-card group relative overflow-hidden p-8 transition-all duration-500 hover:scale-105">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#B8A082] to-[#A68B5B] rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
                 <AIBotIcon size={32} color="default" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>AI‑Powered Assistance</h3>
@@ -891,7 +891,7 @@ function App() {
           <div className="claude-card group relative overflow-hidden p-8 transition-all duration-500 hover:scale-105">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#9B8B73] to-[#8A7A63] rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
                 <MathIcon size={32} color="default" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>LaTeX Support</h3>
@@ -997,6 +997,7 @@ function App() {
                 <button 
                   onClick={() => setCurrentMode('create')} 
                   className="claude-button-primary px-8 py-4 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
                 >
                   <EditIcon size={20} color="default" />
                   Create Your First Card
@@ -1029,9 +1030,11 @@ function App() {
             <button 
               onClick={() => setCurrentMode('search')} 
               className="claude-button-primary group/btn relative overflow-hidden px-12 py-6 font-semibold text-lg shadow-2xl transform hover:scale-105 transition-all duration-300"
+              style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}
             >
               <span className="relative z-10 flex items-center gap-3">
-                🔎 <span>Search Community Flashcards</span>
+                <SearchIcon size={20} color="default" />
+                <span>Search Community Flashcards</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
             </button>
