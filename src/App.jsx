@@ -1017,9 +1017,6 @@ function App() {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
           
           <div className="relative z-10">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-accent-400 to-primary-500 rounded-3xl mb-8 text-5xl shadow-2xl group-hover:shadow-glow/80 transition-all duration-300">
-              <SearchIcon size={40} color="default" />
-            </div>
             
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{color: 'var(--heading)'}}>
               Looking for something specific?
