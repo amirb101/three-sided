@@ -149,44 +149,33 @@ export class UserService {
   // Get study history for a user
   static async getStudyHistory(userId) {
     try {
-      // For now, we'll simulate study history
-      // In production, you'd have a separate study_sessions collection
-      const mockHistory = [
-        {
-          date: '2024-01-15',
-          duration: 45,
-          cardsStudied: 12,
-          accuracy: 85
-        },
-        {
-          date: '2024-01-14',
-          duration: 30,
-          cardsStudied: 8,
-          accuracy: 92
-        },
-        {
-          date: '2024-01-13',
-          duration: 60,
-          cardsStudied: 20,
-          accuracy: 78
-        },
-        {
-          date: '2024-01-12',
-          duration: 25,
-          cardsStudied: 6,
-          accuracy: 95
-        },
-        {
-          date: '2024-01-11',
-          duration: 40,
-          cardsStudied: 15,
-          accuracy: 88
-        }
-      ];
+      // Import AnalyticsService to get real study history
+      const { AnalyticsService } = await import('./analyticsService');
+      
+      // Get recent study sessions from AnalyticsService
+      const recentSessions = await AnalyticsService.getRecentSessions(userId, 'month');
+      
+      // Transform sessions into study history format
+      const studyHistory = recentSessions.map(session => {
+        const sessionDate = session.startTime?.toDate ? 
+          session.startTime.toDate() : 
+          new Date(session.startTime);
+        
+        return {
+          date: sessionDate.toISOString().split('T')[0], // YYYY-MM-DD format
+          duration: session.duration || 0,
+          cardsStudied: session.cardsStudied || 0,
+          accuracy: Math.round((session.accuracy || 0) * 100) // Convert to percentage
+        };
+      });
 
-      return mockHistory;
+      // Sort by date (most recent first)
+      studyHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      return studyHistory;
     } catch (error) {
       console.error('Error fetching study history:', error);
+      // Fallback to empty array if analytics fails
       return [];
     }
   }

@@ -189,7 +189,8 @@ export class AnalyticsService {
       };
 
       batch.update(sessionRef, {
-        cardsStudied: arrayUnion(cardResult),
+        cardResults: arrayUnion(cardResult),
+        cardsStudied: (sessionDoc.data().cardsStudied || 0) + 1,
         [`cards${cardData.wasCorrect ? 'Correct' : 'Incorrect'}`]: 
           (sessionDoc.data()[`cards${cardData.wasCorrect ? 'Correct' : 'Incorrect'}`] || 0) + 1
       });

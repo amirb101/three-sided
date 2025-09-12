@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { FlashcardService } from '../services/flashcardService'
+import { AnalyticsService } from '../services/analyticsService'
+import { useAuth } from '../contexts/AuthContext'
 import { useMathJax } from '../hooks/useMathJax'
 
 // SM-2 Algorithm Constants
@@ -53,6 +55,7 @@ function sm2Update(card, quality, nowMs) {
 }
 
 const SpacedRepetition = ({ onClose, isVisible = false }) => {
+  const { user } = useAuth()
   const [cards, setCards] = useState([])
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
@@ -64,6 +67,8 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
     learning: 0,
     reviewing: 0
   })
+  const [studySession, setStudySession] = useState(null)
+  const [cardStartTime, setCardStartTime] = useState(null)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -75,6 +80,29 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
       mountedRef.current = false;
     };
   }, [isVisible])
+
+  // Start study session when component mounts and cards are loaded
+  useEffect(() => {
+    if (user && cards.length > 0 && !studySession && isVisible) {
+      startStudySession();
+    }
+  }, [user, cards.length, studySession, isVisible]);
+
+  // Track card viewing time
+  useEffect(() => {
+    if (cards[currentCardIndex]) {
+      setCardStartTime(Date.now());
+    }
+  }, [currentCardIndex]);
+
+  // End session on unmount
+  useEffect(() => {
+    return () => {
+      if (studySession) {
+        endStudySession();
+      }
+    };
+  }, [studySession]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -106,6 +134,57 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
       document.body.style.overflow = prev; 
     };
   }, [isVisible])
+
+  // Session management functions
+  const startStudySession = async () => {
+    if (!user) return;
+    
+    try {
+      const session = await AnalyticsService.startStudySession(user.uid, {
+        mode: 'spaced_repetition',
+        deckId: null,
+        deckName: 'Spaced Repetition'
+      });
+      setStudySession(session);
+      console.log('Spaced repetition session started:', session.sessionId);
+    } catch (error) {
+      console.error('Failed to start spaced repetition session:', error);
+    }
+  };
+
+  const endStudySession = async () => {
+    if (!studySession || !user) return;
+    
+    try {
+      const sessionStats = await AnalyticsService.endStudySession(studySession.sessionId, user.uid);
+      console.log('Spaced repetition session ended:', sessionStats);
+      setStudySession(null);
+    } catch (error) {
+      console.warn('Analytics not available for session end:', error);
+      setStudySession(null);
+    }
+  };
+
+  const recordCardAnswer = async (quality, card) => {
+    if (!studySession || !user || !cardStartTime) return;
+    
+    const timeSpent = Math.round((Date.now() - cardStartTime) / 1000);
+    const wasCorrect = quality >= 3; // Quality 3+ is considered correct
+    
+    try {
+      await AnalyticsService.recordCardAnswer(studySession.sessionId, {
+        cardId: card.id,
+        userId: user.uid,
+        timeSpent,
+        wasCorrect,
+        attempts: 1,
+        difficulty: 'medium',
+        confidenceLevel: quality
+      });
+    } catch (error) {
+      console.warn('Analytics not available for card answer:', error);
+    }
+  };
 
   const loadCards = async () => {
     try {
@@ -164,8 +243,15 @@ const SpacedRepetition = ({ onClose, isVisible = false }) => {
     setStats(stats);
   }
 
-  const handleAnswer = (quality) => {
+  const handleAnswer = async (quality) => {
     const now = Date.now();
+    const currentCard = cards[currentCardIndex];
+    
+    if (currentCard) {
+      // Record the answer in analytics
+      await recordCardAnswer(quality, currentCard);
+    }
+    
     setCards(prev => {
       if (!prev.length) return prev;
 
