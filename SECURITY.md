@@ -518,7 +518,7 @@ For security issues or concerns:
 
 ---
 
-**Last Updated**: December 2024  
+**Last Updated**: September 2025  
 **Next Review**: Quarterly security reviews scheduled  
 **Version**: 1.0  
 
