@@ -36,7 +36,8 @@ import {
   LearningAnalyticsIcon,
   HeartIcon,
   FastIcon,
-  DesktopIcon
+  DesktopIcon,
+  SocialIcon
 } from './components/icons'
 import AdminDashboard from './components/AdminDashboard'
 import { WebsiteAnalyticsService } from './services/websiteAnalyticsService'
