@@ -724,7 +724,7 @@ function App() {
               }}
             >
               <span className="relative z-10 flex items-center gap-3">
-                <SearchIcon size={20} color="default" />
+                <SearchIcon size={20} color="white" />
                 <span>Search Flashcards</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
