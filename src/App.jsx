@@ -688,15 +688,15 @@ function App() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-2xl animate-pulse" style={{backgroundColor: 'rgba(91, 194, 162, 0.08)', animationDelay: '2s'}}></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 relative z-10 text-center py-24">
+        <div className="max-w-7xl mx-auto px-4 relative z-10 text-center py-16">
           {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style={{
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{
             backgroundColor: 'rgba(91, 194, 162, 0.15)',
             border: '1px solid var(--claude-success)',
             color: 'var(--claude-success)'
           }}>
             <div className="w-2 h-2 rounded-full animate-pulse" style={{backgroundColor: 'var(--claude-success)'}}></div>
-            <span className="text-sm font-semibold">✨ New React Version - Live Now</span>
+            <span className="text-sm font-semibold">New React Version - Live Now</span>
           </div>
 
           {/* Main Heading */}
