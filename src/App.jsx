@@ -900,7 +900,7 @@ function App() {
                 <MathIcon size={32} color="white" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>LaTeX Support</h3>
-              <p className="claude-text-secondary leading-relaxed">Beautiful mathematical notation with full LaTeX rendering. Use $...$ for inline math and $$...$$ for display blocks.</p>
+              <p className="claude-text-secondary leading-relaxed">Beautiful mathematical notation with full LaTeX rendering. Use <code>$...$</code> for inline math and <code>$$...$$</code> for display blocks.</p>
             </div>
           </div>
         </div>
