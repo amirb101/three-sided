@@ -18,6 +18,26 @@ import DeckCreator from './components/DeckCreator'
 import DeckManager from './components/DeckManager'
 import AnalyticsDashboard from './components/AnalyticsDashboard'
 import AdminAnalyticsDashboard from './components/AdminAnalyticsDashboard'
+import IconTestPage from './components/IconTestPage'
+import { 
+  DashboardIcon, 
+  UserIcon, 
+  SearchIcon, 
+  CardsIcon, 
+  EditIcon, 
+  TrophyIcon, 
+  ViewIcon, 
+  SuccessIcon, 
+  AIBotIcon, 
+  MathIcon, 
+  LaunchIcon, 
+  TargetIcon, 
+  BookIcon, 
+  LearningAnalyticsIcon,
+  HeartIcon,
+  FastIcon,
+  DesktopIcon
+} from './components/icons'
 import AdminDashboard from './components/AdminDashboard'
 import { WebsiteAnalyticsService } from './services/websiteAnalyticsService'
 import { AdminService } from './services/adminService.js'
@@ -261,6 +281,7 @@ function App() {
       )
       case 'leaderboard': return <LeaderboardAndStats />
       case 'dashboard': return <UserDashboard />
+      case 'icon-test': return <IconTestPage />
       case 'create-profile': return <ProfileCreator onProfileCreated={handleProfileCreated} onClose={() => setCurrentMode('home')} />
       case 'social': return <SocialHub onViewProfile={handleViewProfile} />
       case 'profile': return <PublicProfile profileSlug={viewingProfileSlug} onClose={() => setCurrentMode('home')} />
@@ -298,8 +319,9 @@ function App() {
           {/* Desktop Navigation - Only show if signed in */}
           {currentMode === 'home' && user && (
             <div className="hidden lg:flex items-center gap-3">
-              <button className="claude-button-secondary" onClick={() => setCurrentMode('search')}>
-                🔍 Search
+              <button className="claude-button-secondary flex items-center gap-2" onClick={() => setCurrentMode('search')}>
+                <SearchIcon size={16} color="default" />
+                Search
               </button>
               
               {/* Study & Content Dropdown */}
@@ -309,7 +331,8 @@ function App() {
                   onClick={() => setShowStudyDropdown(!showStudyDropdown)}
                   onBlur={() => setTimeout(() => setShowStudyDropdown(false), 200)}
                 >
-                  📚 Study ▾
+                  <CardsIcon size={16} color="default" />
+                  Study ▾
                 </button>
                 {showStudyDropdown && (
                   <div className="absolute top-full mt-1 left-0 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-60">
@@ -320,7 +343,10 @@ function App() {
                         setShowStudyDropdown(false);
                       }}
                     >
-                      📚 My Decks
+                      <div className="flex items-center gap-2">
+                        <CardsIcon size={16} color="default" />
+                        My Decks
+                      </div>
                     </button>
                     <button 
                       className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
@@ -329,7 +355,10 @@ function App() {
                         setShowStudyDropdown(false);
                       }}
                     >
-                      🎯 Study Mode
+                      <div className="flex items-center gap-2">
+                        <TargetIcon size={16} color="default" />
+                        Study Mode
+                      </div>
                     </button>
                     <button 
                       className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
@@ -338,7 +367,10 @@ function App() {
                         setShowStudyDropdown(false);
                       }}
                     >
-                      ✏️ Create Flashcard
+                      <div className="flex items-center gap-2">
+                        <EditIcon size={16} color="default" />
+                        Create Flashcard
+                      </div>
                     </button>
                   </div>
                 )}
@@ -347,8 +379,9 @@ function App() {
               <button className="claude-button-secondary" onClick={() => setCurrentMode('social')}>
                 👥 Social
               </button>
-              <button className="claude-button-secondary" onClick={() => setCurrentMode('leaderboard')}>
-                🏆 Leaderboard
+              <button className="claude-button-secondary flex items-center gap-2" onClick={() => setCurrentMode('leaderboard')}>
+                <TrophyIcon size={16} color="default" />
+                Leaderboard
               </button>
 
               {/* User Account Dropdown */}
@@ -358,7 +391,8 @@ function App() {
                   onClick={() => setShowUserDropdown(!showUserDropdown)}
                   onBlur={() => setTimeout(() => setShowUserDropdown(false), 200)}
                 >
-                  👤 Account ▾
+                  <UserIcon size={16} color="default" />
+                  Account ▾
                 </button>
                 {showUserDropdown && (
                   <div className="absolute top-full mt-1 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-60">
@@ -369,7 +403,10 @@ function App() {
                         setShowUserDropdown(false);
                       }}
                     >
-                      🎯 My Dashboard
+                      <div className="flex items-center gap-2">
+                        <DashboardIcon size={16} color="default" />
+                        My Dashboard
+                      </div>
                     </button>
                     <button 
                       className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
@@ -389,7 +426,10 @@ function App() {
                         WebsiteAnalyticsService.trackClick('button', { text: 'Analytics', action: 'view_analytics' }, user?.uid);
                       }}
                     >
-                      📊 Learning Analytics
+                      <div className="flex items-center gap-2">
+                        <DashboardIcon size={16} color="default" />
+                        Learning Analytics
+                      </div>
                     </button>
                   </div>
                 )}
@@ -509,25 +549,37 @@ function App() {
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { setCurrentMode('search'); setShowMobileMenu(false); }}
               >
-                🔍 Search
+                <div className="flex items-center gap-3">
+                  <SearchIcon size={16} color="default" />
+                  Search
+                </div>
               </button>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { setCurrentMode('decks'); setShowMobileMenu(false); }}
               >
-                📚 My Decks
+                <div className="flex items-center gap-3">
+                  <CardsIcon size={16} color="default" />
+                  My Decks
+                </div>
               </button>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { setCurrentMode('study'); setShowMobileMenu(false); }}
               >
-                🎯 Study Mode
+                <div className="flex items-center gap-3">
+                  <TargetIcon size={16} color="default" />
+                  Study Mode
+                </div>
               </button>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { setCurrentMode('create'); setShowMobileMenu(false); }}
               >
-                ✏️ Create Flashcard
+                <div className="flex items-center gap-3">
+                  <EditIcon size={16} color="default" />
+                  Create Flashcard
+                </div>
               </button>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
@@ -539,20 +591,29 @@ function App() {
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { setCurrentMode('leaderboard'); setShowMobileMenu(false); }}
               >
-                🏆 Leaderboard
+                <div className="flex items-center gap-3">
+                  <TrophyIcon size={16} color="default" />
+                  Leaderboard
+                </div>
               </button>
               <div className="border-t border-gray-200 my-2"></div>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { setCurrentMode('dashboard'); setShowMobileMenu(false); }}
               >
-                🎯 My Dashboard
+                <div className="flex items-center gap-2">
+                  <DashboardIcon size={16} color="default" />
+                  My Dashboard
+                </div>
               </button>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
                 onClick={() => { handleProfileNavigation(); setShowMobileMenu(false); }}
               >
-                👤 My Profile
+                <div className="flex items-center gap-3">
+                  <UserIcon size={16} color="default" />
+                  My Profile
+                </div>
               </button>
               <button 
                 className="w-full text-left py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors"
@@ -562,7 +623,10 @@ function App() {
                   WebsiteAnalyticsService.trackClick('button', { text: 'Analytics', action: 'view_analytics' }, user?.uid);
                 }}
               >
-                📊 Learning Analytics
+                <div className="flex items-center gap-2">
+                  <DashboardIcon size={16} color="default" />
+                  Learning Analytics
+                </div>
               </button>
               {isAdmin && (
                 <>
@@ -654,7 +718,8 @@ function App() {
               }}
             >
               <span className="relative z-10 flex items-center gap-3">
-                🔍 <span>Search Flashcards</span>
+                <SearchIcon size={20} color="default" />
+                <span>Search Flashcards</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-white/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
@@ -664,7 +729,8 @@ function App() {
               className="claude-button-secondary group transform hover:scale-105 transition-all duration-300 min-w-[200px]"
             >
               <span className="flex items-center gap-3">
-                🏆 <span>View Leaderboard</span>
+                <TrophyIcon size={20} color="default" />
+                <span>View Leaderboard</span>
               </span>
             </button>
           </div>
@@ -704,7 +770,8 @@ function App() {
             <div className="relative z-10">
               <div className="text-center mb-8">
                 <h2 className="text-4xl font-extrabold mb-3" style={{color: 'var(--claude-heading)'}}>
-                  🚀 Quick Actions
+                  <LaunchIcon size={24} color="primary" />
+                  Quick Actions
                 </h2>
                 <p className="text-neutral-300 text-lg">Jump into your learning journey</p>
               </div>
@@ -717,11 +784,13 @@ function App() {
                     WebsiteAnalyticsService.trackFeatureUsage('flashcard', 'create_started', {}, user?.uid);
                   }} 
                   className="claude-card group relative overflow-hidden p-6 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                  style={{background: 'linear-gradient(135deg, var(--success) 0%, #10b981 100%)'}}
+                  style={{background: 'linear-gradient(135deg, #D4A574 0%, #C19A6B 100%)'}}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
-                    <div className="text-4xl mb-3">✏️</div>
+                    <div className="text-4xl mb-3">
+                      <EditIcon size={32} color="default" />
+                    </div>
                     <div className="font-bold text-lg mb-1">Create</div>
                     <div className="text-white/90 text-sm">New Flashcard</div>
                   </div>
@@ -734,11 +803,13 @@ function App() {
                     WebsiteAnalyticsService.trackFeatureUsage('study', 'session_started', {}, user?.uid);
                   }} 
                   className="claude-card group relative overflow-hidden p-6 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                  style={{background: 'linear-gradient(135deg, var(--accent-secondary) 0%, #3D4EE6 100%)'}}
+                  style={{background: 'linear-gradient(135deg, #B8A082 0%, #A68B5B 100%)'}}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
-                    <div className="text-4xl mb-3">📚</div>
+                    <div className="text-4xl mb-3">
+                      <BookIcon size={32} color="default" />
+                    </div>
                     <div className="font-bold text-lg mb-1">Study</div>
                     <div className="text-white/90 text-sm">Practice Mode</div>
                   </div>
@@ -747,11 +818,13 @@ function App() {
                 <button 
                   onClick={() => setCurrentMode('search')} 
                   className="claude-card group relative overflow-hidden p-6 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                  style={{background: 'linear-gradient(135deg, var(--accent-primary) 0%, #5B54E6 100%)'}}
+                  style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
-                    <div className="text-4xl mb-3">🔍</div>
+                    <div className="text-4xl mb-3">
+                      <SearchIcon size={32} color="default" />
+                    </div>
                     <div className="font-bold text-lg mb-1">Search</div>
                     <div className="text-white/90 text-sm">& Discover</div>
                   </div>
@@ -760,11 +833,13 @@ function App() {
                 <button 
                   onClick={() => setCurrentMode('dashboard')} 
                   className="claude-card group relative overflow-hidden p-6 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                  style={{background: 'linear-gradient(135deg, var(--warning) 0%, #E6A441 100%)'}}
+                  style={{background: 'linear-gradient(135deg, #7E6B5A 0%, #6D5A4A 100%)'}}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
-                    <div className="text-4xl mb-3">🎯</div>
+                    <div className="text-4xl mb-3">
+                      <TargetIcon size={32} color="default" />
+                    </div>
                     <div className="font-bold text-lg mb-1">Dashboard</div>
                     <div className="text-white/90 text-sm">My Progress</div>
                   </div>
@@ -773,11 +848,13 @@ function App() {
                 <button 
                   onClick={() => setCurrentMode('decks')} 
                   className="claude-card group relative overflow-hidden p-6 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                  style={{background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)'}}
+                  style={{background: 'linear-gradient(135deg, #6B5B4A 0%, #5A4A3A 100%)'}}
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                   <div className="relative z-10 text-center text-white">
-                    <div className="text-4xl mb-3">📚</div>
+                    <div className="text-4xl mb-3">
+                      <CardsIcon size={32} color="default" />
+                    </div>
                     <div className="font-bold text-lg mb-1">Decks</div>
                     <div className="text-white/90 text-sm">Organize Cards</div>
                   </div>
@@ -804,7 +881,7 @@ function App() {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
-                🧠
+                <AIBotIcon size={32} color="default" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>AI‑Powered Assistance</h3>
               <p className="claude-text-secondary leading-relaxed">Get AI‑generated hints, proofs, and suggestions to help you create better flashcards faster and study more effectively.</p>
@@ -815,7 +892,7 @@ function App() {
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
             <div className="relative z-10 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl mb-6 text-4xl shadow-lg group-hover:shadow-xl transition-all duration-300">
-                📐
+                <MathIcon size={32} color="default" />
               </div>
               <h3 className="text-2xl font-bold mb-4" style={{color: 'var(--heading)'}}>LaTeX Support</h3>
               <p className="claude-text-secondary leading-relaxed">Beautiful mathematical notation with full LaTeX rendering. Use $...$ for inline math and $$...$$ for display blocks.</p>
@@ -829,7 +906,8 @@ function App() {
           <div className="relative z-10">
             <div className="text-center mb-8">
               <h2 className="text-4xl font-extrabold mb-3" style={{color: 'var(--heading)'}}>
-                🚀 Get Started
+                <LaunchIcon size={32} color="primary" />
+                Get Started
               </h2>
               <p className="claude-text-secondary text-lg">Complete these quick steps to join our community</p>
             </div>
@@ -847,7 +925,7 @@ function App() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
                     user ? 'bg-success-500 text-white' : 'bg-primary-500 text-white'
                   }`}>
-                    {user ? '✓' : '1'}
+                    {user ? <SuccessIcon size={16} color="success" /> : '1'}
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-lg mb-1" style={{color: 'var(--heading)'}}>
@@ -874,7 +952,7 @@ function App() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
                     onboardingStatus.hasProfile ? 'bg-success-500 text-white' : 'bg-primary-500 text-white'
                   }`}>
-                    {onboardingStatus.hasProfile ? '✓' : '2'}
+                    {onboardingStatus.hasProfile ? <SuccessIcon size={16} color="success" /> : '2'}
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-lg mb-1" style={{color: 'var(--heading)'}}>
@@ -900,7 +978,7 @@ function App() {
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
                     onboardingStatus.hasCards ? 'bg-success-500 text-white' : 'bg-primary-500 text-white'
                   }`}>
-                    {onboardingStatus.hasCards ? '✓' : '3'}
+                    {onboardingStatus.hasCards ? <SuccessIcon size={16} color="success" /> : '3'}
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-lg mb-1" style={{color: 'var(--heading)'}}>
@@ -920,7 +998,8 @@ function App() {
                   onClick={() => setCurrentMode('create')} 
                   className="claude-button-primary px-8 py-4 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                 >
-                  ✏️ Create Your First Card
+                  <EditIcon size={20} color="default" />
+                  Create Your First Card
                 </button>
               </div>
             )}
@@ -934,11 +1013,12 @@ function App() {
           
           <div className="relative z-10">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-accent-400 to-primary-500 rounded-3xl mb-8 text-5xl shadow-2xl group-hover:shadow-glow/80 transition-all duration-300">
-              🔍
+              <SearchIcon size={40} color="default" />
             </div>
             
             <h2 className="text-4xl md:text-5xl font-extrabold mb-6" style={{color: 'var(--heading)'}}>
-              🔍 Looking for something specific?
+              <SearchIcon size={32} color="primary" />
+              Looking for something specific?
             </h2>
             
             <p className="text-xl claude-text-secondary max-w-3xl mx-auto mb-8 leading-relaxed">
@@ -981,7 +1061,7 @@ function App() {
             
             <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-8" style={{borderTop: '1px solid var(--border-light)'}}>
               <div className="claude-text-muted">
-                © {new Date().getFullYear()} Three‑Sided. Made with ❤️ for students.
+                © {new Date().getFullYear()} Three‑Sided. Made with <HeartIcon size={16} color="error" /> for students.
               </div>
               
               <div className="flex items-center gap-8">
