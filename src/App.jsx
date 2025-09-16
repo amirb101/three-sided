@@ -482,7 +482,7 @@ function App() {
               <span className="text-lg font-bold" style={{color: 'var(--claude-heading)'}}>
                 {currentMode === 'create' && '✏️ Create Flashcard'}
                 {currentMode === 'study' && '📚 Study Mode'}
-                {currentMode === 'search' && '🔍 Search & Discovery'}
+                {currentMode === 'search' && 'Search & Discovery'}
                 {currentMode === 'decks' && '📚 My Decks'}
                 {currentMode === 'create-deck' && '➕ Create Deck'}
                 {currentMode === 'edit-deck' && '✏️ Edit Deck'}

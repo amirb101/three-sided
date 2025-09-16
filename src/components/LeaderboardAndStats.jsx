@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { TrophyIcon, HeartIcon, TargetIcon, FastIcon, UserIcon, ViewIcon } from './icons';
 
 // Simple in-memory cache for leaderboard data
 const leaderboardCache = new Map();
@@ -119,9 +120,9 @@ const LeaderboardAndStats = () => {
 
   const getRankIcon = (index) => {
     switch (index) {
-      case 0: return '🥇';
-      case 1: return '🥈';
-      case 2: return '🥉';
+      case 0: return <TrophyIcon size={20} color="white" />;
+      case 1: return <TrophyIcon size={20} color="white" />;
+      case 2: return <TrophyIcon size={20} color="white" />;
       default: return `#${index + 1}`;
     }
   };
@@ -131,28 +132,33 @@ const LeaderboardAndStats = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold mb-4" style={{color: 'var(--claude-heading)'}}>
-            🏆 Community Leaderboard
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white shadow-lg" style={{background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'}}>
+              <TrophyIcon size={32} color="white" />
+            </div>
+            <h1 className="text-4xl font-extrabold" style={{color: 'var(--claude-heading)'}}>
+              Community Leaderboard
+            </h1>
+          </div>
           <p className="claude-text-secondary text-lg">Celebrating our top contributors and creators</p>
         </div>
 
         {/* Community Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="claude-card p-6 text-center">
-            <div className="text-3xl mb-2">👥</div>
+            <UserIcon size={32} color="default" className="mx-auto mb-2" />
             <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-accent-blue)'}}>{communityStats.totalUsers.toLocaleString()}</div>
             <div className="claude-text-secondary">Community Members</div>
           </div>
           
           <div className="claude-card p-6 text-center">
-            <div className="text-3xl mb-2">📚</div>
+            <TrophyIcon size={32} color="default" className="mx-auto mb-2" />
             <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-accent)'}}>{communityStats.totalCards.toLocaleString()}</div>
             <div className="claude-text-secondary">Total Flashcards</div>
           </div>
           
           <div className="claude-card p-6 text-center">
-            <div className="text-3xl mb-2">👁️</div>
+            <ViewIcon size={32} color="default" className="mx-auto mb-2" />
             <div className="text-3xl font-bold mb-1" style={{color: 'var(--claude-success)'}}>{communityStats.totalViews.toLocaleString()}</div>
             <div className="claude-text-secondary">Total Views</div>
           </div>
@@ -162,9 +168,9 @@ const LeaderboardAndStats = () => {
         <div className="claude-card p-2 mb-8">
           <div className="flex">
             {[
-              { id: 'popular', label: 'Most Upvoted', icon: '🔥' },
-              { id: 'creators', label: 'Top Creators', icon: '👑' },
-              { id: 'streak', label: 'Login Streak', icon: '⚡' }
+              { id: 'popular', label: 'Most Upvoted', icon: 'heart' },
+              { id: 'creators', label: 'Top Creators', icon: 'target' },
+              { id: 'streak', label: 'Login Streak', icon: 'fast' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -187,7 +193,13 @@ const LeaderboardAndStats = () => {
                   }
                 }}
               >
-                <span>{tab.icon}</span>
+                {tab.icon === 'heart' ? (
+                  <HeartIcon size={20} color={activeTab === tab.id ? 'white' : 'default'} />
+                ) : tab.icon === 'target' ? (
+                  <TargetIcon size={20} color={activeTab === tab.id ? 'white' : 'default'} />
+                ) : (
+                  <FastIcon size={20} color={activeTab === tab.id ? 'white' : 'default'} />
+                )}
                 {tab.label}
               </button>
             ))}
@@ -197,8 +209,23 @@ const LeaderboardAndStats = () => {
         {/* Leaderboard */}
         <div className="claude-card p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold" style={{color: 'var(--claude-heading)'}}>
-              {activeTab === 'creators' ? '👑 Top Creators' : activeTab === 'popular' ? '🔥 Most Upvoted' : '⚡ Login Streak Champions'}
+            <h2 className="text-2xl font-bold flex items-center gap-2" style={{color: 'var(--claude-heading)'}}>
+              {activeTab === 'creators' ? (
+                <>
+                  <TargetIcon size={24} color="default" />
+                  Top Creators
+                </>
+              ) : activeTab === 'popular' ? (
+                <>
+                  <HeartIcon size={24} color="default" />
+                  Most Upvoted
+                </>
+              ) : (
+                <>
+                  <FastIcon size={24} color="default" />
+                  Login Streak Champions
+                </>
+              )}
             </h2>
             <div className="flex items-center gap-3">
               {fromCache && (
@@ -231,7 +258,7 @@ const LeaderboardAndStats = () => {
             </div>
           ) : leaderboard.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">🏆</div>
+              <TrophyIcon size={64} color="default" className="mx-auto mb-4 opacity-50" />
               <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>No users found</h3>
               <p className="claude-text-muted">Be the first to create some flashcards!</p>
             </div>
@@ -321,7 +348,7 @@ const LeaderboardAndStats = () => {
             <h3 className="text-lg font-semibold text-white mb-4">Your Position</h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'}}>
                   {getUserInitials(user.displayName)}
                 </div>
                 <div>

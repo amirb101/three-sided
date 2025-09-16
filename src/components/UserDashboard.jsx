@@ -15,7 +15,9 @@ import {
   SuccessIcon, 
   ProgressIcon, 
   TrophyIcon,
-  WarningIcon
+  WarningIcon,
+  TargetIcon,
+  BookIcon
 } from './icons';
 
 // Helper functions
@@ -329,9 +331,10 @@ const UserDashboard = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
                   selected
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white'
+                    ? 'text-white'
                     : 'claude-text-secondary hover:text-gray-700 hover:bg-gray-100'
                 }`}
+                style={selected ? {background: 'linear-gradient(135deg, #7E6B5A 0%, #6D5A4A 100%)'} : {}}
               >
                 {tab.icon === 'dashboard' ? (
                   <DashboardIcon size={20} color={selected ? 'primary' : 'default'} />
@@ -395,7 +398,7 @@ const UserDashboard = () => {
                   <div className="claude-text-secondary text-sm">Total Cards</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-400 mb-1">{importedCards.length}</div>
+                  <div className="text-2xl font-bold mb-1" style={{color: '#7E6B5A'}}>{importedCards.length}</div>
                   <div className="claude-text-secondary text-sm">Imported Cards</div>
                 </div>
                 <div className="text-center">
@@ -536,7 +539,11 @@ const UserDashboard = () => {
                   <button
                     onClick={refresh}
                     disabled={refreshing}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-60 font-semibold rounded-xl transition-all duration-200" style={{color: 'white'}}
+                    className="px-6 py-3 disabled:opacity-60 font-semibold rounded-xl transition-all duration-200" 
+                    style={{
+                      background: 'linear-gradient(135deg, #7E6B5A 0%, #6D5A4A 100%)',
+                      color: 'white'
+                    }}
                   >
                     {refreshing ? 'Refreshing…' : 'Try Loading Again'}
                   </button>
@@ -551,10 +558,22 @@ const UserDashboard = () => {
                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
                         <button
                           onClick={() => showDeckMoveOptions(card)}
-                          className="text-purple-400 hover:text-purple-300 text-sm px-2 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20"
+                          className="text-sm px-2 py-1 rounded transition-all duration-200"
+                          style={{
+                            color: '#7E6B5A',
+                            backgroundColor: 'rgba(126, 107, 90, 0.1)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = 'rgba(126, 107, 90, 0.2)';
+                            e.target.style.color = '#6D5A4A';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'rgba(126, 107, 90, 0.1)';
+                            e.target.style.color = '#7E6B5A';
+                          }}
                           title="Move to deck"
                         >
-                          📁
+                          <BookIcon size={16} color="current" />
                         </button>
                         <button
                           onClick={() => deleteCard(card.id)}
@@ -660,13 +679,13 @@ const UserDashboard = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {importedCards.map((card) => (
-                  <div key={card.id} className="group claude-card border hover:border-purple-500/50 rounded-2xl p-6 transition-all duration-300">
+                  <div key={card.id} className="group claude-card border rounded-2xl p-6 transition-all duration-300" style={{'&:hover': {borderColor: 'rgba(126, 107, 90, 0.5)'}}}>
                     <div className="flex justify-between items-start mb-4">
-                      <span className="text-sm text-purple-400 font-medium">{card.subject || 'General'}</span>
+                      <span className="text-sm font-medium" style={{color: '#7E6B5A'}}>{card.subject || 'General'}</span>
                       <ProgressIcon size={16} color="success" />
                     </div>
                     
-                    <h3 className="font-semibold mb-3 group-hover:text-purple-300 transition-colors" style={{color: 'var(--claude-primary-text)'}}>
+                    <h3 className="font-semibold mb-3 transition-colors" style={{color: 'var(--claude-primary-text)'}}>
                       {card.question?.length > 80 ? card.question.slice(0, 80) + '...' : card.question}
                     </h3>
                     
@@ -711,7 +730,7 @@ const UserDashboard = () => {
 
               {/* Statement/Question */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-purple-400 mb-3">Statement</h3>
+                <h3 className="text-lg font-semibold mb-3" style={{color: '#7E6B5A'}}>Statement</h3>
                 <div className="claude-card rounded-xl p-4 leading-relaxed claude-text-primary">
                   {inspectedCard.statement || inspectedCard.question || 'No statement available'}
                 </div>
@@ -820,10 +839,24 @@ const UserDashboard = () => {
                 <button
                   key={deck.id}
                   onClick={() => moveCardToDeck(deck.id)}
-                  className="w-full text-left p-3 rounded-lg border border-gray-600 hover:border-purple-500 hover:bg-purple-500/10 transition-all duration-200"
+                  className="w-full text-left p-3 rounded-lg border border-gray-600 transition-all duration-200"
+                  style={{
+                    '&:hover': {
+                      borderColor: '#7E6B5A',
+                      backgroundColor: 'rgba(126, 107, 90, 0.1)'
+                    }
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.borderColor = '#7E6B5A';
+                    e.target.style.backgroundColor = 'rgba(126, 107, 90, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.borderColor = '#4a5568';
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{deck.icon || '📚'}</span>
+                    <span className="text-2xl">{deck.icon || <BookIcon size={24} color="default" />}</span>
                     <div>
                       <div className="font-medium" style={{color: 'var(--claude-primary-text)'}}>{deck.name}</div>
                       <div className="text-sm claude-text-secondary">

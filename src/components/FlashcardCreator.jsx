@@ -6,6 +6,7 @@ import AIService from '../services/aiService';
 import TagSelector from './TagSelector';
 import SubjectSelector from './SubjectSelector';
 import DeckSelector from './DeckSelector';
+import { EditIcon, TagsIcon, MathIcon, SuccessIcon, ErrorIcon } from './icons';
 
 const FlashcardCreator = ({ onCardCreated, onClose }) => {
   const { user } = useAuth();
@@ -265,15 +266,20 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold mb-4" style={{color: 'var(--claude-heading)'}}>
-            ✏️ Create Flashcard
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white shadow-lg" style={{background: 'linear-gradient(135deg, #8B7355 0%, #7A6245 100%)'}}>
+              <EditIcon size={32} color="white" />
+            </div>
+            <h1 className="text-4xl font-extrabold" style={{color: 'var(--claude-heading)'}}>
+              Create Flashcard
+            </h1>
+          </div>
           <p className="claude-text-secondary text-lg">Build a three-sided flashcard with statement, hints, and proof</p>
           
           {/* Success Message */}
           {success && (
             <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm shadow-md">
-              <div className="text-lg">✅</div>
+              <SuccessIcon size={16} color="green" />
               <span className="font-medium">Flashcard created successfully! Ready to create another?</span>
             </div>
           )}
@@ -317,13 +323,13 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
                   style={{
                     background: aiLoading.autoFill 
                       ? 'var(--claude-muted)' 
-                      : 'linear-gradient(135deg, #635BFF 0%, #7C3AED 100%)'
+                      : 'linear-gradient(135deg, #8B7355 0%, #7A6245 100%)'
                   }}
                 >
                   {aiLoading.autoFill ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <span>🤖</span>
+                    <EditIcon size={16} color="white" />
                   )}
                   <span>{aiLoading.autoFill ? 'Generating...' : 'Autofill Hints, Proof & Tags'}</span>
                 </button>
@@ -342,7 +348,7 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
                   {aiLoading.autoTag ? (
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <span>🏷️</span>
+                    <TagsIcon size={16} color="white" />
                   )}
                   <span>{aiLoading.autoTag ? 'Generating...' : 'Auto Tag Only'}</span>
                 </button>
@@ -392,7 +398,7 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
                   {aiLoading.convertLatex ? (
                     <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <span>📐</span>
+                    <MathIcon size={14} color="white" />
                   )}
                   <span>{aiLoading.convertLatex ? 'Converting...' : 'Convert to LaTeX'}</span>
                 </button>
@@ -435,7 +441,7 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
                   {aiLoading.convertLatex ? (
                     <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    <span>📐</span>
+                    <MathIcon size={14} color="white" />
                   )}
                   <span>{aiLoading.convertLatex ? 'Converting...' : 'Convert to LaTeX'}</span>
                 </button>
@@ -514,7 +520,7 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
           {error && (
             <div className="p-4 rounded-2xl" style={{backgroundColor: 'rgba(255, 99, 99, 0.1)', border: '1px solid var(--claude-error)'}}>
               <div className="flex items-center gap-2 claude-error">
-                <span>❌</span>
+                <ErrorIcon size={16} color="red" />
                 <span>{error}</span>
               </div>
             </div>
@@ -549,7 +555,7 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
                 </>
               ) : (
                 <>
-                  <span>✨</span>
+                  <EditIcon size={16} color="white" />
                   Create Flashcard
                 </>
               )}
@@ -559,7 +565,10 @@ const FlashcardCreator = ({ onCardCreated, onClose }) => {
 
         {/* LaTeX Help */}
         <div className="mt-8 p-6 rounded-2xl" style={{backgroundColor: 'rgba(68, 90, 255, 0.1)', border: '1px solid var(--claude-accent-blue)'}}>
-          <h3 className="text-lg font-semibold mb-3" style={{color: 'var(--claude-accent-blue)'}}>💡 LaTeX Math Support</h3>
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{color: 'var(--claude-accent-blue)'}}>
+            <MathIcon size={20} color="blue" />
+            LaTeX Math Support
+          </h3>
           <div className="claude-text-secondary text-sm space-y-2">
             <p>Use LaTeX for mathematical expressions:</p>
             <div className="claude-card p-3 font-mono text-xs">

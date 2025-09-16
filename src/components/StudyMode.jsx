@@ -3,6 +3,7 @@ import { FlashcardService } from '../services/flashcardService';
 import { AnalyticsService } from '../services/analyticsService';
 import { useAuth } from '../contexts/AuthContext';
 import { useMathJax } from '../hooks/useMathJax';
+import { BookIcon, TargetIcon, ErrorIcon, WarningIcon, SuccessIcon, FastIcon } from './icons';
 // Force rebuild: hooks violation fix v6 - moved ALL hooks to top before conditional returns
 
 const StudyMode = () => {
@@ -223,13 +224,36 @@ const StudyMode = () => {
   }, []);
 
   const handleKeyDown = useCallback((e) => {
+    // Rating shortcuts (only when on answer side and study session is active)
+    if (currentSide === 2 && studySession) {
+      switch (e.key) {
+        case '1':
+          e.preventDefault();
+          recordCardAnswer(false, 1);
+          return;
+        case '2':
+          e.preventDefault();
+          recordCardAnswer(false, 2);
+          return;
+        case '3':
+          e.preventDefault();
+          recordCardAnswer(true, 4);
+          return;
+        case '4':
+          e.preventDefault();
+          recordCardAnswer(true, 5);
+          return;
+      }
+    }
+    
+    // Navigation shortcuts
     if (e.key === 'ArrowRight') nextCard();
     else if (e.key === 'ArrowLeft') prevCard();
     else if (e.key === ' ' || e.code === 'Space') { 
       e.preventDefault(); 
       nextSide(); 
     }
-  }, [nextCard, prevCard, nextSide]);
+  }, [nextCard, prevCard, nextSide, currentSide, studySession, recordCardAnswer]);
 
   const onTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
@@ -267,7 +291,10 @@ const StudyMode = () => {
       <div className="bg-slate-900 min-h-screen pt-20 flex items-center justify-center">
         <div className="bg-slate-800/50 border border-slate-700 rounded-3xl p-12 text-center max-w-lg">
           <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-6"></div>
-          <h3 className="text-2xl font-bold text-white mb-4">📚 Loading Flashcards...</h3>
+          <h3 className="text-2xl font-bold text-white mb-4 flex items-center justify-center gap-2">
+            <BookIcon size={24} color="white" />
+            Loading Flashcards...
+          </h3>
           <p className="text-slate-300">Please wait while we load your study materials.</p>
         </div>
       </div>
@@ -282,7 +309,10 @@ const StudyMode = () => {
           <p className="text-red-300 mb-6">{error}</p>
           <button
             onClick={loadFlashcards}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-200"
+            className="px-6 py-3 text-white font-semibold rounded-xl transition-all duration-200"
+            style={{background: 'linear-gradient(135deg, #A86240 0%, #97552B 100%)'}}
+            onMouseEnter={(e) => e.target.style.background = 'linear-gradient(135deg, #97552B 0%, #86481A 100%)'}
+            onMouseLeave={(e) => e.target.style.background = 'linear-gradient(135deg, #A86240 0%, #97552B 100)'}
           >
             Try Again
           </button>
@@ -295,7 +325,9 @@ const StudyMode = () => {
     return (
       <div className="bg-slate-900 min-h-screen pt-20 flex items-center justify-center">
         <div className="bg-slate-800/50 border border-slate-700 rounded-3xl p-12 text-center max-w-lg">
-          <div className="text-6xl mb-6">📚</div>
+          <div className="mb-6">
+            <BookIcon size={64} color="white" />
+          </div>
           <h3 className="text-2xl font-bold text-white mb-4">No Flashcards Available</h3>
           <p className="text-slate-300">Create your first flashcard to start studying!</p>
         </div>
@@ -327,9 +359,14 @@ const StudyMode = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-4xl font-extrabold" style={{color: 'var(--claude-heading)'}}>
-            📚 Study Mode
-          </h2>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white shadow-lg" style={{background: 'linear-gradient(135deg, #A86240 0%, #97552B 100%)'}}>
+              <TargetIcon size={32} color="white" />
+            </div>
+            <h2 className="text-4xl font-extrabold" style={{color: 'var(--claude-heading)'}}>
+              Study Mode
+            </h2>
+          </div>
           <div className="claude-card px-4 py-2">
             <span className="claude-text-secondary font-medium">
               {currentIndex + 1} of {flashcards.length}
@@ -426,36 +463,51 @@ const StudyMode = () => {
 
           {/* Accuracy Tracking */}
           {currentSide === 2 && studySession && (
-            <div className="mt-6 claude-card p-4 bg-blue-50 border-blue-200">
-              <div className="text-center mb-4">
-                <h4 className="font-semibold text-blue-800 mb-2">How well did you know this?</h4>
-                <p className="text-sm text-blue-600">This helps track your learning progress</p>
+            <div className="mt-6 claude-card p-6" style={{background: 'linear-gradient(135deg, #A86240 0%, #97552B 100%)', color: 'white'}}>
+              <div className="text-center mb-6">
+                <h4 className="font-semibold text-white mb-2 text-lg">How well did you know this?</h4>
+                <p className="text-sm text-white/90 mb-4">This helps track your learning progress</p>
+                <div className="text-xs text-white/80 bg-white/10 rounded-lg px-3 py-2 inline-block">
+                  💡 <strong>Keyboard shortcuts:</strong> Press <kbd className="bg-white/20 px-1 rounded">1</kbd>, <kbd className="bg-white/20 px-1 rounded">2</kbd>, <kbd className="bg-white/20 px-1 rounded">3</kbd>, or <kbd className="bg-white/20 px-1 rounded">4</kbd> to rate quickly
+                </div>
               </div>
               
-              <div className="flex justify-center gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <button
                   onClick={() => recordCardAnswer(false, 1)}
-                  className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg transition-colors text-sm font-medium"
+                  onKeyDown={(e) => e.key === '1' && recordCardAnswer(false, 1)}
+                  className="flex flex-col items-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-400/30 hover:border-red-400/50 text-white rounded-lg transition-all text-sm font-medium group"
                 >
-                  😰 Struggled
+                  <ErrorIcon size={20} color="white" />
+                  <span>Struggled</span>
+                  <span className="text-xs opacity-70">(1)</span>
                 </button>
                 <button
                   onClick={() => recordCardAnswer(false, 2)}
-                  className="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-lg transition-colors text-sm font-medium"
+                  onKeyDown={(e) => e.key === '2' && recordCardAnswer(false, 2)}
+                  className="flex flex-col items-center gap-2 px-4 py-3 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30 hover:border-yellow-400/50 text-white rounded-lg transition-all text-sm font-medium group"
                 >
-                  🤔 Unsure
+                  <WarningIcon size={20} color="white" />
+                  <span>Unsure</span>
+                  <span className="text-xs opacity-70">(2)</span>
                 </button>
                 <button
                   onClick={() => recordCardAnswer(true, 4)}
-                  className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg transition-colors text-sm font-medium"
+                  onKeyDown={(e) => e.key === '3' && recordCardAnswer(true, 4)}
+                  className="flex flex-col items-center gap-2 px-4 py-3 bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 hover:border-green-400/50 text-white rounded-lg transition-all text-sm font-medium group"
                 >
-                  😊 Good
+                  <SuccessIcon size={20} color="white" />
+                  <span>Good</span>
+                  <span className="text-xs opacity-70">(3)</span>
                 </button>
                 <button
                   onClick={() => recordCardAnswer(true, 5)}
-                  className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors text-sm font-medium"
+                  onKeyDown={(e) => e.key === '4' && recordCardAnswer(true, 5)}
+                  className="flex flex-col items-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 hover:border-blue-400/50 text-white rounded-lg transition-all text-sm font-medium group"
                 >
-                  🚀 Perfect
+                  <FastIcon size={20} color="white" />
+                  <span>Perfect</span>
+                  <span className="text-xs opacity-70">(4)</span>
                 </button>
               </div>
               
@@ -485,7 +537,10 @@ const StudyMode = () => {
           </button>
           
           <div className="claude-text-muted text-sm">
-            Use arrow keys or swipe to navigate • Space to flip sides
+            <div className="mb-2">Use arrow keys or swipe to navigate • Space to flip sides</div>
+            <div className="text-xs bg-white/10 rounded-lg px-3 py-2 inline-block">
+              💡 <strong>Rating shortcuts:</strong> Press <kbd className="bg-white/20 px-1 rounded">1-4</kbd> when reviewing to rate quickly
+            </div>
           </div>
           
           <button

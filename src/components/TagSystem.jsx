@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { FlashcardService } from '../services/flashcardService'
+import TagsIcon from '../assets/icons/24px/tags-24.svg'
 
 // --- helpers ---
 const slugify = (s) =>
@@ -157,7 +158,10 @@ const TagSystem = ({
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-secondary-600 px-6 py-4 text-white">
           <div className="flex items-center justify-between">
-            <h2 id="tags-title" className="text-2xl font-bold">🏷️ Tag Management</h2>
+            <div className="flex items-center gap-3">
+              <img src={TagsIcon} alt="Tags" className="w-6 h-6" />
+              <h2 id="tags-title" className="text-2xl font-bold">🏷️ Tag Management</h2>
+            </div>
             <button
               onClick={onClose}
               className="text-white/80 hover:text-white text-2xl transition-colors"

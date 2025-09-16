@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DeckService } from '../services/deckService';
+import { BookIcon, EditIcon, DeleteIcon, ErrorIcon } from './icons';
 
 const DeckManager = ({ onCreateDeck, onEditDeck, onSelectDeck }) => {
   const { user } = useAuth();
@@ -74,20 +75,26 @@ const DeckManager = ({ onCreateDeck, onEditDeck, onSelectDeck }) => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-extrabold mb-2" style={{color: 'var(--claude-heading)'}}>
-              📚 My Decks
-            </h1>
-            <p className="claude-text-secondary">
-              Organize and manage your flashcard collections
-            </p>
+          <div className="flex items-center gap-3 mb-4 md:mb-0">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white shadow-lg" style={{background: 'linear-gradient(135deg, #6B5B4A 0%, #5A4A3A 100%)'}}>
+              <BookIcon size={32} color="white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-extrabold" style={{color: 'var(--claude-heading)'}}>
+                My Decks
+              </h1>
+              <p className="claude-text-secondary">
+                Organize and manage your flashcard collections
+              </p>
+            </div>
           </div>
           
           <button
             onClick={() => onCreateDeck && onCreateDeck()}
             className="claude-button-primary mt-4 md:mt-0 flex items-center gap-2"
+            style={{background: 'linear-gradient(135deg, #6B5B4A 0%, #5A4A3A 100%)'}}
           >
-            <span>➕</span>
+            <span className="text-lg">+</span>
             Create New Deck
           </button>
         </div>
@@ -147,7 +154,7 @@ const DeckManager = ({ onCreateDeck, onEditDeck, onSelectDeck }) => {
         {error && (
           <div className="p-4 rounded-2xl mb-6" style={{backgroundColor: 'rgba(255, 99, 99, 0.1)', border: '1px solid var(--claude-error)'}}>
             <div className="flex items-center gap-2 claude-error">
-              <span>❌</span>
+              <ErrorIcon size={16} color="red" />
               <span>{error}</span>
             </div>
           </div>
@@ -156,7 +163,9 @@ const DeckManager = ({ onCreateDeck, onEditDeck, onSelectDeck }) => {
         {/* Decks Grid */}
         {filteredDecks.length === 0 ? (
           <div className="claude-card p-12 text-center">
-            <div className="text-6xl mb-4">📚</div>
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4" style={{background: 'linear-gradient(135deg, #6B5B4A 0%, #5A4A3A 100%)'}}>
+              <BookIcon size={40} color="white" />
+            </div>
             <h3 className="text-xl font-bold mb-2" style={{color: 'var(--claude-heading)'}}>
               {searchQuery || filterBy !== 'all' ? 'No matching decks found' : 'No decks yet'}
             </h3>
@@ -170,8 +179,9 @@ const DeckManager = ({ onCreateDeck, onEditDeck, onSelectDeck }) => {
               <button
                 onClick={() => onCreateDeck && onCreateDeck()}
                 className="claude-button-primary flex items-center gap-2 mx-auto"
+                style={{background: 'linear-gradient(135deg, #6B5B4A 0%, #5A4A3A 100%)'}}
               >
-                <span>➕</span>
+                <span className="text-lg">+</span>
                 Create Your First Deck
               </button>
             )}
@@ -204,17 +214,21 @@ const DeckCard = ({ deck, onEdit, onDelete, onSelect }) => {
   return (
     <div 
       className="claude-card p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer relative group"
-      style={{borderLeft: `6px solid ${deck.color || '#635BFF'}`}}
+      style={{borderLeft: `6px solid ${deck.color || '#6B5B4A'}`}}
       onClick={() => onSelect && onSelect()}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div 
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl text-white"
-            style={{backgroundColor: deck.color || '#635BFF'}}
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-white"
+            style={{backgroundColor: deck.color || '#6B5B4A'}}
           >
-            {deck.icon || '📚'}
+            {deck.icon ? (
+              <span className="text-2xl">{deck.icon}</span>
+            ) : (
+              <BookIcon size={24} color="white" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-bold claude-text-primary truncate">
@@ -237,7 +251,7 @@ const DeckCard = ({ deck, onEdit, onDelete, onSelect }) => {
               className="p-2 rounded-lg hover:bg-gray-100 text-gray-600 hover:text-gray-800"
               title="Edit deck"
             >
-              ✏️
+              <EditIcon size={16} color="default" />
             </button>
             {!deck.isDefault && (
               <button
@@ -248,7 +262,7 @@ const DeckCard = ({ deck, onEdit, onDelete, onSelect }) => {
                 className="p-2 rounded-lg hover:bg-red-100 text-red-600 hover:text-red-800"
                 title="Delete deck"
               >
-                🗑️
+                <DeleteIcon size={16} color="red" />
               </button>
             )}
           </div>
@@ -276,8 +290,8 @@ const DeckCard = ({ deck, onEdit, onDelete, onSelect }) => {
               key={index}
               className="px-2 py-1 rounded-full text-xs"
               style={{
-                backgroundColor: `${deck.color || '#635BFF'}20`,
-                color: deck.color || '#635BFF'
+                backgroundColor: `${deck.color || '#6B5B4A'}20`,
+                color: deck.color || '#6B5B4A'
               }}
             >
               {tag}

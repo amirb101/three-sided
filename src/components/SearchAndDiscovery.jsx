@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useMathJax } from '../hooks/useMathJax';
+import { SearchIcon, ViewIcon, SaveIcon, HeartIcon } from './icons';
 // Fix hooks #310 - remove timestampToMillis from useMemo deps
 
 const SearchAndDiscovery = () => {
@@ -314,7 +315,7 @@ const SearchAndDiscovery = () => {
         <div className="flex items-center gap-2 mb-4">
           <div 
             className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-            style={{backgroundColor: 'var(--claude-accent)'}}
+            style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}
           >
             {authorInitial}
           </div>
@@ -325,7 +326,7 @@ const SearchAndDiscovery = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium hover:underline"
-                style={{color: 'var(--claude-accent)'}}
+                style={{color: '#9B8B73'}}
               >
                 {card.authorSlug}
               </a>
@@ -361,7 +362,7 @@ const SearchAndDiscovery = () => {
 
         {/* Proof Preview */}
         {card.proof && (
-          <div className="mb-4 p-3 rounded-lg" style={{backgroundColor: 'var(--claude-subtle)', borderLeft: '4px solid var(--claude-accent)'}}>
+          <div className="mb-4 p-3 rounded-lg" style={{backgroundColor: 'var(--claude-subtle)', borderLeft: '4px solid #9B8B73'}}>
             <div className="text-xs font-semibold claude-text-secondary mb-1 uppercase tracking-wider">
               Proof Preview
             </div>
@@ -377,8 +378,14 @@ const SearchAndDiscovery = () => {
 
         {/* Stats */}
         <div className="flex gap-4 mb-4 text-sm claude-text-muted">
-          <span>👁️ {Math.max(0, card.viewCount || 0)} views</span>
-          <span>📥 {Math.max(0, card.importCount || 0)} imports</span>
+          <div className="flex items-center gap-1">
+            <ViewIcon size={16} color="default" />
+            <span>{Math.max(0, card.viewCount || 0)} views</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <SaveIcon size={16} color="default" />
+            <span>{Math.max(0, card.importCount || 0)} imports</span>
+          </div>
         </div>
 
         {/* Tags */}
@@ -387,7 +394,15 @@ const SearchAndDiscovery = () => {
             {card.tags.map(tag => (
               <span 
                 key={tag}
-                className="claude-tag cursor-pointer hover:opacity-80"
+                className="cursor-pointer hover:opacity-80"
+                style={{
+                  backgroundColor: 'rgba(155, 139, 115, 0.1)',
+                  color: '#9B8B73',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontWeight: '500'
+                }}
                 onClick={() => setTagFilter(tag)}
               >
                 {tag}
@@ -407,32 +422,43 @@ const SearchAndDiscovery = () => {
                 : 'claude-button-secondary'
             } ${(!user || isUpvotingCard) ? 'opacity-50 cursor-not-allowed' : ''}`}
             style={{
-              backgroundColor: isUpvoted ? 'var(--claude-accent)' : undefined,
+              backgroundColor: isUpvoted ? 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)' : undefined,
               border: isUpvoted ? 'none' : undefined
             }}
             title={!user ? 'Sign in to upvote cards' : `${isUpvoted ? 'Remove upvote from' : 'Upvote'} this flashcard`}
             aria-label={!user ? 'Sign in to upvote cards' : `${isUpvoted ? 'Remove upvote from' : 'Upvote'} this flashcard`}
           >
-            {isUpvotingCard ? '⏳' : '👍'} {Math.max(0, card.likeCount || 0)}
+            {isUpvotingCard ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              <HeartIcon size={16} color={isUpvoted ? "white" : "default"} />
+            )}
+            {Math.max(0, card.likeCount || 0)}
           </button>
           
           <button
             onClick={() => handleImport(card.id)}
             disabled={!user || isImported || isImportingCard}
-            className={`claude-button-primary text-sm ${(!user || isImported || isImportingCard) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`text-sm flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${(!user || isImported || isImportingCard) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            style={{
+              background: isImported ? 'var(--claude-success)' : 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)',
+              color: 'white'
+            }}
             title={!user ? 'Sign in to import cards' : isImported ? 'Card already imported' : 'Import this flashcard to your collection'}
             aria-label={!user ? 'Sign in to import cards' : isImported ? 'Card already imported' : 'Import this flashcard to your collection'}
           >
-            {isImportingCard ? '⏳ Importing...' : isImported ? '✓ Imported' : '📥 Import'}
+            <SaveIcon size={16} color="white" />
+            {isImportingCard ? 'Importing...' : isImported ? 'Imported' : 'Import'}
           </button>
           
           <a
             href={`/card/${card.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="claude-button-secondary text-sm"
+            className="claude-button-secondary text-sm flex items-center gap-2"
           >
-            👁️ View
+            <ViewIcon size={16} color="default" />
+            View
           </a>
         </div>
       </div>
@@ -456,9 +482,14 @@ const SearchAndDiscovery = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold mb-4" style={{color: 'var(--claude-heading)'}}>
-            🔍 Search Flashcards
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl text-white shadow-lg" style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}>
+              <SearchIcon size={32} color="white" />
+            </div>
+            <h1 className="text-4xl font-extrabold" style={{color: 'var(--claude-heading)'}}>
+              Search Flashcards
+            </h1>
+          </div>
           <p className="claude-text-secondary text-lg">
             Discover and import flashcards from the community
           </p>
@@ -486,7 +517,7 @@ const SearchAndDiscovery = () => {
         {/* Auth Notice */}
         {!user && (
           <div className="text-center p-4 mb-6 rounded-2xl" style={{
-            background: 'linear-gradient(135deg, var(--claude-accent) 0%, var(--claude-accent-blue) 100%)',
+            background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)',
             color: 'white'
           }}>
             <p className="mb-3">Unlock the full experience!</p>
@@ -513,7 +544,7 @@ const SearchAndDiscovery = () => {
             {/* Search Input */}
             <div className="relative flex-1 w-full">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                <span className="claude-text-muted">🔍</span>
+                <SearchIcon size={16} color="default" />
               </div>
               <input
                 type="text"
@@ -578,7 +609,7 @@ const SearchAndDiscovery = () => {
           <div className="text-center py-12">
             <div className="w-10 h-10 border-4 border-t-4 rounded-full animate-spin mx-auto mb-4" style={{
               borderColor: 'var(--claude-border)',
-              borderTopColor: 'var(--claude-accent)'
+              borderTopColor: '#9B8B73'
             }}></div>
             <div className="claude-text-secondary">Loading flashcards...</div>
           </div>
@@ -587,7 +618,7 @@ const SearchAndDiscovery = () => {
         {/* No Results */}
         {!isLoading && filteredCards.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4 opacity-50">🔍</div>
+            <SearchIcon size={64} color="default" className="mx-auto mb-4 opacity-50" />
             <h3 className="text-xl font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>
               No flashcards found
             </h3>
@@ -625,7 +656,7 @@ const SearchAndDiscovery = () => {
                       : 'claude-button-secondary'
                   }`}
                   style={{
-                    backgroundColor: page === currentPage ? 'var(--claude-accent)' : undefined
+                    backgroundColor: page === currentPage ? '#9B8B73' : undefined
                   }}
                 >
                   {page}
