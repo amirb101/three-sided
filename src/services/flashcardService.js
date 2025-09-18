@@ -17,47 +17,56 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { DeckService } from './deckService';
+import globalCache from './cacheService';
 
 export class FlashcardService {
-  // Get flashcards for a user (from private cards collection)
+  // Get flashcards for a user (from private cards collection) - CACHED
   static async getUserFlashcards(userId, resultLimit = 50) {
-    try {
-      const q = query(
-        collection(db, 'cards'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc'),
-        limit(resultLimit)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error fetching user flashcards:', error);
-      throw error;
-    }
+    const cacheKey = globalCache.userKey(userId, 'flashcards', `limit_${resultLimit}`);
+    
+    return globalCache.getOrFetch(cacheKey, async () => {
+      try {
+        const q = query(
+          collection(db, 'cards'),
+          where('userId', '==', userId),
+          orderBy('createdAt', 'desc'),
+          limit(resultLimit)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error('Error fetching user flashcards:', error);
+        throw error;
+      }
+    }, 'userFlashcards');
   }
 
-  // Get public flashcards
+  // Get public flashcards - CACHED
   static async getPublicFlashcards(resultLimit = 50) {
-    try {
-      const q = query(
-        collection(db, 'publicCards'),
-        orderBy('createdAt', 'desc'),
-        limit(resultLimit)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error fetching public flashcards:', error);
-      throw error;
-    }
+    const cacheKey = globalCache.publicKey('cards', `limit_${resultLimit}`);
+    
+    return globalCache.getOrFetch(cacheKey, async () => {
+      try {
+        const q = query(
+          collection(db, 'publicCards'),
+          orderBy('createdAt', 'desc'),
+          limit(resultLimit)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error('Error fetching public flashcards:', error);
+        throw error;
+      }
+    }, 'publicCards');
   }
 
   // Get public flashcards by a specific user
@@ -171,6 +180,14 @@ export class FlashcardService {
       // Add card to all specified decks
       for (const deckIdToAdd of deckIds) {
         await DeckService.addCardToDeck(deckIdToAdd, cardRef.id);
+      }
+      
+      // Invalidate user's cache after creating new card
+      globalCache.invalidateUser(userId);
+      
+      // If public card, also invalidate public cache
+      if (flashcardData.isPublic) {
+        globalCache.invalidatePublic();
       }
       
       return cardRef.id;

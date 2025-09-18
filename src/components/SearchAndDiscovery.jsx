@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useMathJax } from '../hooks/useMathJax';
 import { SearchIcon, ViewIcon, SaveIcon, HeartIcon } from './icons';
+import { FlashcardService } from '../services/flashcardService';
+import globalCache from '../services/cacheService';
 // Fix hooks #310 - remove timestampToMillis from useMemo deps
 
 const SearchAndDiscovery = () => {
@@ -19,6 +21,8 @@ const SearchAndDiscovery = () => {
   const [isUpvoting, setIsUpvoting] = useState(new Set());
   const [isImporting, setIsImporting] = useState(new Set());
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [showCardModal, setShowCardModal] = useState(false);
   const cardsPerPage = 12;
 
   // Debounce search query
@@ -38,6 +42,36 @@ const SearchAndDiscovery = () => {
     if (Number.isNaN(date.getTime())) return 'Unknown date';
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   }, []);
+
+  // Track card view
+  const trackCardView = useCallback(async (cardId) => {
+    try {
+      const { getFunctions, httpsCallable } = await import('firebase/functions');
+      const functions = getFunctions();
+      const trackView = httpsCallable(functions, 'trackCardView');
+      await trackView({ cardId });
+      
+      // Update local card data
+      setAllCards(prev => prev.map(card => 
+        card.id === cardId 
+          ? { ...card, viewCount: (card.viewCount || 0) + 1 }
+          : card
+      ));
+    } catch (error) {
+      console.error('Error tracking view:', error);
+      // Don't show error to user as this is background tracking
+    }
+  }, []);
+
+  // Handle view card in modal
+  const handleViewCard = useCallback((card) => {
+    setSelectedCard(card);
+    setShowCardModal(true);
+    trackCardView(card.id);
+  }, [trackCardView]);
+
+  // Render MathJax in modal when card changes
+  useMathJax([selectedCard?.id], showCardModal);
 
   const loadFirestore = useCallback(async () => {
     const firestore = await import('firebase/firestore');
@@ -94,61 +128,80 @@ const SearchAndDiscovery = () => {
     }
   }, [user]);
 
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     if (!user) return;
     
     try {
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
-      const { db } = await import('../firebase');
+      const [upvotes, imports] = await Promise.all([
+        // Load user's upvotes - CACHED
+        globalCache.getOrFetch(
+          globalCache.userKey(user.uid, 'upvotes'),
+          async () => {
+            const { collection, query, where, getDocs } = await import('firebase/firestore');
+            const { db } = await import('../firebase');
+            const snapshot = await getDocs(
+              query(collection(db, 'userUpvotes'), where('userId', '==', user.uid))
+            );
+            return new Set(snapshot.docs.map(doc => doc.data().cardId));
+          },
+          'userUpvotes'
+        ),
+        
+        // Load user's imports - CACHED
+        globalCache.getOrFetch(
+          globalCache.userKey(user.uid, 'imports'),
+          async () => {
+            const { collection, query, where, getDocs } = await import('firebase/firestore');
+            const { db } = await import('../firebase');
+            const snapshot = await getDocs(
+              query(collection(db, 'flashcards'), where('userId', '==', user.uid))
+            );
+            const importedStatements = new Set();
+            snapshot.docs.forEach(doc => {
+              importedStatements.add(doc.data().statement);
+            });
+            return importedStatements;
+          },
+          'userImports'
+        )
+      ]);
       
-      // Load user's upvotes
-      const upvotesSnapshot = await getDocs(
-        query(collection(db, 'userUpvotes'), where('userId', '==', user.uid))
-      );
-      const upvotes = new Set(upvotesSnapshot.docs.map(doc => doc.data().cardId));
       setUserUpvotes(upvotes);
-      
-      // Load user's imports (existing flashcards)
-      const importsSnapshot = await getDocs(
-        query(collection(db, 'flashcards'), where('userId', '==', user.uid))
-      );
-      const importedStatements = new Set();
-      importsSnapshot.docs.forEach(doc => {
-        importedStatements.add(doc.data().statement);
-      });
-      setUserImports(importedStatements);
+      setUserImports(imports);
       
     } catch (error) {
       console.error('Error loading user data:', error);
     }
-  };
+  }, [user]);
 
   const loadPublicCards = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { db, firestore } = await loadFirestore();
-      const { collection, orderBy, query, getDocs } = firestore;
       
       console.log('🔍 Loading public cards...');
       
-      const q = query(
-        collection(db, 'publicCards'),
-        orderBy('createdAt', 'desc')
-      );
+      // Use cached FlashcardService instead of direct Firebase query
+      const cards = await FlashcardService.getPublicFlashcards(200); // Increased limit
       
-      const snapshot = await getDocs(q);
-      const tagSet = new Set();
-      const cards = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Build tags without mutating existing state
-        (data.tags || []).forEach(tag => tagSet.add(tag));
-        return { id: doc.id, ...data };
-      });
+      // Extract all unique tags - CACHED
+      const tagSet = await globalCache.getOrFetch(
+        globalCache.publicKey('tags'),
+        () => {
+          const tags = new Set();
+          cards.forEach(card => {
+            if (card.tags && Array.isArray(card.tags)) {
+              card.tags.forEach(tag => tags.add(tag));
+            }
+          });
+          return tags;
+        },
+        'tags'
+      );
       
       console.log('✅ Loaded public cards:', cards.length, cards.slice(0, 3));
       
       setAllCards(cards);
-      setAllTags(tagSet); // New Set instance
+      setAllTags(tagSet);
     } catch (error) {
       console.error('❌ Error loading public cards:', error);
       setAllCards([]);
@@ -156,7 +209,7 @@ const SearchAndDiscovery = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [loadFirestore]);
+  }, []); // No dependencies needed since FlashcardService is cached
 
   // Reset page when filters change
   useEffect(() => {
@@ -451,14 +504,26 @@ const SearchAndDiscovery = () => {
             {isImportingCard ? 'Importing...' : isImported ? 'Imported' : 'Import'}
           </button>
           
+          <button
+            onClick={() => handleViewCard(card)}
+            className="claude-button-secondary text-sm flex items-center gap-2"
+          >
+            <ViewIcon size={16} color="default" />
+            View
+          </button>
+          
           <a
             href={`/card/${card.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="claude-button-secondary text-sm flex items-center gap-2"
+            onClick={() => trackCardView(card.id)}
           >
-            <ViewIcon size={16} color="default" />
-            View
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+              <path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+            </svg>
+            Share
           </a>
         </div>
       </div>
@@ -674,6 +739,189 @@ const SearchAndDiscovery = () => {
           </div>
         )}
       </div>
+
+      {/* Card Modal */}
+      {showCardModal && selectedCard && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" 
+          style={{backgroundColor: 'rgba(0, 0, 0, 0.5)'}}
+          onClick={() => setShowCardModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-8 max-w-4xl w-[90%] max-h-[80vh] overflow-y-auto m-4 relative"
+            onClick={(e) => e.stopPropagation()}
+            style={{color: 'var(--claude-primary-text)', backgroundColor: 'var(--claude-surface)'}}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowCardModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
+              style={{color: 'var(--claude-muted-text)'}}
+            >
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+
+            {/* Card Content */}
+            <div className="pr-8">
+              {/* Header */}
+              <div className="mb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold" style={{background: 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)'}}>
+                    {selectedCard.authorSlug ? selectedCard.authorSlug.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div>
+                    <a 
+                      href={`/profile/${selectedCard.authorSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium hover:underline"
+                      style={{color: '#9B8B73'}}
+                    >
+                      {selectedCard.authorSlug}
+                    </a>
+                    <div className="text-sm claude-text-muted">
+                      {formatDate(selectedCard.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Statement */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>Statement</h3>
+                <div 
+                  className="p-4 rounded-lg" 
+                  style={{backgroundColor: 'var(--claude-subtle)', border: '1px solid var(--claude-border)'}}
+                  dangerouslySetInnerHTML={{ __html: selectedCard.statement }}
+                />
+              </div>
+
+              {/* Hints */}
+              {selectedCard.hints && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>Hints</h3>
+                  <div 
+                    className="p-4 rounded-lg"
+                    style={{backgroundColor: 'var(--claude-subtle)', border: '1px solid var(--claude-border)'}}
+                    dangerouslySetInnerHTML={{ __html: selectedCard.hints }}
+                  />
+                </div>
+              )}
+
+              {/* Proof */}
+              {selectedCard.proof && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>Proof / Answer</h3>
+                  <div 
+                    className="p-4 rounded-lg"
+                    style={{backgroundColor: 'var(--claude-subtle)', border: '1px solid var(--claude-border)'}}
+                    dangerouslySetInnerHTML={{ __html: selectedCard.proof }}
+                  />
+                </div>
+              )}
+
+              {/* Tags */}
+              {selectedCard.tags && selectedCard.tags.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--claude-heading)'}}>Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCard.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className="cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{
+                          backgroundColor: 'rgba(155, 139, 115, 0.1)',
+                          color: '#9B8B73',
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: '500'
+                        }}
+                        onClick={() => {
+                          setTagFilter(tag);
+                          setShowCardModal(false);
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Stats */}
+              <div className="flex gap-4 mb-6 text-sm claude-text-muted">
+                <div className="flex items-center gap-1">
+                  <ViewIcon size={16} color="default" />
+                  <span>{Math.max(0, selectedCard.viewCount || 0)} views</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <SaveIcon size={16} color="default" />
+                  <span>{Math.max(0, selectedCard.importCount || 0)} imports</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4 border-t" style={{borderColor: 'var(--claude-border)'}}>
+                <button
+                  onClick={() => {
+                    handleUpvote(selectedCard.id);
+                  }}
+                  disabled={!user || isUpvoting.has(selectedCard.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    userUpvotes.has(selectedCard.id) 
+                      ? 'text-white' 
+                      : 'claude-button-secondary'
+                  } ${(!user || isUpvoting.has(selectedCard.id)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{
+                    backgroundColor: userUpvotes.has(selectedCard.id) ? 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)' : undefined,
+                    border: userUpvotes.has(selectedCard.id) ? 'none' : undefined
+                  }}
+                >
+                  {isUpvoting.has(selectedCard.id) ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    <HeartIcon size={16} color={userUpvotes.has(selectedCard.id) ? "white" : "default"} />
+                  )}
+                  {Math.max(0, selectedCard.likeCount || 0)}
+                </button>
+                
+                <button
+                  onClick={() => {
+                    handleImport(selectedCard.id);
+                    setShowCardModal(false);
+                  }}
+                  disabled={!user || userImports.has(selectedCard.statement) || isImporting.has(selectedCard.id)}
+                  className={`text-sm flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${(!user || userImports.has(selectedCard.statement) || isImporting.has(selectedCard.id)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{
+                    background: userImports.has(selectedCard.statement) ? 'var(--claude-success)' : 'linear-gradient(135deg, #9B8B73 0%, #8A7A63 100%)',
+                    color: 'white'
+                  }}
+                >
+                  <SaveIcon size={16} color="white" />
+                  {isImporting.has(selectedCard.id) ? 'Importing...' : userImports.has(selectedCard.statement) ? 'Imported' : 'Import'}
+                </button>
+
+                <a
+                  href={`/card/${selectedCard.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="claude-button-secondary text-sm flex items-center gap-2"
+                  onClick={() => trackCardView(selectedCard.id)}
+                >
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                    <path d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                  </svg>
+                  Share
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -30,17 +30,10 @@
   <meta name="subject" content="mathematics">
   <meta name="content-type" content="flashcard">
   
-  <!-- Firebase and MathJax -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
-  <script>
-    window.MathJax = {
-      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
-      svg: { fontCache: 'global' }
-    };
-  </script>
   
   <!-- Styles -->
   <link rel="stylesheet" href="/styles/card.css">
@@ -113,6 +106,13 @@
           <div class="section">
             <div class="section-label">Proof</div>
             <div class="section-content" id="proof">Loading...</div>
+          </div>
+
+          <!-- LaTeX Render Button -->
+          <div class="latex-controls" style="text-align: center; margin: 2rem 0;">
+            <button id="renderLatexBtn" onclick="renderLatex()" class="import-button" style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+              📐 Render LaTeX
+            </button>
           </div>
 
           <button class="import-button" onclick="saveCard()" id="importBtn">
@@ -190,6 +190,8 @@
     let currentUser = null;
     let cardData = null;
     let cardId = null;
+    let latexRendered = false;
+    let originalContent = { statement: '', hints: '', proof: '' };
 
     auth.onAuthStateChanged(user => currentUser = user);
 
@@ -318,10 +320,15 @@
         cardData = doc.data();
         cardId = doc.id;
 
-        // Update content
-        document.getElementById("statement").innerHTML = cardData.statement || 'No statement available';
-        document.getElementById("hints").innerHTML = cardData.hints || 'No hints available';
-        document.getElementById("proof").innerHTML = cardData.proof || 'No proof available';
+        // Store original content for LaTeX rendering
+        originalContent.statement = cardData.statement || 'No statement available';
+        originalContent.hints = cardData.hints || 'No hints available';
+        originalContent.proof = cardData.proof || 'No proof available';
+        
+        // Always start with plain text first (for SEO)
+        document.getElementById("statement").textContent = originalContent.statement;
+        document.getElementById("hints").textContent = originalContent.hints;
+        document.getElementById("proof").textContent = originalContent.proof;
         
         // Update UI elements
         const mainTitle = document.getElementById("main-title");
@@ -372,12 +379,7 @@
         // Update SEO meta tags
         updateSEOTags(cardData, slug);
 
-        // Render MathJax - process everything at once after content is updated
-        if (window.MathJax && window.MathJax.typesetPromise) {
-          MathJax.typesetPromise().catch(err => {
-            console.log('MathJax rendering error:', err);
-          });
-        }
+        // Don't render MathJax automatically - wait for user to click button
 
         // Track view (silently - don't let errors break the page)
         try {
@@ -438,6 +440,72 @@
       }
     }
 
+    // LaTeX rendering function - loads MathJax and renders LaTeX
+    function renderLatex() {
+      const button = document.getElementById('renderLatexBtn');
+      const originalText = button.innerHTML;
+      
+      // Show loading state
+      button.disabled = true;
+      button.innerHTML = '⏳ Loading LaTeX...';
+      
+      // Load MathJax if not already loaded
+      if (!window.MathJax) {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+        script.async = true;
+        
+        script.onload = () => {
+          // Configure MathJax
+          window.MathJax = {
+            tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+            svg: { fontCache: 'global' }
+          };
+          
+          // Render LaTeX content
+          renderLatexContent();
+        };
+        
+        script.onerror = () => {
+          button.innerHTML = '❌ Failed to load LaTeX';
+          button.disabled = false;
+          setTimeout(() => {
+            button.innerHTML = originalText;
+          }, 2000);
+        };
+        
+        document.head.appendChild(script);
+      } else {
+        // MathJax already loaded, just render
+        renderLatexContent();
+      }
+    }
+    
+    function renderLatexContent() {
+      const button = document.getElementById('renderLatexBtn');
+      
+      // Update content to use innerHTML (allows LaTeX rendering)
+      document.getElementById("statement").innerHTML = originalContent.statement;
+      document.getElementById("hints").innerHTML = originalContent.hints;
+      document.getElementById("proof").innerHTML = originalContent.proof;
+      
+      // Update button to show LaTeX is active
+      button.innerHTML = '✅ LaTeX Active';
+      button.style.background = '#10B981';
+      button.disabled = true;
+      
+      // Render MathJax after a short delay
+      setTimeout(() => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          MathJax.typesetPromise().catch(err => {
+            console.error('MathJax rendering error:', err);
+            button.innerHTML = '❌ LaTeX Error';
+            button.disabled = false;
+          });
+        }
+      }, 500);
+    }
+
     // Load card when page loads
     document.addEventListener('DOMContentLoaded', loadCard);
   </script>
@@ -496,6 +564,12 @@
     .card-title .mjx-container {
       display: inline !important;
       opacity: 1 !important;
+    }
+    
+    /* Spinner animation for LaTeX loading */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </body>

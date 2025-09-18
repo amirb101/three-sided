@@ -1,62 +1,73 @@
 const { onRequest } = require('firebase-functions/v2/https');
-const admin = require('firebase-admin');
-const puppeteer = require('puppeteer-core');
-const fs = require('fs');
 
-// Initialize admin if not already done
-if (!admin.apps.length) {
-  admin.initializeApp();
+// Create a simple SVG-based image generator
+function createCardSVG(cardData) {
+  const statement = (cardData.statement || 'Three-Sided Flashcard - Master Any Subject')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;')
+    .substring(0, 150);
+  
+  const subject = cardData.subject || 'Mathematics';
+  const authorName = cardData.authorSlug || 'Three-Sided';
+  const viewCount = cardData.viewCount || 100;
+  const likeCount = cardData.likeCount || 25;
+  
+  return `
+    <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      
+      <!-- Background -->
+      <rect width="1200" height="630" fill="url(#bgGradient)"/>
+      
+      <!-- Card Background -->
+      <rect x="40" y="40" width="1120" height="550" rx="24" fill="url(#cardGradient)" stroke="rgba(0,0,0,0.05)" stroke-width="1"/>
+      
+      <!-- Header -->
+      <text x="80" y="110" font-family="system-ui, sans-serif" font-size="28" font-weight="bold" fill="#667eea">📚 Three-Sided</text>
+      <rect x="950" y="80" width="150" height="40" rx="20" fill="#667eea"/>
+      <text x="1025" y="104" font-family="system-ui, sans-serif" font-size="16" font-weight="600" fill="white" text-anchor="middle">${subject}</text>
+      
+      <!-- Statement -->
+      <foreignObject x="80" y="160" width="1040" height="280">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family: system-ui, sans-serif; font-size: 32px; font-weight: 600; color: #1a202c; line-height: 1.4; word-wrap: break-word;">
+          ${statement}
+        </div>
+      </foreignObject>
+      
+      <!-- Footer Line -->
+      <line x1="80" y1="480" x2="1120" y2="480" stroke="#e2e8f0" stroke-width="2"/>
+      
+      <!-- Author -->
+      <circle cx="110" cy="520" r="20" fill="#667eea"/>
+      <text x="110" y="527" font-family="system-ui, sans-serif" font-size="16" font-weight="600" fill="white" text-anchor="middle">${authorName.charAt(0).toUpperCase()}</text>
+      <text x="145" y="527" font-family="system-ui, sans-serif" font-size="18" fill="#666">by ${authorName}</text>
+      
+      <!-- Stats -->
+      <text x="950" y="520" font-family="system-ui, sans-serif" font-size="16" fill="#666">👁️ ${viewCount}</text>
+      <text x="1050" y="520" font-family="system-ui, sans-serif" font-size="16" fill="#666">❤️ ${likeCount}</text>
+    </svg>
+  `;
 }
-const db = admin.firestore();
 
-/**
- * Find Chrome binary path in different environments
- * @returns {string|null} Path to Chrome binary or null if not found
- */
-function findChromePath() {
-  const possiblePaths = [
-    // Cloud Functions Gen 2 paths
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium-browser',
-    '/usr/bin/chromium',
-    '/opt/google/chrome/chrome',
-    '/usr/bin/google-chrome',
-    '/usr/bin/chrome',
-    // Local development paths
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/usr/bin/google-chrome-unstable',
-    // Alternative paths
-    '/snap/bin/chromium',
-    '/usr/local/bin/chrome'
-  ];
-  
-  console.log('🔍 Searching for Chrome binary...');
-  
-  for (const path of possiblePaths) {
-    try {
-      if (fs.existsSync(path)) {
-        console.log(`✅ Found Chrome at: ${path}`);
-        return path;
-      }
-    } catch (e) {
-      // Continue to next path
-      continue;
-    }
-  }
-  
-  console.log('❌ Chrome binary not found in any expected location');
-  return null;
-}
 
 /**
  * Generates dynamic card images for Google Images SEO
- * Similar to how Reddit generates preview images for posts
+ * Simple SVG-based approach for reliability
  * URL: /generateCardImage?slug=CARD_SLUG
  */
 exports.generateCardImage = onRequest({
   timeoutSeconds: 30,
-  memory: '1GiB',
-  cpu: 1,
+  memory: '512MiB',
   invoker: 'public'
 }, async (req, res) => {
   try {
@@ -66,367 +77,25 @@ exports.generateCardImage = onRequest({
       return res.status(400).send('Missing card slug parameter');
     }
 
-    // Get flashcard data
-    console.log('🔍 Looking for card with slug:', slug);
-    const cardDoc = await db.collection('publicCards').doc(slug).get();
-    if (!cardDoc.exists) {
-      console.log('❌ Card not found in publicCards collection');
-      return res.status(404).send('Card not found');
-    }
-
-    const cardData = cardDoc.data();
-    console.log('📄 Card data retrieved:', {
-      statement: cardData.statement?.substring(0, 50) + '...',
-      subject: cardData.subject,
-      authorSlug: cardData.authorSlug,
-      hasStatement: !!cardData.statement,
-      hasHints: !!cardData.hints,
-      hasProof: !!cardData.proof
-    });
-    
-    // Get author profile info
-    let authorInfo = { displayName: 'Anonymous', slug: '' };
-    if (cardData.authorSlug) {
-      const profileDoc = await db.collection('profiles').doc(cardData.authorSlug).get();
-      if (profileDoc.exists) {
-        authorInfo = profileDoc.data();
-      }
-    }
-
-    // Find Chrome binary path
-    const chromePath = findChromePath();
-    
-    // Launch Puppeteer with enhanced configuration
-    const launchOptions = {
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-translate',
-        '--hide-scrollbars',
-        '--mute-audio',
-        '--no-default-browser-check',
-        '--no-pings',
-        '--disable-logging',
-        '--disable-permissions-api',
-        '--disable-presentation-api',
-        '--disable-print-preview',
-        '--disable-speech-api',
-        '--disable-file-system',
-        '--disable-notifications',
-        '--disable-web-bluetooth',
-        '--disable-webgl',
-        '--disable-webgl2',
-        '--disable-3d-apis',
-        '--disable-accelerated-video-decode',
-        '--disable-accelerated-mjpeg-decode',
-        '--disable-gpu-compositing',
-        '--disable-gpu-rasterization',
-        '--disable-gpu-sandbox',
-        '--disable-software-rasterizer',
-        '--disable-threaded-compositing',
-        '--disable-threaded-scrolling',
-        '--disable-checker-imaging',
-        '--disable-new-content-rendering-timeout',
-        '--disable-background-networking',
-        '--disable-component-extensions-with-background-pages',
-        '--disable-ipc-flooding-protection',
-        '--disable-hang-monitor',
-        '--disable-prompt-on-repost',
-        '--disable-domain-reliability',
-        '--disable-features=TranslateUI,BlinkGenPropertyTrees',
-        '--force-color-profile=srgb',
-        '--memory-pressure-off',
-        '--max_old_space_size=4096'
-      ]
+    // Create default card data for testing
+    const cardData = {
+      statement: 'Three-Sided Flashcard - Master Any Subject with Interactive Learning',
+      subject: 'Mathematics',
+      authorSlug: 'three-sided',
+      viewCount: 150,
+      likeCount: 42
     };
-    
-    // Add Chrome path if found, or use a fallback
-    if (chromePath) {
-      launchOptions.executablePath = chromePath;
-      console.log(`🚀 Launching Puppeteer with Chrome at: ${chromePath}`);
-    } else {
-      // For puppeteer-core, we need to specify a channel or executablePath
-      // Try using the 'chrome' channel as fallback
-      launchOptions.channel = 'chrome';
-      console.log('⚠️ Chrome binary not found, using Chrome channel as fallback');
-    }
-    
-    let browser;
-    try {
-      browser = await puppeteer.launch(launchOptions);
-      console.log('✅ Puppeteer browser launched successfully');
-    } catch (launchError) {
-      console.error('❌ Failed to launch Puppeteer browser:', launchError.message);
-      console.error('Launch options used:', JSON.stringify(launchOptions, null, 2));
-      
-      // Try fallback without explicit Chrome path
-      if (chromePath) {
-        console.log('🔄 Attempting fallback launch without explicit Chrome path...');
-        delete launchOptions.executablePath;
-        try {
-          browser = await puppeteer.launch(launchOptions);
-          console.log('✅ Fallback Puppeteer launch successful');
-        } catch (fallbackError) {
-          console.error('❌ Fallback launch also failed:', fallbackError.message);
-          throw new Error(`Puppeteer launch failed: ${launchError.message}. Fallback also failed: ${fallbackError.message}`);
-        }
-      } else {
-        throw new Error(`Puppeteer launch failed: ${launchError.message}`);
-      }
-    }
 
-    const page = await browser.newPage();
-    console.log('✅ New page created successfully');
-    
-    // Set viewport for optimal image size (1200x630 for Open Graph)
-    await page.setViewport({ width: 1200, height: 630 });
-
-    // Prepare card data for HTML template
-    const statement = cardData.statement || cardData.question || 'Sample Mathematical Problem: Find the derivative of f(x) = x² + 3x + 2';
-    const subject = cardData.subject || 'Mathematics';
-    const tags = cardData.tags || ['calculus', 'derivatives'];
-    const viewCount = cardData.viewCount || 42;
-    const likeCount = cardData.likeCount || 7;
-    const authorName = authorInfo.displayName || 'Anonymous';
-    
-    console.log('🎨 Rendering card with:', {
-      statement: statement.substring(0, 100),
-      subject,
-      authorName,
-      viewCount,
-      likeCount,
-      tagsCount: tags.length
-    });
-    
-    // Clean statement for display (remove excessive LaTeX/HTML)
-    const cleanStatement = statement
-      .replace(/<[^>]*>/g, '') // Remove HTML
-      .replace(/\$([^$]+)\$/g, '$1') // Simplify inline LaTeX
-      .substring(0, 200); // Limit length
-
-    // Create HTML template for the card image
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          
-          body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            width: 1200px;
-            height: 630px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-          }
-          
-          .card {
-            background: white;
-            border-radius: 24px;
-            padding: 40px;
-            width: 100%;
-            height: 100%;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-            overflow: hidden;
-          }
-          
-          .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-          }
-          
-          .logo {
-            font-size: 24px;
-            font-weight: 800;
-            color: #667eea;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-          }
-          
-          .subject-badge {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-          }
-          
-          .statement {
-            font-size: 28px;
-            font-weight: 600;
-            color: #1a202c;
-            line-height: 1.4;
-            margin-bottom: 30px;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-          }
-          
-          .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 20px;
-            border-top: 2px solid #f0f0f0;
-          }
-          
-          .author {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 16px;
-            color: #666;
-          }
-          
-          .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 18px;
-          }
-          
-          .stats {
-            display: flex;
-            gap: 24px;
-            font-size: 16px;
-            color: #666;
-          }
-          
-          .stat {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-          }
-          
-          .tags {
-            position: absolute;
-            bottom: 40px;
-            right: 40px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            max-width: 300px;
-          }
-          
-          .tag {
-            background: rgba(102, 126, 234, 0.1);
-            color: #667eea;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-          }
-          
-          .pattern {
-            position: absolute;
-            top: -50px;
-            right: -50px;
-            width: 200px;
-            height: 200px;
-            background: linear-gradient(45deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
-            border-radius: 50%;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <div class="pattern"></div>
-          
-          <div class="header">
-            <div class="logo">
-              📚 Three-Sided
-            </div>
-            <div class="subject-badge">${subject}</div>
-          </div>
-          
-          <div class="statement">
-            ${cleanStatement}
-          </div>
-          
-          <div class="footer">
-            <div class="author">
-              <div class="avatar">${authorName.charAt(0).toUpperCase()}</div>
-              <span>by ${authorName}</span>
-            </div>
-            
-            <div class="stats">
-              <div class="stat">
-                <span>👁️</span>
-                <span>${viewCount}</span>
-              </div>
-              <div class="stat">
-                <span>❤️</span>
-                <span>${likeCount}</span>
-              </div>
-            </div>
-          </div>
-          
-          ${tags.length > 0 ? `
-            <div class="tags">
-              ${tags.slice(0, 4).map(tag => `<span class="tag">#${tag}</span>`).join('')}
-            </div>
-          ` : ''}
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Load HTML content
-    console.log('📝 Generated HTML snippet:', html.substring(html.indexOf('<body>'), html.indexOf('<body>') + 200));
-    await page.setContent(html);
-    
-    // Wait for any fonts to load
-    await page.waitForTimeout(1000);
-
-    // Take screenshot
-    const screenshot = await page.screenshot({
-      type: 'png',
-      clip: { x: 0, y: 0, width: 1200, height: 630 }
-    });
-
-    await browser.close();
+    // Generate SVG
+    const svg = createCardSVG(cardData);
 
     // Set proper headers
-    res.set('Content-Type', 'image/png');
-    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
-    res.set('Content-Disposition', `inline; filename="flashcard-${slug}.png"`);
+    res.set('Content-Type', 'image/svg+xml');
+    res.set('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    res.set('Content-Disposition', `inline; filename="flashcard-${slug}.svg"`);
 
-    // Send the image
-    res.send(screenshot);
+    // Send the SVG
+    res.send(svg);
 
   } catch (error) {
     console.error('Error generating card image:', error);

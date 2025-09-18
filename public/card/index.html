@@ -9,8 +9,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <!-- MathJax will be loaded dynamically when needed -->
   <script>
+    // MathJax configuration - only set up, don't load yet
     window.MathJax = {
       tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
       svg: { fontCache: 'global' }
@@ -68,9 +69,14 @@
         <div class="section-content" id="proof"></div>
       </div>
 
-      <button class="import-button" onclick="saveCard()" id="importBtn">
-        Import to My Account
-      </button>
+      <div class="button-container">
+        <button class="render-latex-button" onclick="renderLaTeX()" id="renderBtn">
+          📐 Render LaTeX
+        </button>
+        <button class="import-button" onclick="saveCard()" id="importBtn">
+          Import to My Account
+        </button>
+      </div>
     </div>
   </div>
 
@@ -81,6 +87,7 @@
     let currentUser = null;
     let cardData = null;
     let cardId = null;
+    let isLatexRendered = false;
 
     auth.onAuthStateChanged(user => currentUser = user);
 
@@ -96,6 +103,60 @@
         notification.classList.remove('show');
         setTimeout(() => document.body.removeChild(notification), 300);
       }, 3000);
+    }
+
+    // Check if text contains LaTeX
+    function containsLatex(text) {
+      if (!text) return false;
+      // Look for common LaTeX patterns
+      return /\$.*?\$|\\\(.*?\\\)|\\\[.*?\\\]|\\[a-zA-Z]+\{/.test(text);
+    }
+
+    // Render LaTeX by loading MathJax and processing content
+    async function renderLaTeX() {
+      if (isLatexRendered) return;
+      
+      const renderBtn = document.getElementById('renderBtn');
+      const originalText = renderBtn.textContent;
+      
+      try {
+        // Show loading state
+        renderBtn.disabled = true;
+        renderBtn.textContent = '⚡ Rendering...';
+        
+        // Load MathJax if not already loaded
+        if (!window.MathJax.typesetPromise) {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+          script.async = true;
+          
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+        
+        // Switch to HTML content for LaTeX rendering
+        document.getElementById("statement").innerHTML = cardData.statement || 'No statement available';
+        document.getElementById("hints").innerHTML = cardData.hints || 'No hints available';
+        document.getElementById("proof").innerHTML = cardData.proof || 'No proof available';
+        
+        // Render MathJax
+        await window.MathJax.typesetPromise();
+        
+        isLatexRendered = true;
+        renderBtn.textContent = '✓ LaTeX Rendered';
+        renderBtn.disabled = true;
+        
+        showNotification('LaTeX rendered successfully!');
+        
+      } catch (error) {
+        console.error('Error rendering LaTeX:', error);
+        renderBtn.disabled = false;
+        renderBtn.textContent = originalText;
+        showNotification('Error rendering LaTeX. Please try again.', 'error');
+      }
     }
 
     async function loadCard() {
@@ -117,10 +178,19 @@
         cardData = doc.data();
         cardId = doc.id;
 
-        document.getElementById("statement").innerHTML = cardData.statement;
-        document.getElementById("hints").innerHTML = cardData.hints;
-        document.getElementById("proof").innerHTML = cardData.proof;
-        MathJax.typesetPromise();
+        // Display as plain text initially for better SEO
+        document.getElementById("statement").textContent = cardData.statement || 'No statement available';
+        document.getElementById("hints").textContent = cardData.hints || 'No hints available';
+        document.getElementById("proof").textContent = cardData.proof || 'No proof available';
+        
+        // Show/hide render button based on whether LaTeX is present
+        const hasLatex = containsLatex(cardData.statement) || containsLatex(cardData.hints) || containsLatex(cardData.proof);
+        const renderBtn = document.getElementById('renderBtn');
+        if (hasLatex) {
+          renderBtn.style.display = 'inline-block';
+        } else {
+          renderBtn.style.display = 'none';
+        }
 
         // Set unique title and meta description
         document.title = cardData.statement ? cardData.statement.substring(0, 60) + " - Flashcard" : "Flashcard";
@@ -208,6 +278,51 @@
     }
     .notification.error {
       background-color: #e74c3c;
+    }
+    
+    .button-container {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    
+    .render-latex-button {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+    }
+    
+    .render-latex-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    .render-latex-button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    @media (max-width: 768px) {
+      .button-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .render-latex-button,
+      .import-button {
+        width: 100%;
+        max-width: 300px;
+      }
     }
   </style>
 </body>

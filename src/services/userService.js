@@ -14,17 +14,22 @@ import {
 import { db } from '../firebase';
 import { ProfileService } from './profileService';
 import { DeckService } from './deckService';
+import globalCache from './cacheService';
 
 export class UserService {
-  // Get user profile (uses ProfileService for compatibility with old system)
+  // Get user profile (uses ProfileService for compatibility with old system) - CACHED
   static async getUserProfile(userId) {
-    try {
-      // Use ProfileService which follows the old system's schema
-      return await ProfileService.getProfileByUserId(userId);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      throw error;
-    }
+    const cacheKey = globalCache.userKey(userId, 'profile');
+    
+    return globalCache.getOrFetch(cacheKey, async () => {
+      try {
+        // Use ProfileService which follows the old system's schema
+        return await ProfileService.getProfileByUserId(userId);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        throw error;
+      }
+    }, 'userProfile');
   }
 
   // Create or update user profile

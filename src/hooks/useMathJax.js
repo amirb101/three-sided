@@ -18,9 +18,19 @@ export const useMathJax = (deps = [], element) => {
           ? document.querySelector(element)
           : element || document.body;
 
+      // Ensure target is a valid DOM element
+      if (!target || !target.nodeType || target.nodeType !== Node.ELEMENT_NODE) {
+        console.warn('Invalid target element for MathJax rendering');
+        return;
+      }
+
       // Clear old render if supported (prevents stale renders)
-      if (window.MathJax.typesetClear) {
-        window.MathJax.typesetClear([target]);
+      if (window.MathJax.typesetClear && target.contains) {
+        try {
+          window.MathJax.typesetClear([target]);
+        } catch (error) {
+          console.warn('MathJax typesetClear error:', error);
+        }
       }
 
       // Render math in the target element

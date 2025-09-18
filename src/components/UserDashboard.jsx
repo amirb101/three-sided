@@ -5,6 +5,7 @@ import { DeckService } from '../services/deckService';
 import { useAuth } from '../contexts/AuthContext';
 import PublicFlashcardManager from './PublicFlashcardManager';
 import { useMathJax } from '../hooks/useMathJax';
+import globalCache from '../services/cacheService';
 import { 
   DashboardIcon, 
   UserIcon, 
@@ -78,31 +79,42 @@ const UserDashboard = () => {
       
       const tasks = [
         UserService.getUserProfile(uid),
+        // Use cached flashcard service instead of direct Firebase reads
         (async () => {
           try {
-            // Load from new 'cards' collection
-            const newCards = await FlashcardService.getUserFlashcards(uid, 100);
+            // Load all user cards using cached service
+            const cacheKey = globalCache.userKey(uid, 'allCards');
             
-            // Also load from legacy 'flashcards' collection
-            const { collection, query, where, orderBy, limit, getDocs } = await import('firebase/firestore');
-            const { db } = await import('../firebase');
-            const legacyQuery = query(
-              collection(db, 'flashcards'),
-              where('userId', '==', uid),
-              orderBy('createdAt', 'desc'),
-              limit(100)
-            );
-            const legacySnap = await getDocs(legacyQuery);
-            const legacyCards = legacySnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            
-            // Merge both collections, newest first
-            const allCards = [...newCards, ...legacyCards].sort((a, b) => {
-              const aDate = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
-              const bDate = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
-              return bDate - aDate;
-            });
-            
-            return allCards;
+            return globalCache.getOrFetch(cacheKey, async () => {
+              try {
+                // Load from new 'cards' collection
+                const newCards = await FlashcardService.getUserFlashcards(uid, 100);
+                
+                // Also load from legacy 'flashcards' collection
+                const { collection, query, where, orderBy, limit, getDocs } = await import('firebase/firestore');
+                const { db } = await import('../firebase');
+                const legacyQuery = query(
+                  collection(db, 'flashcards'),
+                  where('userId', '==', uid),
+                  orderBy('createdAt', 'desc'),
+                  limit(100)
+                );
+                const legacySnap = await getDocs(legacyQuery);
+                const legacyCards = legacySnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                
+                // Merge both collections, newest first
+                const allCards = [...newCards, ...legacyCards].sort((a, b) => {
+                  const aDate = a.createdAt?.toMillis?.() || a.createdAt?.getTime?.() || 0;
+                  const bDate = b.createdAt?.toMillis?.() || b.createdAt?.getTime?.() || 0;
+                  return bDate - aDate;
+                });
+                
+                return allCards;
+              } catch (error) {
+                debug('Failed to load user cards:', error);
+                return [];
+              }
+            }, 'userFlashcards');
           } catch (error) {
             debug('Failed to load user cards:', error);
             return [];

@@ -19,6 +19,7 @@ import DeckManager from './components/DeckManager'
 import AnalyticsDashboard from './components/AnalyticsDashboard'
 import AdminAnalyticsDashboard from './components/AdminAnalyticsDashboard'
 import IconTestPage from './components/IconTestPage'
+import CacheDebugger from './components/CacheDebugger'
 import { 
   DashboardIcon, 
   UserIcon, 
@@ -1140,6 +1141,9 @@ function App() {
           </div>
         </div>
       )}
+      
+      {/* Development Cache Debugger */}
+      <CacheDebugger />
     </div>
   )
 }
