@@ -264,8 +264,46 @@ export class FlashcardService {
   // Delete a flashcard
   static async deleteFlashcard(flashcardId) {
     try {
-      const docRef = doc(db, 'cards', flashcardId);
-      await deleteDoc(docRef);
+      // Try to delete from the new 'cards' collection first
+      try {
+        const docRef = doc(db, 'cards', flashcardId);
+        
+        // Get the document data before deleting to invalidate cache
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const userId = docSnap.data().userId;
+          await deleteDoc(docRef);
+          console.log('✅ Deleted from cards collection:', flashcardId);
+          
+          // Invalidate cache for the user who owned this card
+          if (userId) {
+            globalCache.invalidateUser(userId);
+          }
+          return;
+        } else {
+          throw new Error('Document not found in cards collection');
+        }
+      } catch (cardsError) {
+        console.log('⚠️ Not found in cards collection, trying flashcards collection:', flashcardId);
+        
+        // If not found in 'cards', try the legacy 'flashcards' collection
+        const legacyDocRef = doc(db, 'flashcards', flashcardId);
+        
+        // Get the document data before deleting to invalidate cache
+        const docSnap = await getDoc(legacyDocRef);
+        if (docSnap.exists()) {
+          const userId = docSnap.data().userId;
+          await deleteDoc(legacyDocRef);
+          console.log('✅ Deleted from flashcards collection:', flashcardId);
+          
+          // Invalidate cache for the user who owned this card
+          if (userId) {
+            globalCache.invalidateUser(userId);
+          }
+        } else {
+          throw new Error('Document not found in either collection');
+        }
+      }
     } catch (error) {
       console.error('Error deleting flashcard:', error);
       throw error;
