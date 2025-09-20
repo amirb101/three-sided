@@ -45,4 +45,9 @@ export { default as LearningAnalyticsIcon } from './LearningAnalyticsIcon';
 // Icon Components - Social/Community
 export { default as SocialIcon } from './SocialIcon';
 
-// All 39 icons complete!
+// Icon Components - Import/Export
+export { default as DownloadIcon } from './DownloadIcon';
+export { default as UploadIcon } from './UploadIcon';
+export { default as CopyIcon } from './CopyIcon';
+
+// All 42 icons complete!
